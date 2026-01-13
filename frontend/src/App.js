@@ -1685,7 +1685,7 @@ const MyOffersPage = () => {
                     <MapPin className="w-4 h-4" />
                     {offer.governorate}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 mb-2">
                     <Button variant="outline" size="sm" className="flex-1 rounded-xl" onClick={() => navigate(`/offer/${offer.id}`)}>
                       <Eye className="w-4 h-4 ml-1" />
                       عرض
@@ -1694,6 +1694,45 @@ const MyOffersPage = () => {
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
+                  
+                  {/* Status Management */}
+                  {offer.status === "active" && (
+                    <div className="flex gap-1">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1 rounded-xl text-xs bg-blue-50 hover:bg-blue-100" 
+                        onClick={() => updateOfferStatus(offer.id, "completed")}
+                        data-testid="mark-completed-btn"
+                      >
+                        <Check className="w-3 h-3 ml-1" />
+                        مكتمل
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1 rounded-xl text-xs bg-red-50 hover:bg-red-100" 
+                        onClick={() => updateOfferStatus(offer.id, "cancelled")}
+                        data-testid="mark-cancelled-btn"
+                      >
+                        <X className="w-3 h-3 ml-1" />
+                        إلغاء
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {(offer.status === "completed" || offer.status === "cancelled") && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full rounded-xl text-xs bg-green-50 hover:bg-green-100" 
+                      onClick={() => updateOfferStatus(offer.id, "active")}
+                      data-testid="reactivate-btn"
+                    >
+                      <ArrowRight className="w-3 h-3 ml-1" />
+                      إعادة تفعيل
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             ))}
