@@ -7,7 +7,7 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
-from typing import List, Optional, Any
+from typing import List, Optional, Any, Dict
 import uuid
 from datetime import datetime, timezone, timedelta
 from jose import JWTError, jwt
@@ -71,6 +71,7 @@ class UserResponse(BaseModel):
     is_admin: bool = False
     trust_score: int = 0
     trades_count: int = 0
+    avatar: Optional[str] = None
     created_at: str
 
 class TokenResponse(BaseModel):
@@ -146,6 +147,7 @@ class NotificationResponse(BaseModel):
     title: str
     message: str
     notification_type: str
+    link: Optional[str] = None
     is_read: bool = False
     created_at: str
 
@@ -155,6 +157,68 @@ class AISuggestionRequest(BaseModel):
 class AISuggestionResponse(BaseModel):
     suggestions: List[str]
     market_value: str
+
+# Blog Models
+class BlogPostCreate(BaseModel):
+    title: str
+    content: str
+    excerpt: Optional[str] = None
+    cover_image: Optional[str] = None
+    tags: List[str] = []
+    category: Optional[str] = None
+    is_published: bool = False
+
+class BlogPostResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    title: str
+    content: str
+    excerpt: Optional[str] = None
+    cover_image: Optional[str] = None
+    tags: List[str] = []
+    category: Optional[str] = None
+    author_id: str
+    author_name: str
+    is_published: bool = False
+    views: int = 0
+    created_at: str
+    updated_at: str
+
+# Page Builder Models
+class PageBlock(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    type: str  # hero, slider, text, image, listings, banner, contact
+    content: Dict[str, Any] = {}
+    order: int = 0
+
+class PageCreate(BaseModel):
+    title: str
+    slug: str
+    blocks: List[PageBlock] = []
+    is_published: bool = False
+
+class PageResponse(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str
+    title: str
+    slug: str
+    blocks: List[Dict] = []
+    is_published: bool = False
+    created_at: str
+    updated_at: str
+
+# Site Settings Models
+class SiteSettingsUpdate(BaseModel):
+    site_name: Optional[str] = None
+    site_logo: Optional[str] = None
+    custom_font: Optional[str] = None
+    custom_font_name: Optional[str] = None
+    primary_color: Optional[str] = None
+    secondary_color: Optional[str] = None
+    contact_email: Optional[str] = None
+    contact_phone: Optional[str] = None
+    social_links: Optional[Dict[str, str]] = None
+    footer_text: Optional[str] = None
 
 # ==================== HELPER FUNCTIONS ====================
 
@@ -191,11 +255,24 @@ async def get_admin_user(current_user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="غير مصرح")
     return current_user
 
+async def get_optional_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False))):
+    """Get user if authenticated, otherwise return None"""
+    if not credentials:
+        return None
+    try:
+        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = payload.get("sub")
+        if user_id:
+            user = await db.users.find_one({"id": user_id}, {"_id": 0})
+            return user
+    except:
+        pass
+    return None
+
 # ==================== AUTH ENDPOINTS ====================
 
 @api_router.post("/auth/register", response_model=TokenResponse)
 async def register(user_data: UserCreate):
-    # Check if email exists
     existing = await db.users.find_one({"email": user_data.email}, {"_id": 0})
     if existing:
         raise HTTPException(status_code=400, detail="البريد الإلكتروني مستخدم بالفعل")
@@ -214,6 +291,7 @@ async def register(user_data: UserCreate):
         "trust_score": 0,
         "trades_count": 0,
         "favorites": [],
+        "avatar": None,
         "created_at": now
     }
     
@@ -229,6 +307,7 @@ async def register(user_data: UserCreate):
         is_admin=False,
         trust_score=0,
         trades_count=0,
+        avatar=None,
         created_at=now
     )
     
@@ -250,6 +329,7 @@ async def login(login_data: UserLogin):
         is_admin=user.get("is_admin", False),
         trust_score=user.get("trust_score", 0),
         trades_count=user.get("trades_count", 0),
+        avatar=user.get("avatar"),
         created_at=user.get("created_at", "")
     )
     
@@ -266,8 +346,28 @@ async def get_me(current_user: dict = Depends(get_current_user)):
         is_admin=current_user.get("is_admin", False),
         trust_score=current_user.get("trust_score", 0),
         trades_count=current_user.get("trades_count", 0),
+        avatar=current_user.get("avatar"),
         created_at=current_user.get("created_at", "")
     )
+
+@api_router.put("/auth/profile")
+async def update_profile(
+    name: Optional[str] = None,
+    phone: Optional[str] = None,
+    governorate: Optional[str] = None,
+    avatar: Optional[str] = None,
+    current_user: dict = Depends(get_current_user)
+):
+    update_doc = {}
+    if name: update_doc["name"] = name
+    if phone: update_doc["phone"] = phone
+    if governorate: update_doc["governorate"] = governorate
+    if avatar: update_doc["avatar"] = avatar
+    
+    if update_doc:
+        await db.users.update_one({"id": current_user["id"]}, {"$set": update_doc})
+    
+    return {"message": "تم تحديث الملف الشخصي"}
 
 # ==================== OFFERS ENDPOINTS ====================
 
@@ -283,7 +383,7 @@ async def create_offer(offer_data: OfferCreate, current_user: dict = Depends(get
         "category": offer_data.category,
         "governorate": offer_data.governorate,
         "wanted_items": offer_data.wanted_items,
-        "images": offer_data.images[:5],  # Max 5 images
+        "images": offer_data.images[:5],
         "is_quick_trade": offer_data.is_quick_trade,
         "user_id": current_user["id"],
         "user_name": current_user["name"],
@@ -303,14 +403,16 @@ async def get_offers(
     governorate: Optional[str] = None,
     search: Optional[str] = None,
     quick_trade: Optional[bool] = None,
+    status: Optional[str] = "active",
     limit: int = 20,
     skip: int = 0
 ):
-    query = {"status": "active"}
-    
-    if category:
+    query = {}
+    if status:
+        query["status"] = status
+    if category and category != "all":
         query["category"] = category
-    if governorate:
+    if governorate and governorate != "all":
         query["governorate"] = governorate
     if quick_trade:
         query["is_quick_trade"] = True
@@ -324,7 +426,7 @@ async def get_offers(
     return [OfferResponse(**o) for o in offers]
 
 @api_router.get("/offers/{offer_id}", response_model=OfferResponse)
-async def get_offer(offer_id: str):
+async def get_offer(offer_id: str, current_user: dict = Depends(get_optional_user)):
     offer = await db.offers.find_one({"id": offer_id}, {"_id": 0})
     if not offer:
         raise HTTPException(status_code=404, detail="العرض غير موجود")
@@ -360,8 +462,7 @@ async def update_offer(offer_id: str, offer_data: OfferCreate, current_user: dic
 
 @api_router.put("/offers/{offer_id}/status")
 async def update_offer_status(offer_id: str, status: str, current_user: dict = Depends(get_current_user)):
-    """Update offer status (active, completed, cancelled)"""
-    if status not in ["active", "completed", "cancelled"]:
+    if status not in ["active", "completed", "cancelled", "pending"]:
         raise HTTPException(status_code=400, detail="حالة غير صالحة")
     
     offer = await db.offers.find_one({"id": offer_id}, {"_id": 0})
@@ -372,10 +473,15 @@ async def update_offer_status(offer_id: str, status: str, current_user: dict = D
     
     await db.offers.update_one({"id": offer_id}, {"$set": {"status": status}})
     
+    # Update user trades count if completed
+    if status == "completed":
+        await db.users.update_one({"id": offer["user_id"]}, {"$inc": {"trades_count": 1}})
+    
     status_messages = {
         "completed": "تم تحديد العرض كمكتمل",
-        "cancelled": "تم إلغاء العرض", 
-        "active": "تم تفعيل العرض"
+        "cancelled": "تم إلغاء العرض",
+        "active": "تم تفعيل العرض",
+        "pending": "العرض قيد المراجعة"
     }
     
     return {"message": status_messages.get(status, "تم التحديث")}
@@ -425,6 +531,12 @@ async def get_favorites(current_user: dict = Depends(get_current_user)):
     offers = await db.offers.find({"id": {"$in": favorite_ids}}, {"_id": 0}).to_list(100)
     return [OfferResponse(**o) for o in offers]
 
+@api_router.get("/favorites/check/{offer_id}")
+async def check_favorite(offer_id: str, current_user: dict = Depends(get_current_user)):
+    user = await db.users.find_one({"id": current_user["id"]}, {"_id": 0})
+    is_favorite = offer_id in user.get("favorites", [])
+    return {"is_favorite": is_favorite}
+
 # ==================== MESSAGES ENDPOINTS ====================
 
 @api_router.post("/messages", response_model=MessageResponse)
@@ -456,6 +568,7 @@ async def send_message(msg_data: MessageCreate, current_user: dict = Depends(get
         "title": "رسالة جديدة",
         "message": f"رسالة جديدة من {current_user['name']} بخصوص {offer_title}",
         "notification_type": "message",
+        "link": f"/messages?offer={msg_data.offer_id}&user={current_user['id']}",
         "is_read": False,
         "created_at": now
     }
@@ -538,6 +651,14 @@ async def get_messages(offer_id: str, user_id: str, current_user: dict = Depends
     
     return [MessageResponse(**m) for m in messages]
 
+@api_router.get("/messages/unread-count")
+async def get_unread_count(current_user: dict = Depends(get_current_user)):
+    count = await db.messages.count_documents({
+        "receiver_id": current_user["id"],
+        "is_read": False
+    })
+    return {"count": count}
+
 # ==================== NOTIFICATIONS ENDPOINTS ====================
 
 @api_router.get("/notifications", response_model=List[NotificationResponse])
@@ -548,6 +669,14 @@ async def get_notifications(current_user: dict = Depends(get_current_user)):
     ).sort("created_at", -1).limit(50).to_list(50)
     
     return [NotificationResponse(**n) for n in notifications]
+
+@api_router.get("/notifications/unread-count")
+async def get_notifications_unread_count(current_user: dict = Depends(get_current_user)):
+    count = await db.notifications.count_documents({
+        "user_id": current_user["id"],
+        "is_read": False
+    })
+    return {"count": count}
 
 @api_router.put("/notifications/{notification_id}/read")
 async def mark_notification_read(notification_id: str, current_user: dict = Depends(get_current_user)):
@@ -616,10 +745,8 @@ async def get_ai_suggestions(request: AISuggestionRequest, current_user: dict = 
         
         response = await chat.send_message(user_message)
         
-        # Parse JSON response
         import json
         try:
-            # Clean response if needed
             response_text = response.strip()
             if response_text.startswith("```"):
                 response_text = response_text.split("```")[1]
@@ -632,7 +759,6 @@ async def get_ai_suggestions(request: AISuggestionRequest, current_user: dict = 
                 market_value=data.get("market_value", "غير محدد")
             )
         except json.JSONDecodeError:
-            # Fallback if AI returns non-JSON
             return AISuggestionResponse(
                 suggestions=["موبايل حديث", "منظومة طاقة شمسية", "أثاث منزلي", "جهاز كهربائي"],
                 market_value="يعتمد على حالة الغرض"
@@ -640,11 +766,191 @@ async def get_ai_suggestions(request: AISuggestionRequest, current_user: dict = 
             
     except Exception as e:
         logging.error(f"AI Error: {e}")
-        # Fallback suggestions
         return AISuggestionResponse(
             suggestions=["موبايل حديث", "منظومة طاقة شمسية", "أثاث منزلي", "جهاز كهربائي", "دراجة نارية"],
             market_value="يرجى التواصل للاتفاق على القيمة"
         )
+
+# ==================== BLOG ENDPOINTS ====================
+
+@api_router.post("/blog", response_model=BlogPostResponse)
+async def create_blog_post(post_data: BlogPostCreate, current_user: dict = Depends(get_admin_user)):
+    post_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    
+    post_doc = {
+        "id": post_id,
+        "title": post_data.title,
+        "content": post_data.content,
+        "excerpt": post_data.excerpt or post_data.content[:200],
+        "cover_image": post_data.cover_image,
+        "tags": post_data.tags,
+        "category": post_data.category,
+        "author_id": current_user["id"],
+        "author_name": current_user["name"],
+        "is_published": post_data.is_published,
+        "views": 0,
+        "created_at": now,
+        "updated_at": now
+    }
+    
+    await db.blog_posts.insert_one(post_doc)
+    return BlogPostResponse(**post_doc)
+
+@api_router.get("/blog", response_model=List[BlogPostResponse])
+async def get_blog_posts(
+    category: Optional[str] = None,
+    tag: Optional[str] = None,
+    published_only: bool = True,
+    limit: int = 20,
+    skip: int = 0
+):
+    query = {}
+    if published_only:
+        query["is_published"] = True
+    if category:
+        query["category"] = category
+    if tag:
+        query["tags"] = tag
+    
+    posts = await db.blog_posts.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    return [BlogPostResponse(**p) for p in posts]
+
+@api_router.get("/blog/{post_id}", response_model=BlogPostResponse)
+async def get_blog_post(post_id: str):
+    post = await db.blog_posts.find_one({"id": post_id}, {"_id": 0})
+    if not post:
+        raise HTTPException(status_code=404, detail="المقالة غير موجودة")
+    
+    await db.blog_posts.update_one({"id": post_id}, {"$inc": {"views": 1}})
+    post["views"] = post.get("views", 0) + 1
+    
+    return BlogPostResponse(**post)
+
+@api_router.put("/blog/{post_id}", response_model=BlogPostResponse)
+async def update_blog_post(post_id: str, post_data: BlogPostCreate, current_user: dict = Depends(get_admin_user)):
+    post = await db.blog_posts.find_one({"id": post_id}, {"_id": 0})
+    if not post:
+        raise HTTPException(status_code=404, detail="المقالة غير موجودة")
+    
+    update_doc = {
+        "title": post_data.title,
+        "content": post_data.content,
+        "excerpt": post_data.excerpt or post_data.content[:200],
+        "cover_image": post_data.cover_image,
+        "tags": post_data.tags,
+        "category": post_data.category,
+        "is_published": post_data.is_published,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.blog_posts.update_one({"id": post_id}, {"$set": update_doc})
+    updated = await db.blog_posts.find_one({"id": post_id}, {"_id": 0})
+    return BlogPostResponse(**updated)
+
+@api_router.delete("/blog/{post_id}")
+async def delete_blog_post(post_id: str, current_user: dict = Depends(get_admin_user)):
+    await db.blog_posts.delete_one({"id": post_id})
+    return {"message": "تم حذف المقالة"}
+
+# ==================== PAGE BUILDER ENDPOINTS ====================
+
+@api_router.post("/pages", response_model=PageResponse)
+async def create_page(page_data: PageCreate, current_user: dict = Depends(get_admin_user)):
+    # Check if slug exists
+    existing = await db.pages.find_one({"slug": page_data.slug}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=400, detail="هذا الرابط مستخدم بالفعل")
+    
+    page_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    
+    page_doc = {
+        "id": page_id,
+        "title": page_data.title,
+        "slug": page_data.slug,
+        "blocks": [b.model_dump() for b in page_data.blocks],
+        "is_published": page_data.is_published,
+        "created_at": now,
+        "updated_at": now
+    }
+    
+    await db.pages.insert_one(page_doc)
+    return PageResponse(**page_doc)
+
+@api_router.get("/pages", response_model=List[PageResponse])
+async def get_pages(published_only: bool = False):
+    query = {}
+    if published_only:
+        query["is_published"] = True
+    
+    pages = await db.pages.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return [PageResponse(**p) for p in pages]
+
+@api_router.get("/pages/{slug}", response_model=PageResponse)
+async def get_page_by_slug(slug: str):
+    page = await db.pages.find_one({"slug": slug}, {"_id": 0})
+    if not page:
+        raise HTTPException(status_code=404, detail="الصفحة غير موجودة")
+    return PageResponse(**page)
+
+@api_router.put("/pages/{page_id}", response_model=PageResponse)
+async def update_page(page_id: str, page_data: PageCreate, current_user: dict = Depends(get_admin_user)):
+    page = await db.pages.find_one({"id": page_id}, {"_id": 0})
+    if not page:
+        raise HTTPException(status_code=404, detail="الصفحة غير موجودة")
+    
+    update_doc = {
+        "title": page_data.title,
+        "slug": page_data.slug,
+        "blocks": [b.model_dump() for b in page_data.blocks],
+        "is_published": page_data.is_published,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.pages.update_one({"id": page_id}, {"$set": update_doc})
+    updated = await db.pages.find_one({"id": page_id}, {"_id": 0})
+    return PageResponse(**updated)
+
+@api_router.delete("/pages/{page_id}")
+async def delete_page(page_id: str, current_user: dict = Depends(get_admin_user)):
+    await db.pages.delete_one({"id": page_id})
+    return {"message": "تم حذف الصفحة"}
+
+# ==================== SITE SETTINGS ENDPOINTS ====================
+
+@api_router.get("/settings")
+async def get_site_settings():
+    settings = await db.settings.find_one({"type": "site"}, {"_id": 0})
+    if not settings:
+        # Return defaults
+        return {
+            "site_name": "بدل",
+            "site_logo": None,
+            "custom_font": None,
+            "custom_font_name": "Tajawal",
+            "primary_color": "#8b5cf6",
+            "secondary_color": "#4f46e5",
+            "contact_email": "info@badal.sy",
+            "contact_phone": "+963999999999",
+            "social_links": {},
+            "footer_text": "منصة بدل للمقايضة السورية © 2024"
+        }
+    return settings
+
+@api_router.put("/settings")
+async def update_site_settings(settings_data: SiteSettingsUpdate, current_user: dict = Depends(get_admin_user)):
+    update_doc = {k: v for k, v in settings_data.model_dump().items() if v is not None}
+    update_doc["type"] = "site"
+    update_doc["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.settings.update_one(
+        {"type": "site"},
+        {"$set": update_doc},
+        upsert=True
+    )
+    
+    return {"message": "تم تحديث الإعدادات"}
 
 # ==================== ADMIN ENDPOINTS ====================
 
@@ -653,8 +959,10 @@ async def get_admin_stats(admin: dict = Depends(get_admin_user)):
     users_count = await db.users.count_documents({})
     offers_count = await db.offers.count_documents({})
     active_offers = await db.offers.count_documents({"status": "active"})
+    pending_offers = await db.offers.count_documents({"status": "pending"})
     reports_count = await db.reports.count_documents({"status": "pending"})
     messages_count = await db.messages.count_documents({})
+    blog_posts = await db.blog_posts.count_documents({})
     
     # Get offers by category
     category_pipeline = [
@@ -670,20 +978,45 @@ async def get_admin_stats(admin: dict = Depends(get_admin_user)):
     ]
     governorates = await db.offers.aggregate(gov_pipeline).to_list(20)
     
+    # Recent activity
+    recent_users = await db.users.find({}, {"_id": 0, "password": 0}).sort("created_at", -1).limit(5).to_list(5)
+    recent_offers = await db.offers.find({}, {"_id": 0}).sort("created_at", -1).limit(5).to_list(5)
+    
     return {
         "users_count": users_count,
         "offers_count": offers_count,
         "active_offers": active_offers,
+        "pending_offers": pending_offers,
         "pending_reports": reports_count,
         "messages_count": messages_count,
+        "blog_posts": blog_posts,
         "by_category": {c["_id"]: c["count"] for c in categories if c["_id"]},
-        "by_governorate": {g["_id"]: g["count"] for g in governorates if g["_id"]}
+        "by_governorate": {g["_id"]: g["count"] for g in governorates if g["_id"]},
+        "recent_users": recent_users,
+        "recent_offers": recent_offers
     }
 
 @api_router.get("/admin/users")
-async def get_admin_users(admin: dict = Depends(get_admin_user), skip: int = 0, limit: int = 50):
-    users = await db.users.find({}, {"_id": 0, "password": 0}).skip(skip).limit(limit).to_list(limit)
-    return users
+async def get_admin_users(admin: dict = Depends(get_admin_user), skip: int = 0, limit: int = 50, search: Optional[str] = None):
+    query = {}
+    if search:
+        query["$or"] = [
+            {"name": {"$regex": search, "$options": "i"}},
+            {"email": {"$regex": search, "$options": "i"}}
+        ]
+    users = await db.users.find(query, {"_id": 0, "password": 0}).skip(skip).limit(limit).to_list(limit)
+    total = await db.users.count_documents(query)
+    return {"users": users, "total": total}
+
+@api_router.put("/admin/users/{user_id}/status")
+async def update_user_status(user_id: str, is_active: bool, admin: dict = Depends(get_admin_user)):
+    await db.users.update_one({"id": user_id}, {"$set": {"is_active": is_active}})
+    return {"message": "تم تحديث حالة المستخدم"}
+
+@api_router.put("/admin/users/{user_id}/admin")
+async def toggle_admin(user_id: str, is_admin: bool, admin: dict = Depends(get_admin_user)):
+    await db.users.update_one({"id": user_id}, {"$set": {"is_admin": is_admin}})
+    return {"message": "تم تحديث صلاحيات المستخدم"}
 
 @api_router.get("/admin/reports")
 async def get_admin_reports(admin: dict = Depends(get_admin_user), status: Optional[str] = None):
@@ -715,10 +1048,11 @@ async def get_admin_offers(admin: dict = Depends(get_admin_user), status: Option
     if status:
         query["status"] = status
     offers = await db.offers.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
-    return offers
+    total = await db.offers.count_documents(query)
+    return {"offers": offers, "total": total}
 
 @api_router.put("/admin/offers/{offer_id}/status")
-async def update_offer_status(offer_id: str, status: str, admin: dict = Depends(get_admin_user)):
+async def admin_update_offer_status(offer_id: str, status: str, admin: dict = Depends(get_admin_user)):
     await db.offers.update_one({"id": offer_id}, {"$set": {"status": status}})
     return {"message": "تم التحديث"}
 
@@ -773,9 +1107,11 @@ async def create_default_users():
             "phone": "+963999999999",
             "governorate": "دمشق",
             "is_admin": True,
+            "is_active": True,
             "trust_score": 100,
             "trades_count": 0,
             "favorites": [],
+            "avatar": None,
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         await db.users.insert_one(admin_doc)
@@ -792,13 +1128,35 @@ async def create_default_users():
             "phone": "+963912345678",
             "governorate": "حلب",
             "is_admin": False,
+            "is_active": True,
             "trust_score": 25,
             "trades_count": 3,
             "favorites": [],
+            "avatar": None,
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         await db.users.insert_one(user_doc)
         logger.info("Created default test user")
+    
+    # Create default site settings
+    settings = await db.settings.find_one({"type": "site"}, {"_id": 0})
+    if not settings:
+        settings_doc = {
+            "type": "site",
+            "site_name": "بدل",
+            "site_logo": None,
+            "custom_font": None,
+            "custom_font_name": "Tajawal",
+            "primary_color": "#8b5cf6",
+            "secondary_color": "#4f46e5",
+            "contact_email": "info@badal.sy",
+            "contact_phone": "+963999999999",
+            "social_links": {},
+            "footer_text": "منصة بدل للمقايضة السورية © 2024",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.settings.insert_one(settings_doc)
+        logger.info("Created default site settings")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
