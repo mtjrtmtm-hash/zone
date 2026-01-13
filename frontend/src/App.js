@@ -239,30 +239,28 @@ const GlassCard = ({ children, className = "", ...props }) => (
 
 // Navbar Component
 const Navbar = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, api } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  useEffect(() => {
-    if (user) {
-      fetchNotifications();
-    }
-  }, [user]);
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
+    if (!user || !api) return;
     try {
-      const { api } = useAuth();
-      const res = await axios.get(`${API}/notifications`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem("badal_token") ? JSON.parse(localStorage.getItem("badal_token")) : ""}` }
-      });
+      const res = await api.get('/notifications');
       setNotifications(res.data);
       setUnreadCount(res.data.filter(n => !n.is_read).length);
     } catch (e) {
       console.error(e);
     }
-  };
+  }, [user, api]);
+
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+    }
+  }, [user, fetchNotifications]);
 
   const navItems = [
     { path: "/", icon: HomeIcon, label: "الرئيسية" },
