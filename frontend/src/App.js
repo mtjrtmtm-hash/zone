@@ -1313,6 +1313,26 @@ const MessagesPage = () => {
   const [sending, setSending] = useState(false);
   const location = useLocation();
 
+  // Auto-refresh messages every 3 seconds when a conversation is selected
+  useEffect(() => {
+    if (!selectedConv) return;
+    
+    const interval = setInterval(() => {
+      refreshMessages();
+    }, 3000);
+    
+    return () => clearInterval(interval);
+  }, [selectedConv, api]);
+
+  // Auto-refresh conversations every 10 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchConversations();
+    }, 10000);
+    
+    return () => clearInterval(interval);
+  }, [api]);
+
   useEffect(() => {
     fetchConversations();
   }, []);
@@ -1336,6 +1356,16 @@ const MessagesPage = () => {
       console.error(e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const refreshMessages = async () => {
+    if (!selectedConv) return;
+    try {
+      const res = await api.get(`/messages/${selectedConv.offer_id}/${selectedConv.other_user_id}`);
+      setMessages(res.data);
+    } catch (e) {
+      console.error(e);
     }
   };
 
