@@ -358,6 +358,28 @@ async def update_offer(offer_id: str, offer_data: OfferCreate, current_user: dic
     updated = await db.offers.find_one({"id": offer_id}, {"_id": 0})
     return OfferResponse(**updated)
 
+@api_router.put("/offers/{offer_id}/status")
+async def update_offer_status(offer_id: str, status: str, current_user: dict = Depends(get_current_user)):
+    """Update offer status (active, completed, cancelled)"""
+    if status not in ["active", "completed", "cancelled"]:
+        raise HTTPException(status_code=400, detail="حالة غير صالحة")
+    
+    offer = await db.offers.find_one({"id": offer_id}, {"_id": 0})
+    if not offer:
+        raise HTTPException(status_code=404, detail="العرض غير موجود")
+    if offer["user_id"] != current_user["id"] and not current_user.get("is_admin"):
+        raise HTTPException(status_code=403, detail="غير مصرح")
+    
+    await db.offers.update_one({"id": offer_id}, {"$set": {"status": status}})
+    
+    status_messages = {
+        "completed": "تم تحديد العرض كمكتمل",
+        "cancelled": "تم إلغاء العرض", 
+        "active": "تم تفعيل العرض"
+    }
+    
+    return {"message": status_messages.get(status, "تم التحديث")}
+
 @api_router.delete("/offers/{offer_id}")
 async def delete_offer(offer_id: str, current_user: dict = Depends(get_current_user)):
     offer = await db.offers.find_one({"id": offer_id}, {"_id": 0})
