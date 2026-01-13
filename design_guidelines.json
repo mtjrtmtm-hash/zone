@@ -1,0 +1,182 @@
+{
+  "identity": {
+    "name": "Badal (بدل)",
+    "persona": "E1 - The Anti-AI Designer",
+    "tone": "Trustworthy, Modern, Community-driven, Accessible",
+    "theme": "Light Mode (Pearl White & Purple)",
+    "direction": "RTL"
+  },
+  "typography": {
+    "font_family": "Tajawal, sans-serif",
+    "import_url": "https://fonts.googleapis.com/css2?family=Tajawal:wght@200;300;400;500;700;800;900&display=swap",
+    "headings": {
+      "weight": "700",
+      "tracking": "tracking-tight",
+      "size_mobile": "text-3xl",
+      "size_desktop": "text-5xl"
+    },
+    "body": {
+      "weight": "400",
+      "leading": "leading-relaxed"
+    }
+  },
+  "colors": {
+    "palette": {
+      "primary": {
+        "hex": "#8b5cf6",
+        "hsl": "258 90% 66%",
+        "usage": "Main CTAs, Active States, Brand Elements"
+      },
+      "secondary": {
+        "hex": "#4f46e5",
+        "hsl": "243 75% 59%",
+        "usage": "AI Suggestions, Trust Indicators"
+      },
+      "background": {
+        "hex": "#F9F7FF",
+        "hsl": "255 100% 98%",
+        "usage": "Page Background (Pearl White)"
+      },
+      "surface": {
+        "hex": "#FFFFFF",
+        "hsl": "0 0% 100%",
+        "usage": "Cards, Modals, Dropdowns"
+      },
+      "text": {
+        "primary": "#1a1a1a",
+        "secondary": "#6b7280",
+        "accent": "#8b5cf6"
+      }
+    },
+    "css_variables": {
+      ":root": {
+        "--background": "255 100% 98%",
+        "--foreground": "258 50% 10%",
+        "--card": "0 0% 100%",
+        "--card-foreground": "258 50% 10%",
+        "--popover": "0 0% 100%",
+        "--popover-foreground": "258 50% 10%",
+        "--primary": "258 90% 66%",
+        "--primary-foreground": "0 0% 100%",
+        "--secondary": "243 75% 59%",
+        "--secondary-foreground": "0 0% 100%",
+        "--muted": "255 20% 96%",
+        "--muted-foreground": "258 10% 50%",
+        "--accent": "258 90% 96%",
+        "--accent-foreground": "258 90% 40%",
+        "--destructive": "0 84.2% 60.2%",
+        "--destructive-foreground": "0 0% 98%",
+        "--border": "258 20% 90%",
+        "--input": "258 20% 90%",
+        "--ring": "258 90% 66%",
+        "--radius": "1.5rem"
+      }
+    }
+  },
+  "visual_enhancers": {
+    "glassmorphism": {
+      "base": "bg-white/70 backdrop-blur-md border border-white/40 shadow-sm",
+      "usage": "Sticky Headers, Floating Action Buttons, Modal Overlays, Featured Cards"
+    },
+    "shadows": {
+      "soft": "shadow-[0_8px_30px_rgb(0,0,0,0.04)]",
+      "hover": "shadow-[0_8px_30px_rgb(139,92,246,0.15)]"
+    },
+    "borders": {
+      "radius": "rounded-3xl",
+      "width": "border-1",
+      "color": "border-purple-100"
+    }
+  },
+  "layout": {
+    "rtl_strategy": {
+      "root": "dir='rtl'",
+      "alignment": "text-right",
+      "margins": "mr-auto (instead of ml-auto for pushing left)",
+      "icons": "Mirror directional icons (arrows), keep universal icons (play, check) standard"
+    },
+    "grid_system": {
+      "bento": "grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6",
+      "mobile_first": "flex flex-col md:flex-row"
+    },
+    "spacing": {
+      "container_padding": "p-4 md:p-8 lg:p-12",
+      "section_gap": "gap-8 md:gap-16"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-8 py-6 text-lg font-bold shadow-lg hover:shadow-primary/25 transition-all duration-300",
+      "secondary": "bg-white text-primary border-2 border-primary/10 hover:border-primary/30 hover:bg-purple-50 rounded-full px-8 py-6 text-lg font-medium transition-all duration-300",
+      "ghost": "hover:bg-purple-50 text-purple-900 rounded-xl"
+    },
+    "cards": {
+      "base": "bg-white/80 backdrop-blur-sm border border-white/50 rounded-3xl p-6 shadow-sm hover:shadow-md transition-all duration-300 group",
+      "barter_card": "relative overflow-hidden border-2 border-transparent hover:border-primary/20"
+    },
+    "inputs": {
+      "style": "bg-white/50 border-purple-100 focus:border-primary focus:ring-4 focus:ring-primary/10 rounded-2xl h-12 text-right"
+    },
+    "navigation": {
+      "mobile": "fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-purple-100 h-20 flex items-center justify-around z-50 pb-2",
+      "desktop": "sticky top-4 mx-auto max-w-7xl bg-white/80 backdrop-blur-xl border border-white/40 rounded-full px-8 py-4 shadow-sm z-50 flex justify-between items-center mt-4"
+    }
+  },
+  "images": {
+    "hero_backgrounds": [
+      {
+        "url": "https://images.unsplash.com/photo-1690999038639-846a3fdbcb72?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "alt": "Damascus City View",
+        "category": "hero"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1699951364233-be78eafd6395?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "alt": "Aleppo Citadel",
+        "category": "hero"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1585584030066-66910f39d341?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "alt": "Latakia Sunset",
+        "category": "hero"
+      }
+    ],
+    "categories": {
+      "electronics": "https://images.unsplash.com/photo-1764053430604-d585d1f1dad6?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "furniture": "https://images.unsplash.com/photo-1705326701287-346fc37a2c86?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "services": "https://images.unsplash.com/photo-1711386689622-1cda23e10217?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "education": "https://images.unsplash.com/photo-1758685733907-42e9651721f5?crop=entropy&cs=srgb&fm=jpg&q=85"
+    },
+    "community": [
+      {
+        "url": "https://images.unsplash.com/photo-1706448475110-b78eba2f7618?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "alt": "Friends talking",
+        "category": "social"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1629455047261-ef66027827ca?crop=entropy&cs=srgb&fm=jpg&q=85",
+        "alt": "Woman smiling",
+        "category": "social"
+      }
+    ]
+  },
+  "instructions_to_main_agent": [
+    "1. INSTALLATION: Run 'yarn add lucide-react framer-motion clsx tailwind-merge @radix-ui/react-slot class-variance-authority' immediately.",
+    "2. FONT: Add the Tajawal Google Font link to public/index.html head.",
+    "3. RTL: Add 'dir=\"rtl\"' to the <html> tag in public/index.html.",
+    "4. THEME: Update src/index.css with the CSS variables provided in 'colors.css_variables'.",
+    "5. TAILWIND: Update tailwind.config.js to extend colors with the CSS variables and add 'rounded-3xl' as default radius.",
+    "6. LAYOUT: Build the 'AppLayout' component first, handling the mobile bottom nav and desktop top nav logic.",
+    "7. GLASSMORPHISM: Create a reusable 'GlassCard' component using the visual_enhancers.glassmorphism classes.",
+    "8. MOCK DATA: Create a 'mockData.js' file for listings, users, and governorates (Damascus, Aleppo, Homs, etc.) to populate the UI.",
+    "9. AI FEATURE: Mock the Gemini suggestion in the 'Add Offer' flow using a timeout and a predefined list of suggestions.",
+    "10. TESTING: Add data-testid to all interactive elements (buttons, inputs, cards)."
+  ],
+  "universal_guidelines": [
+    "Do not use gradients for text.",
+    "Avoid 'Inter' font; use 'Tajawal' exclusively.",
+    "Use 2-3x more padding than standard.",
+    "Ensure all text has high contrast against the Pearl White background.",
+    "Never use pure black (#000000); use the deep purple-grey provided.",
+    "Animations should be smooth (duration-300) and triggered on hover/focus."
+  ]
+}
