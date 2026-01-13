@@ -1666,8 +1666,14 @@ const MyOffersPage = () => {
                       <Package className="w-12 h-12 text-purple-200" />
                     </div>
                   )}
-                  <Badge className={`absolute top-3 right-3 ${offer.status === "active" ? "bg-green-500" : "bg-gray-500"}`}>
-                    {offer.status === "active" ? "نشط" : "غير نشط"}
+                  <Badge className={`absolute top-3 right-3 ${
+                    offer.status === "active" ? "bg-green-500" : 
+                    offer.status === "completed" ? "bg-blue-500" : 
+                    "bg-gray-500"
+                  }`}>
+                    {offer.status === "active" ? "نشط" : 
+                     offer.status === "completed" ? "مكتمل" : 
+                     offer.status === "cancelled" ? "ملغي" : "غير نشط"}
                   </Badge>
                 </div>
                 <CardContent className="p-4">
