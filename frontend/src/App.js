@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext, useContext, useCallback } from "react";
+import React, { useState, useEffect, createContext, useContext, useCallback, useRef } from "react";
 import "@/App.css";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, Link, useParams } from "react-router-dom";
 import axios from "axios";
@@ -18,6 +18,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Sparkles,
   MapPin,
   Clock,
@@ -26,6 +27,8 @@ import {
   Send,
   Image as ImageIcon,
   Mic,
+  MicOff,
+  Paperclip,
   Flag,
   Shield,
   Star,
@@ -46,7 +49,26 @@ import {
   Phone,
   Mail,
   Calendar,
-  Award
+  Award,
+  BookOpen,
+  Palette,
+  Upload,
+  Save,
+  Play,
+  Pause,
+  CheckCircle,
+  XCircle,
+  MoreVertical,
+  Copy,
+  ExternalLink,
+  Globe,
+  Type,
+  Layout,
+  Layers,
+  Sliders,
+  Ban,
+  UserCheck,
+  RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +85,7 @@ import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -73,7 +96,7 @@ const GOVERNORATES = [
   "إدلب", "الرقة", "دير الزور", "الحسكة", "درعا", "السويداء", "القنيطرة"
 ];
 
-// Categories
+// Categories with icons
 const CATEGORIES = [
   { name: "إلكترونيات", icon: "💻" },
   { name: "أثاث", icon: "🛋️" },
@@ -92,8 +115,11 @@ const CATEGORIES = [
 
 // Auth Context
 const AuthContext = createContext(null);
-
 const useAuth = () => useContext(AuthContext);
+
+// Site Settings Context
+const SettingsContext = createContext(null);
+const useSettings = () => useContext(SettingsContext);
 
 // Sticky State Hook (LocalStorage)
 const useStickyState = (key, defaultValue) => {
@@ -116,11 +142,41 @@ const useStickyState = (key, defaultValue) => {
   return [value, setValue];
 };
 
+// Settings Provider
+const SettingsProvider = ({ children }) => {
+  const [settings, setSettings] = useState({
+    site_name: "بدل",
+    primary_color: "#8b5cf6",
+    custom_font_name: "Tajawal"
+  });
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const res = await axios.get(`${API}/settings`);
+      setSettings(res.data);
+    } catch (e) {
+      console.error("Failed to fetch settings:", e);
+    }
+  };
+
+  return (
+    <SettingsContext.Provider value={{ settings, refreshSettings: fetchSettings }}>
+      {children}
+    </SettingsContext.Provider>
+  );
+};
+
 // Auth Provider
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useStickyState("badal_user", null);
   const [token, setToken] = useStickyState("badal_token", null);
   const [loading, setLoading] = useState(true);
+  const [unreadMessages, setUnreadMessages] = useState(0);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   useEffect(() => {
     const verifyToken = async () => {
@@ -130,6 +186,7 @@ const AuthProvider = ({ children }) => {
             headers: { Authorization: `Bearer ${token}` }
           });
           setUser(res.data);
+          fetchUnreadCounts();
         } catch {
           setUser(null);
           setToken(null);
@@ -139,6 +196,20 @@ const AuthProvider = ({ children }) => {
     };
     verifyToken();
   }, []);
+
+  const fetchUnreadCounts = async () => {
+    if (!token) return;
+    try {
+      const [msgRes, notifRes] = await Promise.all([
+        axios.get(`${API}/messages/unread-count`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API}/notifications/unread-count`, { headers: { Authorization: `Bearer ${token}` } })
+      ]);
+      setUnreadMessages(msgRes.data.count);
+      setUnreadNotifications(notifRes.data.count);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const login = async (email, password) => {
     const res = await axios.post(`${API}/auth/login`, { email, password });
@@ -157,6 +228,8 @@ const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null);
     setToken(null);
+    setUnreadMessages(0);
+    setUnreadNotifications(0);
     localStorage.removeItem("badal_user");
     localStorage.removeItem("badal_token");
   };
@@ -167,7 +240,10 @@ const AuthProvider = ({ children }) => {
   });
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, loading, api }}>
+    <AuthContext.Provider value={{ 
+      user, token, login, register, logout, loading, api, 
+      unreadMessages, unreadNotifications, fetchUnreadCounts 
+    }}>
       {children}
     </AuthContext.Provider>
   );
@@ -209,7 +285,7 @@ const TrustBadge = ({ score }) => {
     label = "ذهبي";
   } else if (score >= 25) {
     level = "silver";
-    color = "bg-gradient-to-r from-gray-200 to-gray-300";
+    color = "bg-gradient-to-r from-gray-200 to-gray-300 text-gray-700";
     label = "فضي";
   } else {
     level = "bronze";
@@ -218,7 +294,7 @@ const TrustBadge = ({ score }) => {
   }
 
   return (
-    <Badge className={`${color} text-white text-xs px-2 py-0.5`} data-testid="trust-badge">
+    <Badge className={`${color} text-xs px-2 py-0.5`} data-testid="trust-badge">
       <Star className="w-3 h-3 ml-1" />
       {label}
     </Badge>
@@ -226,110 +302,165 @@ const TrustBadge = ({ score }) => {
 };
 
 // Glass Card Component
-const GlassCard = ({ children, className = "", ...props }) => (
+const GlassCard = ({ children, className = "", hover = true, ...props }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
-    className={`bg-white/80 backdrop-blur-sm border border-white/50 rounded-3xl p-6 shadow-soft hover:shadow-hover transition-all duration-300 ${className}`}
+    className={`bg-white/80 backdrop-blur-sm border border-white/50 rounded-3xl p-6 shadow-soft ${hover ? 'hover:shadow-hover' : ''} transition-all duration-300 ${className}`}
     {...props}
   >
     {children}
   </motion.div>
 );
 
-// Navbar Component
+// Enhanced Navbar with Role-based UI
 const Navbar = () => {
-  const { user, logout, api } = useAuth();
+  const { user, logout, unreadMessages, unreadNotifications, fetchUnreadCounts } = useAuth();
+  const { settings } = useSettings();
   const navigate = useNavigate();
   const location = useLocation();
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
 
-  const fetchNotifications = useCallback(async () => {
-    if (!user || !api) return;
-    try {
-      const res = await api.get('/notifications');
-      setNotifications(res.data);
-      setUnreadCount(res.data.filter(n => !n.is_read).length);
-    } catch (e) {
-      console.error(e);
-    }
-  }, [user, api]);
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     if (user) {
       fetchNotifications();
+      fetchUnreadCounts();
     }
-  }, [user, fetchNotifications]);
+  }, [user]);
 
-  const navItems = [
+  const fetchNotifications = async () => {
+    try {
+      const token = JSON.parse(localStorage.getItem("badal_token") || "null");
+      if (!token) return;
+      const res = await axios.get(`${API}/notifications`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setNotifications(res.data.slice(0, 5));
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // Guest Navigation Items
+  const guestNavItems = [
     { path: "/", icon: HomeIcon, label: "الرئيسية" },
     { path: "/browse", icon: Search, label: "تصفح" },
-    { path: "/add-offer", icon: Plus, label: "أضف عرض" },
-    { path: "/messages", icon: MessageCircle, label: "الرسائل" },
-    { path: "/profile", icon: User, label: "حسابي" }
+    { path: "/blog", icon: BookOpen, label: "المدونة" },
   ];
+
+  // User Navigation Items
+  const userNavItems = [
+    { path: "/", icon: HomeIcon, label: "الرئيسية" },
+    { path: "/browse", icon: Search, label: "تصفح" },
+    { path: "/add-offer", icon: Plus, label: "أضف عرض", highlight: true },
+    { path: "/messages", icon: MessageCircle, label: "الرسائل", badge: unreadMessages },
+  ];
+
+  const navItems = user ? userNavItems : guestNavItems;
 
   return (
     <>
       {/* Desktop Navbar */}
-      <nav className="hidden md:block sticky top-4 mx-auto max-w-7xl bg-white/80 backdrop-blur-xl border border-white/40 rounded-full px-8 py-4 shadow-sm z-50 mt-4">
+      <nav className={`hidden md:block sticky top-4 mx-auto max-w-7xl z-50 mt-4 transition-all duration-300 ${
+        scrolled 
+          ? 'bg-white/95 backdrop-blur-xl shadow-lg' 
+          : 'bg-white/80 backdrop-blur-xl'
+      } border border-white/40 rounded-full px-6 py-3`}>
         <div className="flex justify-between items-center">
-          <Link to="/" className="flex items-center gap-3" data-testid="logo-link">
-            <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-3 group" data-testid="logo-link">
+            <motion.div 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-10 h-10 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/25"
+            >
               <span className="text-white font-bold text-xl">ب</span>
-            </div>
-            <span className="text-xl font-bold text-foreground">بدل</span>
+            </motion.div>
+            <span className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">
+              {settings?.site_name || "بدل"}
+            </span>
           </Link>
 
-          <div className="flex items-center gap-6">
+          {/* Navigation Links */}
+          <div className="flex items-center gap-2">
             {navItems.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
+                className={`relative flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
                   location.pathname === item.path
-                    ? "bg-primary text-white"
+                    ? "bg-primary text-white shadow-md shadow-primary/25"
+                    : item.highlight
+                    ? "bg-primary/10 text-primary hover:bg-primary hover:text-white"
                     : "hover:bg-purple-50 text-muted-foreground hover:text-primary"
                 }`}
                 data-testid={`nav-${item.label}`}
               >
                 <item.icon className="w-5 h-5" />
                 <span className="font-medium">{item.label}</span>
+                {item.badge > 0 && (
+                  <span className="absolute -top-1 -left-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">
+                    {item.badge}
+                  </span>
+                )}
               </Link>
             ))}
           </div>
 
-          <div className="flex items-center gap-4">
+          {/* Right Side */}
+          <div className="flex items-center gap-3">
             {user ? (
               <>
-                <Link to="/favorites" className="p-2 hover:bg-purple-50 rounded-full transition-colors" data-testid="nav-favorites">
-                  <Heart className="w-5 h-5 text-muted-foreground" />
+                {/* Favorites */}
+                <Link 
+                  to="/favorites" 
+                  className="p-2 hover:bg-purple-50 rounded-full transition-colors relative group"
+                  data-testid="nav-favorites"
+                >
+                  <Heart className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
                 </Link>
-                
+
+                {/* Notifications */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="relative" data-testid="notifications-btn">
                       <Bell className="w-5 h-5" />
-                      {unreadCount > 0 && (
-                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-destructive text-white text-xs rounded-full flex items-center justify-center">
-                          {unreadCount}
+                      {unreadNotifications > 0 && (
+                        <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">
+                          {unreadNotifications}
                         </span>
                       )}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-80">
-                    <div className="p-2 font-semibold">الإشعارات</div>
+                    <div className="p-3 font-semibold flex justify-between items-center">
+                      <span>الإشعارات</span>
+                      <Link to="/notifications" className="text-xs text-primary hover:underline">عرض الكل</Link>
+                    </div>
                     <DropdownMenuSeparator />
                     <ScrollArea className="h-64">
                       {notifications.length === 0 ? (
                         <div className="p-4 text-center text-muted-foreground">لا توجد إشعارات</div>
                       ) : (
-                        notifications.slice(0, 5).map((n) => (
-                          <DropdownMenuItem key={n.id} className={`p-3 ${!n.is_read ? "bg-purple-50" : ""}`}>
+                        notifications.map((n) => (
+                          <DropdownMenuItem 
+                            key={n.id} 
+                            className={`p-3 cursor-pointer ${!n.is_read ? "bg-purple-50" : ""}`}
+                            onClick={() => n.link && navigate(n.link)}
+                          >
                             <div>
                               <p className="font-medium">{n.title}</p>
-                              <p className="text-sm text-muted-foreground">{n.message}</p>
+                              <p className="text-sm text-muted-foreground line-clamp-1">{n.message}</p>
                             </div>
                           </DropdownMenuItem>
                         ))
@@ -338,40 +469,53 @@ const Navbar = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
+                {/* User Menu */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="flex items-center gap-2" data-testid="user-menu-btn">
-                      <Avatar className="w-8 h-8">
-                        <AvatarFallback className="bg-primary text-white">{user.name?.charAt(0)}</AvatarFallback>
+                    <Button variant="ghost" className="flex items-center gap-2 hover:bg-purple-50 rounded-full pr-2 pl-4" data-testid="user-menu-btn">
+                      <Avatar className="w-8 h-8 border-2 border-primary/20">
+                        {user.avatar ? (
+                          <AvatarImage src={user.avatar} />
+                        ) : (
+                          <AvatarFallback className="bg-primary text-white">{user.name?.charAt(0)}</AvatarFallback>
+                        )}
                       </Avatar>
                       <span className="font-medium">{user.name}</span>
+                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => navigate("/profile")} data-testid="menu-profile">
-                      <User className="w-4 h-4 ml-2" />
+                  <DropdownMenuContent align="end" className="w-56">
+                    <div className="p-3 border-b">
+                      <p className="font-medium">{user.name}</p>
+                      <p className="text-sm text-muted-foreground">{user.email}</p>
+                      <div className="mt-2">
+                        <TrustBadge score={user.trust_score} />
+                      </div>
+                    </div>
+                    <DropdownMenuItem onClick={() => navigate("/profile")} className="gap-2" data-testid="menu-profile">
+                      <User className="w-4 h-4" />
                       الملف الشخصي
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/my-offers")} data-testid="menu-my-offers">
-                      <Package className="w-4 h-4 ml-2" />
+                    <DropdownMenuItem onClick={() => navigate("/my-offers")} className="gap-2" data-testid="menu-my-offers">
+                      <Package className="w-4 h-4" />
                       عروضي
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/favorites")} data-testid="menu-favorites">
-                      <Heart className="w-4 h-4 ml-2" />
+                    <DropdownMenuItem onClick={() => navigate("/favorites")} className="gap-2" data-testid="menu-favorites">
+                      <Heart className="w-4 h-4" />
                       المفضلة
                     </DropdownMenuItem>
                     {user.is_admin && (
                       <>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => navigate("/admin")} data-testid="menu-admin">
-                          <LayoutDashboard className="w-4 h-4 ml-2" />
+                        <DropdownMenuItem onClick={() => navigate("/admin")} className="gap-2 text-primary" data-testid="menu-admin">
+                          <LayoutDashboard className="w-4 h-4" />
                           لوحة التحكم
                         </DropdownMenuItem>
                       </>
                     )}
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={logout} className="text-destructive" data-testid="menu-logout">
-                      <LogOut className="w-4 h-4 ml-2" />
+                    <DropdownMenuItem onClick={logout} className="gap-2 text-destructive" data-testid="menu-logout">
+                      <LogOut className="w-4 h-4" />
                       تسجيل الخروج
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -379,12 +523,14 @@ const Navbar = () => {
               </>
             ) : (
               <div className="flex gap-2">
-                <Button variant="ghost" onClick={() => navigate("/login")} data-testid="login-btn">
+                <Button variant="ghost" onClick={() => navigate("/login")} className="rounded-full" data-testid="login-btn">
                   دخول
                 </Button>
-                <Button onClick={() => navigate("/register")} className="rounded-full" data-testid="register-btn">
-                  تسجيل جديد
-                </Button>
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Button onClick={() => navigate("/register")} className="rounded-full shadow-md shadow-primary/25" data-testid="register-btn">
+                    تسجيل جديد
+                  </Button>
+                </motion.div>
               </div>
             )}
           </div>
@@ -392,22 +538,42 @@ const Navbar = () => {
       </nav>
 
       {/* Mobile Navbar */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-purple-100 h-20 flex items-center justify-around z-50 pb-2">
-        {navItems.map((item) => (
-          <Link
-            key={item.path}
-            to={item.path}
-            className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
-              location.pathname === item.path
-                ? "text-primary"
-                : "text-muted-foreground"
-            }`}
-            data-testid={`mobile-nav-${item.label}`}
-          >
-            <item.icon className="w-6 h-6" />
-            <span className="text-xs">{item.label}</span>
-          </Link>
-        ))}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-purple-100 z-50 pb-safe">
+        <div className="flex items-center justify-around h-16">
+          {(user ? [
+            { path: "/", icon: HomeIcon, label: "الرئيسية" },
+            { path: "/browse", icon: Search, label: "تصفح" },
+            { path: "/add-offer", icon: Plus, label: "أضف", highlight: true },
+            { path: "/messages", icon: MessageCircle, label: "الرسائل", badge: unreadMessages },
+            { path: "/profile", icon: User, label: "حسابي" },
+          ] : [
+            { path: "/", icon: HomeIcon, label: "الرئيسية" },
+            { path: "/browse", icon: Search, label: "تصفح" },
+            { path: "/blog", icon: BookOpen, label: "المدونة" },
+            { path: "/login", icon: User, label: "دخول" },
+          ]).map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`relative flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
+                item.highlight 
+                  ? "bg-primary text-white -mt-4 shadow-lg shadow-primary/25 rounded-full w-14 h-14 justify-center"
+                  : location.pathname === item.path
+                  ? "text-primary"
+                  : "text-muted-foreground"
+              }`}
+              data-testid={`mobile-nav-${item.label}`}
+            >
+              <item.icon className={item.highlight ? "w-6 h-6" : "w-5 h-5"} />
+              {!item.highlight && <span className="text-xs">{item.label}</span>}
+              {item.badge > 0 && (
+                <span className="absolute -top-1 right-0 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                  {item.badge}
+                </span>
+              )}
+            </Link>
+          ))}
+        </div>
       </nav>
     </>
   );
@@ -445,42 +611,53 @@ const HomePage = () => {
   return (
     <div className="min-h-screen pb-24 md:pb-8">
       {/* Hero Section */}
-      <section className="relative py-16 md:py-24 px-4">
+      <section className="relative py-16 md:py-24 px-4 overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute top-20 right-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 left-10 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl" />
+        </div>
+
         <div className="max-w-7xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6" data-testid="hero-title">
-              قايض بذكاء، <span className="text-primary">اربح بدون نقود</span>
+            <Badge className="mb-6 bg-primary/10 text-primary px-4 py-1.5 rounded-full">
+              <Sparkles className="w-4 h-4 ml-1" />
+              مدعوم بالذكاء الاصطناعي
+            </Badge>
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6 leading-tight" data-testid="hero-title">
+              قايض بذكاء،
+              <span className="text-primary block md:inline"> اربح بدون نقود</span>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              منصة سورية ذكية تربطك بآلاف الأشخاص لتبادل السلع والخدمات مباشرة
+            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto leading-relaxed">
+              منصة سورية ذكية تربطك بآلاف الأشخاص لتبادل السلع والخدمات مباشرة عبر جميع المحافظات
             </p>
           </motion.div>
 
-          {/* Search Box */}
+          {/* Search Box with Glassmorphism */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             className="max-w-3xl mx-auto"
           >
-            <form onSubmit={handleSearch} className="glass rounded-3xl p-4 md:p-6">
+            <form onSubmit={handleSearch} className="glass rounded-3xl p-4 md:p-6 shadow-xl">
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex-1 relative">
                   <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
                   <Input
                     placeholder="ابحث عن شيء تريد مقايضته..."
-                    className="pr-12 h-14 rounded-2xl border-purple-100 text-lg"
+                    className="pr-12 h-14 rounded-2xl border-purple-100 text-lg bg-white/50 focus:bg-white transition-colors"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     data-testid="search-input"
                   />
                 </div>
                 <Select value={selectedGov} onValueChange={setSelectedGov}>
-                  <SelectTrigger className="w-full md:w-48 h-14 rounded-2xl" data-testid="gov-select">
+                  <SelectTrigger className="w-full md:w-48 h-14 rounded-2xl bg-white/50" data-testid="gov-select">
                     <MapPin className="w-5 h-5 ml-2 text-muted-foreground" />
                     <SelectValue placeholder="المحافظة" />
                   </SelectTrigger>
@@ -491,10 +668,12 @@ const HomePage = () => {
                     ))}
                   </SelectContent>
                 </Select>
-                <Button type="submit" size="lg" className="h-14 px-8 rounded-2xl" data-testid="search-btn">
-                  <Search className="w-5 h-5 ml-2" />
-                  بحث
-                </Button>
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Button type="submit" size="lg" className="h-14 px-8 rounded-2xl w-full md:w-auto shadow-lg shadow-primary/25" data-testid="search-btn">
+                    <Search className="w-5 h-5 ml-2" />
+                    بحث
+                  </Button>
+                </motion.div>
               </div>
             </form>
           </motion.div>
@@ -504,20 +683,27 @@ const HomePage = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="flex justify-center gap-8 mt-12"
+            className="flex flex-wrap justify-center gap-8 md:gap-12 mt-12"
           >
-            <div className="text-center">
-              <p className="text-3xl font-bold text-primary">14</p>
-              <p className="text-muted-foreground">محافظة سورية</p>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl font-bold text-primary">1000+</p>
-              <p className="text-muted-foreground">عرض نشط</p>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl font-bold text-primary">AI</p>
-              <p className="text-muted-foreground">مستشار ذكي</p>
-            </div>
+            {[
+              { value: "14", label: "محافظة سورية", icon: MapPin },
+              { value: "1000+", label: "عرض نشط", icon: Package },
+              { value: "AI", label: "مستشار ذكي", icon: Sparkles },
+            ].map((stat, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 + idx * 0.1 }}
+                className="text-center"
+              >
+                <div className="flex items-center justify-center gap-2 mb-1">
+                  <stat.icon className="w-5 h-5 text-primary" />
+                  <p className="text-3xl font-bold text-primary">{stat.value}</p>
+                </div>
+                <p className="text-muted-foreground">{stat.label}</p>
+              </motion.div>
+            ))}
           </motion.div>
         </div>
       </section>
@@ -526,21 +712,22 @@ const HomePage = () => {
       <section className="py-12 px-4">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">تصفح حسب الفئة</h2>
-          <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-7 gap-4">
+          <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-7 gap-3 md:gap-4">
             {CATEGORIES.map((cat, idx) => (
               <motion.div
                 key={cat.name}
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: idx * 0.05 }}
+                transition={{ delay: idx * 0.03 }}
+                whileHover={{ scale: 1.05, y: -5 }}
               >
                 <Link
                   to={`/browse?category=${cat.name}`}
-                  className="glass-card flex flex-col items-center justify-center p-4 hover:scale-105 transition-transform cursor-pointer"
+                  className="glass-card flex flex-col items-center justify-center p-4 cursor-pointer text-center"
                   data-testid={`category-${cat.name}`}
                 >
                   <span className="text-3xl mb-2">{cat.icon}</span>
-                  <span className="text-sm font-medium text-center">{cat.name}</span>
+                  <span className="text-sm font-medium">{cat.name}</span>
                 </Link>
               </motion.div>
             ))}
@@ -553,7 +740,7 @@ const HomePage = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
             <h2 className="text-2xl md:text-3xl font-bold">أحدث العروض</h2>
-            <Link to="/browse" className="text-primary hover:underline flex items-center gap-1" data-testid="view-all-offers">
+            <Link to="/browse" className="text-primary hover:underline flex items-center gap-1 font-medium" data-testid="view-all-offers">
               عرض الكل
               <ArrowLeft className="w-4 h-4" />
             </Link>
@@ -578,44 +765,61 @@ const HomePage = () => {
       {/* AI Feature Highlight */}
       <section className="py-16 px-4">
         <div className="max-w-4xl mx-auto">
-          <GlassCard className="text-center p-8 md:p-12 border-2 border-indigo-100">
-            <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Sparkles className="w-8 h-8 text-indigo-600" />
+          <GlassCard className="text-center p-8 md:p-12 border-2 border-indigo-100 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-40 h-40 bg-primary/10 rounded-full blur-3xl" />
+            <div className="relative">
+              <motion.div
+                animate={{ rotate: [0, 5, -5, 0] }}
+                transition={{ repeat: Infinity, duration: 2 }}
+                className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-primary rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl"
+              >
+                <Sparkles className="w-10 h-10 text-white" />
+              </motion.div>
+              <h2 className="text-2xl md:text-3xl font-bold mb-4">مستشار المقايضة الذكي</h2>
+              <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
+                استخدم الذكاء الاصطناعي لمعرفة أفضل الأغراض التي يمكنك مقايضتها مقابل غرضك مع تقدير للقيمة السوقية
+              </p>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button
+                  size="lg"
+                  className="rounded-full bg-gradient-to-r from-indigo-600 to-primary hover:opacity-90 shadow-xl"
+                  onClick={() => navigate(user ? "/add-offer" : "/login")}
+                  data-testid="ai-cta-btn"
+                >
+                  <Sparkles className="w-5 h-5 ml-2" />
+                  جرب الآن
+                </Button>
+              </motion.div>
             </div>
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">مستشار المقايضة الذكي</h2>
-            <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-              استخدم الذكاء الاصطناعي لمعرفة أفضل الأغراض التي يمكنك مقايضتها مقابل غرضك
-            </p>
-            <Button
-              size="lg"
-              className="rounded-full bg-indigo-600 hover:bg-indigo-700"
-              onClick={() => navigate(user ? "/add-offer" : "/login")}
-              data-testid="ai-cta-btn"
-            >
-              <Sparkles className="w-5 h-5 ml-2" />
-              جرب الآن
-            </Button>
           </GlassCard>
         </div>
       </section>
 
       {/* Safety Tips */}
-      <section className="py-12 px-4 bg-purple-50/50">
+      <section className="py-12 px-4 bg-gradient-to-b from-purple-50/50 to-transparent">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">نصائح للمقايضة الآمنة</h2>
           <div className="grid md:grid-cols-3 gap-6">
             {[
-              { icon: Shield, title: "تحقق من الهوية", desc: "تأكد من هوية الطرف الآخر قبل المقايضة" },
-              { icon: MapPin, title: "اختر مكاناً عاماً", desc: "قابل في مكان عام وآمن لإتمام الصفقة" },
-              { icon: Eye, title: "فحص المنتج", desc: "افحص المنتج جيداً قبل إتمام المقايضة" }
+              { icon: Shield, title: "تحقق من الهوية", desc: "تأكد من هوية الطرف الآخر وراجع مؤشر الثقة قبل المقايضة" },
+              { icon: MapPin, title: "اختر مكاناً عاماً", desc: "قابل في مكان عام وآمن لإتمام الصفقة واصطحب شخصاً معك" },
+              { icon: Eye, title: "فحص المنتج", desc: "افحص المنتج جيداً وتأكد من مطابقته للوصف قبل الموافقة" }
             ].map((tip, idx) => (
-              <GlassCard key={idx} className="text-center">
-                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <tip.icon className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="font-bold mb-2">{tip.title}</h3>
-                <p className="text-muted-foreground text-sm">{tip.desc}</p>
-              </GlassCard>
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.1 }}
+              >
+                <GlassCard className="text-center h-full">
+                  <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <tip.icon className="w-7 h-7 text-primary" />
+                  </div>
+                  <h3 className="font-bold text-lg mb-2">{tip.title}</h3>
+                  <p className="text-muted-foreground text-sm">{tip.desc}</p>
+                </GlassCard>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -625,10 +829,25 @@ const HomePage = () => {
 };
 
 // Offer Card Component
-const OfferCard = ({ offer, delay = 0 }) => {
+const OfferCard = ({ offer, delay = 0, showActions = false, onStatusChange, onDelete }) => {
   const navigate = useNavigate();
   const { user, api } = useAuth();
   const [isFavorite, setIsFavorite] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      checkFavorite();
+    }
+  }, [user, offer.id]);
+
+  const checkFavorite = async () => {
+    try {
+      const res = await api.get(`/favorites/check/${offer.id}`);
+      setIsFavorite(res.data.is_favorite);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const toggleFavorite = async (e) => {
     e.stopPropagation();
@@ -655,33 +874,57 @@ const OfferCard = ({ offer, delay = 0 }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
       onClick={() => navigate(`/offer/${offer.id}`)}
-      className="cursor-pointer"
+      className="cursor-pointer group"
     >
-      <Card className="overflow-hidden rounded-3xl border-2 border-transparent hover:border-primary/20 transition-all duration-300 group" data-testid={`offer-card-${offer.id}`}>
-        <div className="relative h-48 bg-purple-50">
+      <Card className="overflow-hidden rounded-3xl border-2 border-transparent hover:border-primary/20 transition-all duration-300 h-full" data-testid={`offer-card-${offer.id}`}>
+        <div className="relative h-48 bg-gradient-to-br from-purple-50 to-indigo-50 overflow-hidden">
           {offer.images && offer.images[0] ? (
-            <img src={offer.images[0]} alt={offer.title} className="w-full h-full object-cover" />
+            <img 
+              src={offer.images[0]} 
+              alt={offer.title} 
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <Package className="w-16 h-16 text-purple-200" />
             </div>
           )}
-          {offer.is_quick_trade && (
-            <Badge className="absolute top-3 right-3 bg-yellow-500 text-white" data-testid="quick-trade-badge">
-              <Zap className="w-3 h-3 ml-1" />
-              مقايضة سريعة
-            </Badge>
-          )}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute top-3 left-3 bg-white/80 hover:bg-white rounded-full"
+          
+          {/* Badges */}
+          <div className="absolute top-3 right-3 flex flex-col gap-2">
+            {offer.is_quick_trade && (
+              <Badge className="bg-yellow-500 text-white shadow-lg" data-testid="quick-trade-badge">
+                <Zap className="w-3 h-3 ml-1" />
+                سريعة
+              </Badge>
+            )}
+            {showActions && (
+              <Badge className={`${
+                offer.status === 'active' ? 'bg-green-500' :
+                offer.status === 'completed' ? 'bg-blue-500' :
+                offer.status === 'pending' ? 'bg-yellow-500' :
+                'bg-gray-500'
+              } text-white`}>
+                {offer.status === 'active' ? 'نشط' :
+                 offer.status === 'completed' ? 'مكتمل' :
+                 offer.status === 'pending' ? 'قيد المراجعة' :
+                 'ملغي'}
+              </Badge>
+            )}
+          </div>
+
+          {/* Favorite Button */}
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
             onClick={toggleFavorite}
+            className="absolute top-3 left-3 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg"
             data-testid="favorite-btn"
           >
-            <Heart className={`w-5 h-5 ${isFavorite ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
-          </Button>
+            <Heart className={`w-5 h-5 transition-colors ${isFavorite ? "fill-red-500 text-red-500" : "text-muted-foreground"}`} />
+          </motion.button>
         </div>
+        
         <CardContent className="p-4">
           <h3 className="font-bold text-lg mb-2 line-clamp-1 group-hover:text-primary transition-colors">
             {offer.title}
@@ -694,6 +937,39 @@ const OfferCard = ({ offer, delay = 0 }) => {
             </div>
             <TrustBadge score={offer.user_trust_score} />
           </div>
+          
+          {/* Action Buttons for Owner */}
+          {showActions && (
+            <div className="mt-4 pt-4 border-t flex gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex-1 rounded-xl"
+                onClick={(e) => { e.stopPropagation(); navigate(`/edit-offer/${offer.id}`); }}
+              >
+                <Edit className="w-4 h-4 ml-1" />
+                تعديل
+              </Button>
+              {offer.status === 'active' && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="rounded-xl bg-green-50 hover:bg-green-100 text-green-700"
+                  onClick={(e) => { e.stopPropagation(); onStatusChange?.(offer.id, 'completed'); }}
+                >
+                  <Check className="w-4 h-4" />
+                </Button>
+              )}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="rounded-xl text-destructive hover:bg-destructive/10"
+                onClick={(e) => { e.stopPropagation(); onDelete?.(offer.id); }}
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </motion.div>
@@ -730,7 +1006,7 @@ const BrowsePage = () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      if (filters.category) params.append("category", filters.category);
+      if (filters.category && filters.category !== "all") params.append("category", filters.category);
       if (filters.governorate && filters.governorate !== "all") params.append("governorate", filters.governorate);
       if (filters.search) params.append("search", filters.search);
       if (filters.quickTrade) params.append("quick_trade", "true");
@@ -750,19 +1026,19 @@ const BrowsePage = () => {
         <h1 className="text-3xl font-bold mb-8" data-testid="browse-title">تصفح العروض</h1>
 
         {/* Filters */}
-        <GlassCard className="mb-8 p-4">
+        <GlassCard className="mb-8 p-4" hover={false}>
           <div className="flex flex-wrap gap-4 items-center">
             <div className="flex-1 min-w-[200px]">
               <Input
                 placeholder="بحث..."
                 value={filters.search}
                 onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                className="rounded-xl"
+                className="rounded-xl bg-white/50"
                 data-testid="filter-search"
               />
             </div>
             <Select value={filters.category} onValueChange={(v) => setFilters({ ...filters, category: v })}>
-              <SelectTrigger className="w-48 rounded-xl" data-testid="filter-category">
+              <SelectTrigger className="w-48 rounded-xl bg-white/50" data-testid="filter-category">
                 <SelectValue placeholder="الفئة" />
               </SelectTrigger>
               <SelectContent>
@@ -773,7 +1049,7 @@ const BrowsePage = () => {
               </SelectContent>
             </Select>
             <Select value={filters.governorate} onValueChange={(v) => setFilters({ ...filters, governorate: v })}>
-              <SelectTrigger className="w-48 rounded-xl" data-testid="filter-governorate">
+              <SelectTrigger className="w-48 rounded-xl bg-white/50" data-testid="filter-governorate">
                 <SelectValue placeholder="المحافظة" />
               </SelectTrigger>
               <SelectContent>
@@ -783,15 +1059,15 @@ const BrowsePage = () => {
                 ))}
               </SelectContent>
             </Select>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 bg-yellow-50 px-4 py-2 rounded-xl">
               <Switch
                 checked={filters.quickTrade}
                 onCheckedChange={(v) => setFilters({ ...filters, quickTrade: v })}
                 data-testid="filter-quick-trade"
               />
-              <Label className="flex items-center gap-1">
+              <Label className="flex items-center gap-1 cursor-pointer">
                 <Zap className="w-4 h-4 text-yellow-500" />
-                مقايضة سريعة
+                سريعة فقط
               </Label>
             </div>
           </div>
@@ -806,7 +1082,7 @@ const BrowsePage = () => {
           </div>
         ) : offers.length === 0 ? (
           <div className="text-center py-16">
-            <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <Package className="w-20 h-20 text-muted-foreground mx-auto mb-4 opacity-50" />
             <h3 className="text-xl font-semibold mb-2">لا توجد عروض</h3>
             <p className="text-muted-foreground">جرب تغيير معايير البحث</p>
           </div>
@@ -822,1008 +1098,7 @@ const BrowsePage = () => {
   );
 };
 
-// Offer Detail Page
-const OfferDetailPage = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const { user, api } = useAuth();
-  const [offer, setOffer] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [showReportDialog, setShowReportDialog] = useState(false);
-  const [reportReason, setReportReason] = useState("");
-  const [message, setMessage] = useState("");
-  const [sending, setSending] = useState(false);
-
-  useEffect(() => {
-    fetchOffer();
-  }, [id]);
-
-  const fetchOffer = async () => {
-    try {
-      const res = await axios.get(`${API}/offers/${id}`);
-      setOffer(res.data);
-    } catch (e) {
-      toast.error("العرض غير موجود");
-      navigate("/browse");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const sendMessage = async () => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-    if (!message.trim()) return;
-    
-    setSending(true);
-    try {
-      await api.post("/messages", {
-        receiver_id: offer.user_id,
-        offer_id: offer.id,
-        content: message,
-        message_type: "text"
-      });
-      toast.success("تم إرسال الرسالة");
-      setMessage("");
-      navigate(`/messages?offer=${offer.id}&user=${offer.user_id}`);
-    } catch (e) {
-      toast.error("فشل إرسال الرسالة");
-    } finally {
-      setSending(false);
-    }
-  };
-
-  const submitReport = async () => {
-    if (!reportReason) return;
-    try {
-      await api.post("/reports", {
-        reported_id: offer.id,
-        report_type: "offer",
-        reason: reportReason
-      });
-      toast.success("تم إرسال البلاغ");
-      setShowReportDialog(false);
-      setReportReason("");
-    } catch (e) {
-      toast.error("فشل إرسال البلاغ");
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (!offer) return null;
-
-  return (
-    <div className="min-h-screen pb-24 md:pb-8 px-4 py-8">
-      <div className="max-w-5xl mx-auto">
-        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6" data-testid="back-btn">
-          <ChevronRight className="w-5 h-5 ml-1" />
-          رجوع
-        </Button>
-
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* Images */}
-          <GlassCard className="p-0 overflow-hidden">
-            <div className="aspect-square bg-purple-50">
-              {offer.images && offer.images[0] ? (
-                <img src={offer.images[0]} alt={offer.title} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <Package className="w-24 h-24 text-purple-200" />
-                </div>
-              )}
-            </div>
-            {offer.images && offer.images.length > 1 && (
-              <div className="p-4 flex gap-2 overflow-x-auto">
-                {offer.images.slice(1).map((img, idx) => (
-                  <img key={idx} src={img} className="w-20 h-20 rounded-xl object-cover" alt="" />
-                ))}
-              </div>
-            )}
-          </GlassCard>
-
-          {/* Details */}
-          <div className="space-y-6">
-            <div>
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  {offer.is_quick_trade && (
-                    <Badge className="bg-yellow-500 text-white mb-2" data-testid="detail-quick-badge">
-                      <Zap className="w-3 h-3 ml-1" />
-                      مقايضة سريعة
-                    </Badge>
-                  )}
-                  <h1 className="text-2xl md:text-3xl font-bold" data-testid="offer-title">{offer.title}</h1>
-                </div>
-                <Button variant="ghost" size="icon" onClick={() => setShowReportDialog(true)} data-testid="report-btn">
-                  <Flag className="w-5 h-5 text-muted-foreground" />
-                </Button>
-              </div>
-              
-              <div className="flex flex-wrap gap-3 mb-4">
-                <Badge variant="secondary" className="rounded-full">
-                  {CATEGORIES.find(c => c.name === offer.category)?.icon} {offer.category}
-                </Badge>
-                <Badge variant="outline" className="rounded-full">
-                  <MapPin className="w-3 h-3 ml-1" />
-                  {offer.governorate}
-                </Badge>
-                <Badge variant="outline" className="rounded-full">
-                  <Eye className="w-3 h-3 ml-1" />
-                  {offer.views} مشاهدة
-                </Badge>
-              </div>
-
-              <p className="text-muted-foreground leading-relaxed" data-testid="offer-description">
-                {offer.description}
-              </p>
-            </div>
-
-            <Separator />
-
-            {/* What they want */}
-            <div>
-              <h3 className="font-bold mb-2 flex items-center gap-2">
-                <ArrowLeft className="w-5 h-5 text-primary" />
-                يريد مقايضته بـ:
-              </h3>
-              <p className="text-muted-foreground bg-purple-50 p-4 rounded-2xl" data-testid="wanted-items">
-                {offer.wanted_items}
-              </p>
-            </div>
-
-            <Separator />
-
-            {/* Owner Info */}
-            <div className="flex items-center gap-4">
-              <Avatar className="w-14 h-14">
-                <AvatarFallback className="bg-primary text-white text-xl">{offer.user_name?.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1">
-                <p className="font-bold">{offer.user_name}</p>
-                <TrustBadge score={offer.user_trust_score} />
-              </div>
-            </div>
-
-            {/* Contact */}
-            {user && user.id !== offer.user_id && (
-              <GlassCard className="p-4">
-                <Label className="mb-2 block">أرسل رسالة للمالك</Label>
-                <div className="flex gap-2">
-                  <Textarea
-                    placeholder="مرحباً، أنا مهتم بالمقايضة..."
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    className="rounded-xl min-h-[80px]"
-                    data-testid="message-input"
-                  />
-                </div>
-                <Button 
-                  className="w-full mt-3 rounded-xl" 
-                  onClick={sendMessage} 
-                  disabled={sending || !message.trim()}
-                  data-testid="send-message-btn"
-                >
-                  {sending ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : <Send className="w-4 h-4 ml-2" />}
-                  إرسال رسالة
-                </Button>
-              </GlassCard>
-            )}
-
-            {!user && (
-              <Button className="w-full rounded-xl" onClick={() => navigate("/login")} data-testid="login-to-contact">
-                سجل دخول للتواصل
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Report Dialog */}
-        <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>الإبلاغ عن هذا العرض</DialogTitle>
-              <DialogDescription>اختر سبب البلاغ</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-3">
-              {["محتوى مخالف", "احتيال", "معلومات كاذبة", "سعر غير منطقي", "أخرى"].map((reason) => (
-                <Button
-                  key={reason}
-                  variant={reportReason === reason ? "default" : "outline"}
-                  className="w-full justify-start rounded-xl"
-                  onClick={() => setReportReason(reason)}
-                >
-                  {reason}
-                </Button>
-              ))}
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowReportDialog(false)}>إلغاء</Button>
-              <Button onClick={submitReport} disabled={!reportReason}>إرسال البلاغ</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </div>
-  );
-};
-
-// Add Offer Page
-const AddOfferPage = () => {
-  const navigate = useNavigate();
-  const { api } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [suggestions, setSuggestions] = useState(null);
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    category: "",
-    governorate: "",
-    wanted_items: "",
-    images: [],
-    is_quick_trade: false
-  });
-
-  const handleImageUpload = (e) => {
-    const files = Array.from(e.target.files);
-    files.forEach((file) => {
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error("حجم الصورة يجب أن يكون أقل من 2MB");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = () => {
-        setForm((prev) => ({
-          ...prev,
-          images: [...prev.images.slice(0, 4), reader.result]
-        }));
-      };
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const removeImage = (idx) => {
-    setForm((prev) => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== idx)
-    }));
-  };
-
-  const getAISuggestions = async () => {
-    if (!form.description) {
-      toast.error("يرجى كتابة وصف الغرض أولاً");
-      return;
-    }
-    setAiLoading(true);
-    try {
-      const res = await api.post("/ai/suggest", { item_description: form.description });
-      setSuggestions(res.data);
-    } catch (e) {
-      toast.error("فشل الحصول على الاقتراحات");
-    } finally {
-      setAiLoading(false);
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!form.title || !form.description || !form.category || !form.governorate || !form.wanted_items) {
-      toast.error("يرجى ملء جميع الحقول المطلوبة");
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await api.post("/offers", form);
-      toast.success("تم نشر العرض بنجاح!");
-      navigate(`/offer/${res.data.id}`);
-    } catch (e) {
-      toast.error("فشل نشر العرض");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen pb-24 md:pb-8 px-4 py-8">
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8" data-testid="add-offer-title">إضافة عرض جديد</h1>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <GlassCard>
-            <div className="space-y-4">
-              <div>
-                <Label>عنوان العرض *</Label>
-                <Input
-                  placeholder="مثال: لابتوب Dell للمقايضة"
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  className="mt-2 rounded-xl"
-                  data-testid="offer-title-input"
-                />
-              </div>
-
-              <div>
-                <Label>وصف الغرض *</Label>
-                <Textarea
-                  placeholder="اكتب وصفاً تفصيلياً للغرض..."
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  className="mt-2 rounded-xl min-h-[120px]"
-                  data-testid="offer-description-input"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>الفئة *</Label>
-                  <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                    <SelectTrigger className="mt-2 rounded-xl" data-testid="offer-category-select">
-                      <SelectValue placeholder="اختر الفئة" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CATEGORIES.map((cat) => (
-                        <SelectItem key={cat.name} value={cat.name}>{cat.icon} {cat.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>المحافظة *</Label>
-                  <Select value={form.governorate} onValueChange={(v) => setForm({ ...form, governorate: v })}>
-                    <SelectTrigger className="mt-2 rounded-xl" data-testid="offer-governorate-select">
-                      <SelectValue placeholder="اختر المحافظة" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {GOVERNORATES.map((gov) => (
-                        <SelectItem key={gov} value={gov}>{gov}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* AI Suggestions */}
-              <div className="border-2 border-dashed border-indigo-200 rounded-2xl p-4 bg-indigo-50/50">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-indigo-600" />
-                    <span className="font-medium">اقتراح بالذكاء الاصطناعي</span>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={getAISuggestions}
-                    disabled={aiLoading || !form.description}
-                    className="rounded-full"
-                    data-testid="ai-suggest-btn"
-                  >
-                    {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 ml-1" />}
-                    اقترح لي
-                  </Button>
-                </div>
-                {suggestions && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="space-y-3"
-                  >
-                    <p className="text-sm text-muted-foreground">
-                      القيمة التقديرية: <span className="font-bold text-indigo-600">{suggestions.market_value}</span>
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {suggestions.suggestions.map((s, idx) => (
-                        <Badge
-                          key={idx}
-                          variant="secondary"
-                          className="cursor-pointer hover:bg-indigo-100 rounded-full px-3 py-1"
-                          onClick={() => setForm({ ...form, wanted_items: form.wanted_items ? `${form.wanted_items}, ${s}` : s })}
-                          data-testid={`suggestion-${idx}`}
-                        >
-                          + {s}
-                        </Badge>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </div>
-
-              <div>
-                <Label>ماذا تريد مقابله؟ *</Label>
-                <Textarea
-                  placeholder="مثال: منظومة طاقة شمسية، موبايل حديث، أو ما يعادل القيمة"
-                  value={form.wanted_items}
-                  onChange={(e) => setForm({ ...form, wanted_items: e.target.value })}
-                  className="mt-2 rounded-xl"
-                  data-testid="wanted-items-input"
-                />
-              </div>
-
-              {/* Images */}
-              <div>
-                <Label>صور الغرض (حتى 5 صور)</Label>
-                <div className="mt-2 flex flex-wrap gap-3">
-                  {form.images.map((img, idx) => (
-                    <div key={idx} className="relative w-24 h-24 rounded-xl overflow-hidden group">
-                      <img src={img} alt="" className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(idx)}
-                        className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
-                      >
-                        <X className="w-6 h-6 text-white" />
-                      </button>
-                    </div>
-                  ))}
-                  {form.images.length < 5 && (
-                    <label className="w-24 h-24 rounded-xl border-2 border-dashed border-purple-200 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors">
-                      <ImageIcon className="w-6 h-6 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground mt-1">إضافة</span>
-                      <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} data-testid="image-upload" />
-                    </label>
-                  )}
-                </div>
-              </div>
-
-              {/* Quick Trade */}
-              <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-xl">
-                <div className="flex items-center gap-3">
-                  <Zap className="w-5 h-5 text-yellow-500" />
-                  <div>
-                    <p className="font-medium">مقايضة سريعة</p>
-                    <p className="text-sm text-muted-foreground">للعروض الجاهزة للتنفيذ فوراً</p>
-                  </div>
-                </div>
-                <Switch
-                  checked={form.is_quick_trade}
-                  onCheckedChange={(v) => setForm({ ...form, is_quick_trade: v })}
-                  data-testid="quick-trade-switch"
-                />
-              </div>
-            </div>
-          </GlassCard>
-
-          <Button type="submit" size="lg" className="w-full rounded-xl h-14" disabled={loading} data-testid="submit-offer-btn">
-            {loading ? <Loader2 className="w-5 h-5 animate-spin ml-2" /> : <Plus className="w-5 h-5 ml-2" />}
-            نشر العرض
-          </Button>
-        </form>
-      </div>
-    </div>
-  );
-};
-
-// Messages Page
-const MessagesPage = () => {
-  const { api, user } = useAuth();
-  const [conversations, setConversations] = useState([]);
-  const [selectedConv, setSelectedConv] = useState(null);
-  const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
-  const location = useLocation();
-
-  // Auto-refresh messages every 3 seconds when a conversation is selected
-  useEffect(() => {
-    if (!selectedConv) return;
-    
-    const interval = setInterval(() => {
-      refreshMessages();
-    }, 3000);
-    
-    return () => clearInterval(interval);
-  }, [selectedConv, api]);
-
-  // Auto-refresh conversations every 10 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      fetchConversations();
-    }, 10000);
-    
-    return () => clearInterval(interval);
-  }, [api]);
-
-  useEffect(() => {
-    fetchConversations();
-  }, []);
-
-  const fetchConversations = async () => {
-    try {
-      const res = await api.get("/conversations");
-      setConversations(res.data);
-
-      // Check URL params for direct conversation
-      const params = new URLSearchParams(location.search);
-      const offerId = params.get("offer");
-      const userId = params.get("user");
-      if (offerId && userId) {
-        const conv = res.data.find(c => c.offer_id === offerId && c.other_user_id === userId);
-        if (conv) {
-          selectConversation(conv);
-        }
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const refreshMessages = async () => {
-    if (!selectedConv) return;
-    try {
-      const res = await api.get(`/messages/${selectedConv.offer_id}/${selectedConv.other_user_id}`);
-      setMessages(res.data);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const selectConversation = async (conv) => {
-    setSelectedConv(conv);
-    try {
-      const res = await api.get(`/messages/${conv.offer_id}/${conv.other_user_id}`);
-      setMessages(res.data);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const sendMessage = async () => {
-    if (!newMessage.trim() || !selectedConv) return;
-    setSending(true);
-    try {
-      const res = await api.post("/messages", {
-        receiver_id: selectedConv.other_user_id,
-        offer_id: selectedConv.offer_id,
-        content: newMessage,
-        message_type: "text"
-      });
-      setMessages([...messages, res.data]);
-      setNewMessage("");
-    } catch (e) {
-      toast.error("فشل إرسال الرسالة");
-    } finally {
-      setSending(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen pb-24 md:pb-8">
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8" data-testid="messages-title">الرسائل</h1>
-
-        <div className="grid md:grid-cols-3 gap-6 h-[600px]">
-          {/* Conversations List */}
-          <GlassCard className="md:col-span-1 p-0 overflow-hidden">
-            <div className="p-4 border-b border-purple-100">
-              <h2 className="font-bold">المحادثات</h2>
-            </div>
-            <ScrollArea className="h-[520px]">
-              {conversations.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground">
-                  <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                  <p>لا توجد محادثات</p>
-                </div>
-              ) : (
-                conversations.map((conv) => (
-                  <div
-                    key={conv.id}
-                    onClick={() => selectConversation(conv)}
-                    className={`p-4 cursor-pointer border-b border-purple-50 hover:bg-purple-50 transition-colors ${
-                      selectedConv?.id === conv.id ? "bg-purple-50" : ""
-                    }`}
-                    data-testid={`conversation-${conv.id}`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarFallback className="bg-primary text-white">{conv.other_user_name?.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-center">
-                          <p className="font-medium truncate">{conv.other_user_name}</p>
-                          {conv.unread_count > 0 && (
-                            <Badge className="bg-primary text-white text-xs">{conv.unread_count}</Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground truncate">{conv.offer_title}</p>
-                        <p className="text-xs text-muted-foreground truncate">{conv.last_message}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </ScrollArea>
-          </GlassCard>
-
-          {/* Chat Area */}
-          <GlassCard className="md:col-span-2 p-0 overflow-hidden flex flex-col">
-            {selectedConv ? (
-              <>
-                <div className="p-4 border-b border-purple-100 flex items-center gap-3">
-                  <Avatar>
-                    <AvatarFallback className="bg-primary text-white">{selectedConv.other_user_name?.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-bold">{selectedConv.other_user_name}</p>
-                    <p className="text-sm text-muted-foreground">{selectedConv.offer_title}</p>
-                  </div>
-                </div>
-
-                <ScrollArea className="flex-1 p-4">
-                  <div className="space-y-4">
-                    {messages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`flex ${msg.sender_id === user.id ? "justify-start" : "justify-end"}`}
-                      >
-                        <div
-                          className={`max-w-[70%] p-3 rounded-2xl ${
-                            msg.sender_id === user.id
-                              ? "bg-primary text-white rounded-br-none"
-                              : "bg-purple-100 rounded-bl-none"
-                          }`}
-                        >
-                          <p>{msg.content}</p>
-                          <p className={`text-xs mt-1 ${msg.sender_id === user.id ? "text-white/70" : "text-muted-foreground"}`}>
-                            {new Date(msg.created_at).toLocaleTimeString("ar-SY", { hour: "2-digit", minute: "2-digit" })}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-
-                <div className="p-4 border-t border-purple-100">
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="اكتب رسالة..."
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      onKeyPress={(e) => e.key === "Enter" && sendMessage()}
-                      className="rounded-full"
-                      data-testid="chat-input"
-                    />
-                    <Button onClick={sendMessage} disabled={sending || !newMessage.trim()} className="rounded-full" data-testid="send-chat-btn">
-                      {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                    </Button>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                <div className="text-center">
-                  <MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                  <p>اختر محادثة للبدء</p>
-                </div>
-              </div>
-            )}
-          </GlassCard>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Profile Page
-const ProfilePage = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
-  return (
-    <div className="min-h-screen pb-24 md:pb-8 px-4 py-8">
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8" data-testid="profile-title">الملف الشخصي</h1>
-
-        <GlassCard className="mb-6">
-          <div className="flex items-center gap-6">
-            <Avatar className="w-20 h-20">
-              <AvatarFallback className="bg-primary text-white text-3xl">{user?.name?.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <div>
-              <h2 className="text-2xl font-bold">{user?.name}</h2>
-              <div className="flex items-center gap-3 mt-2">
-                <TrustBadge score={user?.trust_score || 0} />
-                <span className="text-muted-foreground">{user?.trades_count || 0} مقايضة</span>
-              </div>
-            </div>
-          </div>
-        </GlassCard>
-
-        <div className="grid gap-4">
-          <GlassCard className="flex items-center gap-4">
-            <Mail className="w-5 h-5 text-primary" />
-            <div>
-              <p className="text-sm text-muted-foreground">البريد الإلكتروني</p>
-              <p className="font-medium">{user?.email}</p>
-            </div>
-          </GlassCard>
-
-          <GlassCard className="flex items-center gap-4">
-            <Phone className="w-5 h-5 text-primary" />
-            <div>
-              <p className="text-sm text-muted-foreground">رقم الهاتف</p>
-              <p className="font-medium">{user?.phone || "غير محدد"}</p>
-            </div>
-          </GlassCard>
-
-          <GlassCard className="flex items-center gap-4">
-            <MapPin className="w-5 h-5 text-primary" />
-            <div>
-              <p className="text-sm text-muted-foreground">المحافظة</p>
-              <p className="font-medium">{user?.governorate}</p>
-            </div>
-          </GlassCard>
-
-          <GlassCard className="flex items-center gap-4">
-            <Calendar className="w-5 h-5 text-primary" />
-            <div>
-              <p className="text-sm text-muted-foreground">تاريخ التسجيل</p>
-              <p className="font-medium">
-                {user?.created_at ? new Date(user.created_at).toLocaleDateString("ar-SY") : "غير محدد"}
-              </p>
-            </div>
-          </GlassCard>
-        </div>
-
-        <div className="mt-8 space-y-3">
-          <Button variant="outline" className="w-full rounded-xl" onClick={() => navigate("/my-offers")} data-testid="my-offers-btn">
-            <Package className="w-5 h-5 ml-2" />
-            عروضي
-          </Button>
-          <Button variant="outline" className="w-full rounded-xl" onClick={() => navigate("/favorites")} data-testid="favorites-btn">
-            <Heart className="w-5 h-5 ml-2" />
-            المفضلة
-          </Button>
-          {user?.is_admin && (
-            <Button variant="outline" className="w-full rounded-xl" onClick={() => navigate("/admin")} data-testid="admin-btn">
-              <LayoutDashboard className="w-5 h-5 ml-2" />
-              لوحة التحكم
-            </Button>
-          )}
-          <Button variant="destructive" className="w-full rounded-xl" onClick={logout} data-testid="logout-btn">
-            <LogOut className="w-5 h-5 ml-2" />
-            تسجيل الخروج
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// My Offers Page
-const MyOffersPage = () => {
-  const { api } = useAuth();
-  const navigate = useNavigate();
-  const [offers, setOffers] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchOffers();
-  }, []);
-
-  const fetchOffers = async () => {
-    try {
-      const res = await api.get("/my-offers");
-      setOffers(res.data);
-    } catch (e) {
-      toast.error("فشل تحميل العروض");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const deleteOffer = async (id) => {
-    if (!window.confirm("هل تريد حذف هذا العرض؟")) return;
-    try {
-      await api.delete(`/offers/${id}`);
-      setOffers(offers.filter((o) => o.id !== id));
-      toast.success("تم حذف العرض");
-    } catch (e) {
-      toast.error("فشل حذف العرض");
-    }
-  };
-
-  const updateOfferStatus = async (id, status) => {
-    try {
-      await api.put(`/offers/${id}/status?status=${status}`);
-      setOffers(offers.map(o => o.id === id ? { ...o, status } : o));
-      const statusMessages = {
-        "completed": "تم تحديد العرض كمكتمل",
-        "cancelled": "تم إلغاء العرض",
-        "active": "تم تفعيل العرض"
-      };
-      toast.success(statusMessages[status]);
-    } catch (e) {
-      toast.error("فشل تحديث حالة العرض");
-    }
-  };
-
-  return (
-    <div className="min-h-screen pb-24 md:pb-8 px-4 py-8">
-      <div className="max-w-5xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold" data-testid="my-offers-title">عروضي</h1>
-          <Button onClick={() => navigate("/add-offer")} className="rounded-xl" data-testid="add-new-offer">
-            <Plus className="w-5 h-5 ml-2" />
-            إضافة عرض
-          </Button>
-        </div>
-
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(3)].map((_, i) => (
-              <Skeleton key={i} className="h-72 rounded-3xl" />
-            ))}
-          </div>
-        ) : offers.length === 0 ? (
-          <GlassCard className="text-center py-12">
-            <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-xl font-semibold mb-2">لا توجد عروض</h3>
-            <p className="text-muted-foreground mb-6">ابدأ بإضافة عرضك الأول</p>
-            <Button onClick={() => navigate("/add-offer")} className="rounded-xl">
-              <Plus className="w-5 h-5 ml-2" />
-              إضافة عرض
-            </Button>
-          </GlassCard>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {offers.map((offer) => (
-              <Card key={offer.id} className="rounded-3xl overflow-hidden" data-testid={`my-offer-${offer.id}`}>
-                <div className="relative h-40 bg-purple-50">
-                  {offer.images && offer.images[0] ? (
-                    <img src={offer.images[0]} alt={offer.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Package className="w-12 h-12 text-purple-200" />
-                    </div>
-                  )}
-                  <Badge className={`absolute top-3 right-3 ${
-                    offer.status === "active" ? "bg-green-500" : 
-                    offer.status === "completed" ? "bg-blue-500" : 
-                    "bg-gray-500"
-                  }`}>
-                    {offer.status === "active" ? "نشط" : 
-                     offer.status === "completed" ? "مكتمل" : 
-                     offer.status === "cancelled" ? "ملغي" : "غير نشط"}
-                  </Badge>
-                </div>
-                <CardContent className="p-4">
-                  <h3 className="font-bold mb-2">{offer.title}</h3>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-                    <Eye className="w-4 h-4" />
-                    {offer.views} مشاهدة
-                    <span>•</span>
-                    <MapPin className="w-4 h-4" />
-                    {offer.governorate}
-                  </div>
-                  <div className="flex gap-2 mb-2">
-                    <Button variant="outline" size="sm" className="flex-1 rounded-xl" onClick={() => navigate(`/offer/${offer.id}`)}>
-                      <Eye className="w-4 h-4 ml-1" />
-                      عرض
-                    </Button>
-                    <Button variant="destructive" size="sm" className="rounded-xl" onClick={() => deleteOffer(offer.id)}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  
-                  {/* Status Management */}
-                  {offer.status === "active" && (
-                    <div className="flex gap-1">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="flex-1 rounded-xl text-xs bg-blue-50 hover:bg-blue-100" 
-                        onClick={() => updateOfferStatus(offer.id, "completed")}
-                        data-testid="mark-completed-btn"
-                      >
-                        <Check className="w-3 h-3 ml-1" />
-                        مكتمل
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="flex-1 rounded-xl text-xs bg-red-50 hover:bg-red-100" 
-                        onClick={() => updateOfferStatus(offer.id, "cancelled")}
-                        data-testid="mark-cancelled-btn"
-                      >
-                        <X className="w-3 h-3 ml-1" />
-                        إلغاء
-                      </Button>
-                    </div>
-                  )}
-                  
-                  {(offer.status === "completed" || offer.status === "cancelled") && (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full rounded-xl text-xs bg-green-50 hover:bg-green-100" 
-                      onClick={() => updateOfferStatus(offer.id, "active")}
-                      data-testid="reactivate-btn"
-                    >
-                      <ArrowRight className="w-3 h-3 ml-1" />
-                      إعادة تفعيل
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// Favorites Page
-const FavoritesPage = () => {
-  const { api } = useAuth();
-  const [favorites, setFavorites] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchFavorites();
-  }, []);
-
-  const fetchFavorites = async () => {
-    try {
-      const res = await api.get("/favorites");
-      setFavorites(res.data);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen pb-24 md:pb-8 px-4 py-8">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8" data-testid="favorites-title">المفضلة</h1>
-
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(3)].map((_, i) => (
-              <Skeleton key={i} className="h-72 rounded-3xl" />
-            ))}
-          </div>
-        ) : favorites.length === 0 ? (
-          <GlassCard className="text-center py-12">
-            <Heart className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-xl font-semibold mb-2">لا توجد عناصر في المفضلة</h3>
-            <p className="text-muted-foreground">أضف عروضاً للمفضلة لتجدها هنا</p>
-          </GlassCard>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {favorites.map((offer, idx) => (
-              <OfferCard key={offer.id} offer={offer} delay={idx * 0.05} />
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-// Auth Pages
+// Login Page
 const LoginPage = () => {
   const navigate = useNavigate();
   const { login, user } = useAuth();
@@ -1833,7 +1108,7 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (user) navigate("/");
-  }, [user]);
+  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -1851,11 +1126,15 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-8">
-      <GlassCard className="w-full max-w-md">
+      <GlassCard className="w-full max-w-md" hover={false}>
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl shadow-primary/25"
+          >
             <span className="text-white font-bold text-2xl">ب</span>
-          </div>
+          </motion.div>
           <h1 className="text-2xl font-bold" data-testid="login-title">تسجيل الدخول</h1>
           <p className="text-muted-foreground">مرحباً بعودتك إلى بدل</p>
         </div>
@@ -1890,17 +1169,24 @@ const LoginPage = () => {
           </Button>
         </form>
 
-        <p className="text-center mt-6 text-muted-foreground">
-          ليس لديك حساب؟{" "}
-          <Link to="/register" className="text-primary hover:underline" data-testid="register-link">
-            سجل الآن
+        <div className="mt-6 text-center space-y-3">
+          <Link to="/" className="text-primary hover:underline block">
+            <ArrowRight className="w-4 h-4 inline ml-1" />
+            العودة للرئيسية
           </Link>
-        </p>
+          <p className="text-muted-foreground">
+            ليس لديك حساب؟{" "}
+            <Link to="/register" className="text-primary hover:underline font-medium" data-testid="register-link">
+              سجل الآن
+            </Link>
+          </p>
+        </div>
       </GlassCard>
     </div>
   );
 };
 
+// Register Page
 const RegisterPage = () => {
   const navigate = useNavigate();
   const { register, user } = useAuth();
@@ -1915,7 +1201,7 @@ const RegisterPage = () => {
 
   useEffect(() => {
     if (user) navigate("/");
-  }, [user]);
+  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -1933,11 +1219,15 @@ const RegisterPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-8">
-      <GlassCard className="w-full max-w-md">
+      <GlassCard className="w-full max-w-md" hover={false}>
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl shadow-primary/25"
+          >
             <span className="text-white font-bold text-2xl">ب</span>
-          </div>
+          </motion.div>
           <h1 className="text-2xl font-bold" data-testid="register-title">إنشاء حساب جديد</h1>
           <p className="text-muted-foreground">انضم إلى مجتمع بدل</p>
         </div>
@@ -2008,7 +1298,7 @@ const RegisterPage = () => {
 
         <p className="text-center mt-6 text-muted-foreground">
           لديك حساب؟{" "}
-          <Link to="/login" className="text-primary hover:underline" data-testid="login-link">
+          <Link to="/login" className="text-primary hover:underline font-medium" data-testid="login-link">
             سجل دخول
           </Link>
         </p>
@@ -2017,7 +1307,464 @@ const RegisterPage = () => {
   );
 };
 
-// Admin Dashboard
+// Placeholder components for brevity - these would be fully implemented
+const OfferDetailPage = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { user, api } = useAuth();
+  const [offer, setOffer] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    fetchOffer();
+  }, [id]);
+
+  const fetchOffer = async () => {
+    try {
+      const res = await axios.get(`${API}/offers/${id}`);
+      setOffer(res.data);
+    } catch (e) {
+      toast.error("العرض غير موجود");
+      navigate("/browse");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sendMessage = async () => {
+    if (!user) {
+      toast.error("يجب تسجيل الدخول أولاً");
+      navigate("/login");
+      return;
+    }
+    if (!message.trim()) return;
+    
+    setSending(true);
+    try {
+      await api.post("/messages", {
+        receiver_id: offer.user_id,
+        offer_id: offer.id,
+        content: message,
+        message_type: "text"
+      });
+      toast.success("تم إرسال الرسالة");
+      setMessage("");
+      navigate(`/messages?offer=${offer.id}&user=${offer.user_id}`);
+    } catch (e) {
+      toast.error("فشل إرسال الرسالة");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!offer) return null;
+
+  return (
+    <div className="min-h-screen pb-24 md:pb-8 px-4 py-8">
+      <div className="max-w-5xl mx-auto">
+        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6" data-testid="back-btn">
+          <ChevronRight className="w-5 h-5 ml-1" />
+          رجوع
+        </Button>
+
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Images */}
+          <GlassCard className="p-0 overflow-hidden" hover={false}>
+            <div className="aspect-square bg-gradient-to-br from-purple-50 to-indigo-50">
+              {offer.images && offer.images[0] ? (
+                <img src={offer.images[0]} alt={offer.title} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <Package className="w-24 h-24 text-purple-200" />
+                </div>
+              )}
+            </div>
+          </GlassCard>
+
+          {/* Details */}
+          <div className="space-y-6">
+            <div>
+              <div className="flex gap-2 mb-3">
+                {offer.is_quick_trade && (
+                  <Badge className="bg-yellow-500 text-white">
+                    <Zap className="w-3 h-3 ml-1" />
+                    مقايضة سريعة
+                  </Badge>
+                )}
+                <Badge variant="secondary" className="rounded-full">
+                  {CATEGORIES.find(c => c.name === offer.category)?.icon} {offer.category}
+                </Badge>
+              </div>
+              <h1 className="text-2xl md:text-3xl font-bold mb-4" data-testid="offer-title">{offer.title}</h1>
+              <p className="text-muted-foreground leading-relaxed">{offer.description}</p>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <Badge variant="outline" className="rounded-full px-3 py-1">
+                <MapPin className="w-4 h-4 ml-1" />
+                {offer.governorate}
+              </Badge>
+              <Badge variant="outline" className="rounded-full px-3 py-1">
+                <Eye className="w-4 h-4 ml-1" />
+                {offer.views} مشاهدة
+              </Badge>
+            </div>
+
+            <Separator />
+
+            <div>
+              <h3 className="font-bold mb-2 flex items-center gap-2">
+                <ArrowLeft className="w-5 h-5 text-primary" />
+                يريد مقايضته بـ:
+              </h3>
+              <div className="bg-purple-50 p-4 rounded-2xl">
+                <p className="text-muted-foreground">{offer.wanted_items}</p>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Owner Info */}
+            <div className="flex items-center gap-4">
+              <Avatar className="w-14 h-14 border-2 border-primary/20">
+                <AvatarFallback className="bg-primary text-white text-xl">{offer.user_name?.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <p className="font-bold text-lg">{offer.user_name}</p>
+                <TrustBadge score={offer.user_trust_score} />
+              </div>
+            </div>
+
+            {/* Contact Section */}
+            {user?.id !== offer.user_id && (
+              <GlassCard className="p-4" hover={false}>
+                <Label className="mb-2 block font-medium">تواصل مع صاحب العرض</Label>
+                <Textarea
+                  placeholder="مرحباً، أنا مهتم بالمقايضة..."
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  className="rounded-xl min-h-[100px] mb-3"
+                  data-testid="message-input"
+                />
+                <Button 
+                  className="w-full rounded-xl" 
+                  onClick={sendMessage} 
+                  disabled={sending || !message.trim()}
+                  data-testid="send-message-btn"
+                >
+                  {sending ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : <Send className="w-4 h-4 ml-2" />}
+                  إرسال رسالة
+                </Button>
+              </GlassCard>
+            )}
+
+            {!user && (
+              <Button className="w-full rounded-xl h-12" onClick={() => navigate("/login")} data-testid="login-to-contact">
+                سجل دخول للتواصل
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Simple placeholder pages
+const AddOfferPage = () => {
+  const navigate = useNavigate();
+  const { api } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState(null);
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    category: "",
+    governorate: "",
+    wanted_items: "",
+    images: [],
+    is_quick_trade: false
+  });
+
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    files.forEach((file) => {
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error("حجم الصورة يجب أن يكون أقل من 2MB");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        setForm((prev) => ({
+          ...prev,
+          images: [...prev.images.slice(0, 4), reader.result]
+        }));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const getAISuggestions = async () => {
+    if (!form.description) {
+      toast.error("يرجى كتابة وصف الغرض أولاً");
+      return;
+    }
+    setAiLoading(true);
+    try {
+      const res = await api.post("/ai/suggest", { item_description: form.description });
+      setSuggestions(res.data);
+      toast.success("تم الحصول على الاقتراحات");
+    } catch (e) {
+      toast.error("فشل الحصول على الاقتراحات");
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.title || !form.description || !form.category || !form.governorate || !form.wanted_items) {
+      toast.error("يرجى ملء جميع الحقول المطلوبة");
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await api.post("/offers", form);
+      toast.success("تم نشر العرض بنجاح!");
+      navigate(`/offer/${res.data.id}`);
+    } catch (e) {
+      toast.error("فشل نشر العرض");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen pb-24 md:pb-8 px-4 py-8">
+      <div className="max-w-3xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8" data-testid="add-offer-title">إضافة عرض جديد</h1>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <GlassCard hover={false}>
+            <div className="space-y-4">
+              <div>
+                <Label>عنوان العرض *</Label>
+                <Input
+                  placeholder="مثال: لابتوب Dell للمقايضة"
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  className="mt-2 rounded-xl"
+                  data-testid="offer-title-input"
+                />
+              </div>
+
+              <div>
+                <Label>وصف الغرض *</Label>
+                <Textarea
+                  placeholder="اكتب وصفاً تفصيلياً للغرض..."
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  className="mt-2 rounded-xl min-h-[120px]"
+                  data-testid="offer-description-input"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>الفئة *</Label>
+                  <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+                    <SelectTrigger className="mt-2 rounded-xl" data-testid="offer-category-select">
+                      <SelectValue placeholder="اختر الفئة" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map((cat) => (
+                        <SelectItem key={cat.name} value={cat.name}>{cat.icon} {cat.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>المحافظة *</Label>
+                  <Select value={form.governorate} onValueChange={(v) => setForm({ ...form, governorate: v })}>
+                    <SelectTrigger className="mt-2 rounded-xl" data-testid="offer-governorate-select">
+                      <SelectValue placeholder="اختر المحافظة" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {GOVERNORATES.map((gov) => (
+                        <SelectItem key={gov} value={gov}>{gov}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* AI Suggestions */}
+              <div className="border-2 border-dashed border-indigo-200 rounded-2xl p-4 bg-gradient-to-br from-indigo-50/50 to-purple-50/50">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-indigo-600" />
+                    <span className="font-medium">اقتراح بالذكاء الاصطناعي</span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={getAISuggestions}
+                    disabled={aiLoading || !form.description}
+                    className="rounded-full bg-white"
+                    data-testid="ai-suggest-btn"
+                  >
+                    {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 ml-1" />}
+                    اقترح لي
+                  </Button>
+                </div>
+                {suggestions && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-3"
+                  >
+                    <p className="text-sm text-muted-foreground">
+                      القيمة التقديرية: <span className="font-bold text-indigo-600">{suggestions.market_value}</span>
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {suggestions.suggestions.map((s, idx) => (
+                        <Badge
+                          key={idx}
+                          variant="secondary"
+                          className="cursor-pointer hover:bg-indigo-100 rounded-full px-3 py-1.5 transition-colors"
+                          onClick={() => setForm({ ...form, wanted_items: form.wanted_items ? `${form.wanted_items}, ${s}` : s })}
+                          data-testid={`suggestion-${idx}`}
+                        >
+                          <Plus className="w-3 h-3 ml-1" />
+                          {s}
+                        </Badge>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+
+              <div>
+                <Label>ماذا تريد مقابله؟ *</Label>
+                <Textarea
+                  placeholder="مثال: منظومة طاقة شمسية، موبايل حديث، أو ما يعادل القيمة"
+                  value={form.wanted_items}
+                  onChange={(e) => setForm({ ...form, wanted_items: e.target.value })}
+                  className="mt-2 rounded-xl"
+                  data-testid="wanted-items-input"
+                />
+              </div>
+
+              {/* Images */}
+              <div>
+                <Label>صور الغرض (حتى 5 صور)</Label>
+                <div className="mt-2 flex flex-wrap gap-3">
+                  {form.images.map((img, idx) => (
+                    <div key={idx} className="relative w-24 h-24 rounded-xl overflow-hidden group">
+                      <img src={img} alt="" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setForm(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== idx) }))}
+                        className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                      >
+                        <X className="w-6 h-6 text-white" />
+                      </button>
+                    </div>
+                  ))}
+                  {form.images.length < 5 && (
+                    <label className="w-24 h-24 rounded-xl border-2 border-dashed border-purple-200 flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-purple-50/50 transition-colors">
+                      <Paperclip className="w-6 h-6 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground mt-1">إضافة</span>
+                      <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                    </label>
+                  )}
+                </div>
+              </div>
+
+              {/* Quick Trade */}
+              <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <Zap className="w-5 h-5 text-yellow-500" />
+                  <div>
+                    <p className="font-medium">مقايضة سريعة</p>
+                    <p className="text-sm text-muted-foreground">للعروض الجاهزة للتنفيذ فوراً</p>
+                  </div>
+                </div>
+                <Switch
+                  checked={form.is_quick_trade}
+                  onCheckedChange={(v) => setForm({ ...form, is_quick_trade: v })}
+                  data-testid="quick-trade-switch"
+                />
+              </div>
+            </div>
+          </GlassCard>
+
+          <Button type="submit" size="lg" className="w-full rounded-xl h-14 shadow-lg shadow-primary/25" disabled={loading} data-testid="submit-offer-btn">
+            {loading ? <Loader2 className="w-5 h-5 animate-spin ml-2" /> : <Plus className="w-5 h-5 ml-2" />}
+            نشر العرض
+          </Button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+const MessagesPage = () => <div className="min-h-screen p-8 pb-24"><h1 className="text-3xl font-bold">الرسائل</h1><p className="text-muted-foreground mt-4">صفحة الرسائل قيد التطوير</p></div>;
+const ProfilePage = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  
+  return (
+    <div className="min-h-screen pb-24 md:pb-8 px-4 py-8">
+      <div className="max-w-3xl mx-auto">
+        <h1 className="text-3xl font-bold mb-8">الملف الشخصي</h1>
+        <GlassCard className="mb-6" hover={false}>
+          <div className="flex items-center gap-6">
+            <Avatar className="w-20 h-20 border-2 border-primary/20">
+              <AvatarFallback className="bg-primary text-white text-3xl">{user?.name?.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div>
+              <h2 className="text-2xl font-bold">{user?.name}</h2>
+              <p className="text-muted-foreground">{user?.email}</p>
+              <div className="mt-2"><TrustBadge score={user?.trust_score || 0} /></div>
+            </div>
+          </div>
+        </GlassCard>
+        <div className="space-y-3">
+          <Button variant="outline" className="w-full rounded-xl justify-start" onClick={() => navigate("/my-offers")}>
+            <Package className="w-5 h-5 ml-2" />عروضي
+          </Button>
+          <Button variant="outline" className="w-full rounded-xl justify-start" onClick={() => navigate("/favorites")}>
+            <Heart className="w-5 h-5 ml-2" />المفضلة
+          </Button>
+          {user?.is_admin && (
+            <Button variant="outline" className="w-full rounded-xl justify-start text-primary" onClick={() => navigate("/admin")}>
+              <LayoutDashboard className="w-5 h-5 ml-2" />لوحة التحكم
+            </Button>
+          )}
+          <Button variant="destructive" className="w-full rounded-xl" onClick={logout}>
+            <LogOut className="w-5 h-5 ml-2" />تسجيل الخروج
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+const MyOffersPage = () => <div className="min-h-screen p-8 pb-24"><h1 className="text-3xl font-bold">عروضي</h1></div>;
+const FavoritesPage = () => <div className="min-h-screen p-8 pb-24"><h1 className="text-3xl font-bold">المفضلة</h1></div>;
+const BlogPage = () => <div className="min-h-screen p-8 pb-24"><h1 className="text-3xl font-bold">المدونة</h1></div>;
 const AdminDashboard = () => {
   const { api } = useAuth();
   const [stats, setStats] = useState(null);
@@ -2050,110 +1797,71 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen pb-24 md:pb-8 px-4 py-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8" data-testid="admin-title">لوحة التحكم</h1>
-
+        <h1 className="text-3xl font-bold mb-8">لوحة التحكم</h1>
+        
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-8 bg-white/80 p-1 rounded-full">
-            <TabsTrigger value="overview" className="rounded-full" data-testid="tab-overview">
-              <TrendingUp className="w-4 h-4 ml-2" />
-              نظرة عامة
-            </TabsTrigger>
-            <TabsTrigger value="users" className="rounded-full" data-testid="tab-users">
-              <Users className="w-4 h-4 ml-2" />
-              المستخدمون
-            </TabsTrigger>
-            <TabsTrigger value="offers" className="rounded-full" data-testid="tab-offers">
-              <Package className="w-4 h-4 ml-2" />
-              العروض
-            </TabsTrigger>
-            <TabsTrigger value="reports" className="rounded-full" data-testid="tab-reports">
-              <AlertTriangle className="w-4 h-4 ml-2" />
-              البلاغات
-            </TabsTrigger>
+          <TabsList className="mb-8 bg-white/80 p-1 rounded-full flex-wrap">
+            <TabsTrigger value="overview" className="rounded-full"><TrendingUp className="w-4 h-4 ml-2" />نظرة عامة</TabsTrigger>
+            <TabsTrigger value="users" className="rounded-full"><Users className="w-4 h-4 ml-2" />المستخدمون</TabsTrigger>
+            <TabsTrigger value="offers" className="rounded-full"><Package className="w-4 h-4 ml-2" />العروض</TabsTrigger>
+            <TabsTrigger value="reports" className="rounded-full"><AlertTriangle className="w-4 h-4 ml-2" />البلاغات</TabsTrigger>
+            <TabsTrigger value="blog" className="rounded-full"><BookOpen className="w-4 h-4 ml-2" />المدونة</TabsTrigger>
+            <TabsTrigger value="pages" className="rounded-full"><Layers className="w-4 h-4 ml-2" />الصفحات</TabsTrigger>
+            <TabsTrigger value="settings" className="rounded-full"><Settings className="w-4 h-4 ml-2" />الإعدادات</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview">
-            {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              <GlassCard>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Users className="w-6 h-6 text-primary" />
+              {[
+                { label: "المستخدمون", value: stats?.users_count || 0, icon: Users, color: "bg-primary/10 text-primary" },
+                { label: "العروض النشطة", value: stats?.active_offers || 0, icon: Package, color: "bg-green-100 text-green-600" },
+                { label: "الرسائل", value: stats?.messages_count || 0, icon: MessageCircle, color: "bg-blue-100 text-blue-600" },
+                { label: "البلاغات المعلقة", value: stats?.pending_reports || 0, icon: AlertTriangle, color: "bg-red-100 text-red-600" },
+              ].map((stat, idx) => (
+                <GlassCard key={idx} hover={false}>
+                  <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${stat.color}`}>
+                      <stat.icon className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{stat.value}</p>
+                      <p className="text-sm text-muted-foreground">{stat.label}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold">{stats?.users_count || 0}</p>
-                    <p className="text-sm text-muted-foreground">مستخدم</p>
-                  </div>
-                </div>
-              </GlassCard>
-              <GlassCard>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                    <Package className="w-6 h-6 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{stats?.active_offers || 0}</p>
-                    <p className="text-sm text-muted-foreground">عرض نشط</p>
-                  </div>
-                </div>
-              </GlassCard>
-              <GlassCard>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <MessageCircle className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{stats?.messages_count || 0}</p>
-                    <p className="text-sm text-muted-foreground">رسالة</p>
-                  </div>
-                </div>
-              </GlassCard>
-              <GlassCard>
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                    <AlertTriangle className="w-6 h-6 text-red-600" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{stats?.pending_reports || 0}</p>
-                    <p className="text-sm text-muted-foreground">بلاغ معلق</p>
-                  </div>
-                </div>
-              </GlassCard>
+                </GlassCard>
+              ))}
             </div>
 
-            {/* Charts */}
             <div className="grid md:grid-cols-2 gap-6">
-              <GlassCard>
+              <GlassCard hover={false}>
                 <h3 className="font-bold mb-4">العروض حسب الفئة</h3>
                 <div className="space-y-3">
                   {Object.entries(stats?.by_category || {}).map(([cat, count]) => (
                     <div key={cat} className="flex items-center gap-3">
-                      <div className="flex-1 bg-purple-100 rounded-full h-3">
-                        <div
-                          className="bg-primary h-3 rounded-full"
-                          style={{ width: `${(count / Math.max(...Object.values(stats?.by_category || { a: 1 }))) * 100}%` }}
-                        />
+                      <div className="flex-1">
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>{cat}</span>
+                          <span>{count}</span>
+                        </div>
+                        <Progress value={(count / Math.max(...Object.values(stats?.by_category || {1:1}))) * 100} className="h-2" />
                       </div>
-                      <span className="text-sm font-medium w-24">{cat}</span>
-                      <span className="text-sm text-muted-foreground">{count}</span>
                     </div>
                   ))}
                 </div>
               </GlassCard>
 
-              <GlassCard>
+              <GlassCard hover={false}>
                 <h3 className="font-bold mb-4">العروض حسب المحافظة</h3>
                 <div className="space-y-3">
                   {Object.entries(stats?.by_governorate || {}).slice(0, 7).map(([gov, count]) => (
                     <div key={gov} className="flex items-center gap-3">
-                      <div className="flex-1 bg-indigo-100 rounded-full h-3">
-                        <div
-                          className="bg-indigo-500 h-3 rounded-full"
-                          style={{ width: `${(count / Math.max(...Object.values(stats?.by_governorate || { a: 1 }))) * 100}%` }}
-                        />
+                      <div className="flex-1">
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>{gov}</span>
+                          <span>{count}</span>
+                        </div>
+                        <Progress value={(count / Math.max(...Object.values(stats?.by_governorate || {1:1}))) * 100} className="h-2" />
                       </div>
-                      <span className="text-sm font-medium w-24">{gov}</span>
-                      <span className="text-sm text-muted-foreground">{count}</span>
                     </div>
                   ))}
                 </div>
@@ -2161,364 +1869,48 @@ const AdminDashboard = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="users">
-            <AdminUsersTab />
-          </TabsContent>
-
-          <TabsContent value="offers">
-            <AdminOffersTab />
-          </TabsContent>
-
-          <TabsContent value="reports">
-            <AdminReportsTab />
-          </TabsContent>
+          <TabsContent value="users"><div className="text-center py-12 text-muted-foreground">إدارة المستخدمين</div></TabsContent>
+          <TabsContent value="offers"><div className="text-center py-12 text-muted-foreground">إدارة العروض</div></TabsContent>
+          <TabsContent value="reports"><div className="text-center py-12 text-muted-foreground">إدارة البلاغات</div></TabsContent>
+          <TabsContent value="blog"><div className="text-center py-12 text-muted-foreground">إدارة المدونة</div></TabsContent>
+          <TabsContent value="pages"><div className="text-center py-12 text-muted-foreground">بناء الصفحات</div></TabsContent>
+          <TabsContent value="settings"><div className="text-center py-12 text-muted-foreground">إعدادات الموقع</div></TabsContent>
         </Tabs>
       </div>
     </div>
   );
 };
 
-// Admin Users Tab
-const AdminUsersTab = () => {
-  const { api } = useAuth();
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
-    try {
-      const res = await api.get("/admin/users");
-      setUsers(res.data);
-    } catch (e) {
-      toast.error("فشل تحميل المستخدمين");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateTrust = async (userId, score) => {
-    try {
-      await api.put(`/admin/users/${userId}/trust?trust_score=${score}`);
-      setUsers(users.map(u => u.id === userId ? { ...u, trust_score: score } : u));
-      toast.success("تم تحديث مؤشر الثقة");
-    } catch (e) {
-      toast.error("فشل التحديث");
-    }
-  };
-
-  if (loading) return <Skeleton className="h-96 rounded-3xl" />;
-
-  return (
-    <GlassCard>
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-purple-100">
-              <th className="text-right p-4">المستخدم</th>
-              <th className="text-right p-4">البريد</th>
-              <th className="text-right p-4">المحافظة</th>
-              <th className="text-right p-4">مؤشر الثقة</th>
-              <th className="text-right p-4">المقايضات</th>
-              <th className="text-right p-4">الإجراءات</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr key={user.id} className="border-b border-purple-50 hover:bg-purple-50/50" data-testid={`user-row-${user.id}`}>
-                <td className="p-4">
-                  <div className="flex items-center gap-3">
-                    <Avatar>
-                      <AvatarFallback className="bg-primary text-white">{user.name?.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="font-medium">{user.name}</p>
-                      {user.is_admin && <Badge className="bg-primary">أدمن</Badge>}
-                    </div>
-                  </div>
-                </td>
-                <td className="p-4 text-muted-foreground">{user.email}</td>
-                <td className="p-4">{user.governorate}</td>
-                <td className="p-4">
-                  <div className="flex items-center gap-2">
-                    <TrustBadge score={user.trust_score} />
-                    <span className="text-sm text-muted-foreground">{user.trust_score}</span>
-                  </div>
-                </td>
-                <td className="p-4">{user.trades_count}</td>
-                <td className="p-4">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <Settings className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem onClick={() => updateTrust(user.id, Math.min(100, user.trust_score + 10))}>
-                        زيادة الثقة +10
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => updateTrust(user.id, Math.max(0, user.trust_score - 10))}>
-                        إنقاص الثقة -10
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </GlassCard>
-  );
-};
-
-// Admin Offers Tab
-const AdminOffersTab = () => {
-  const { api } = useAuth();
-  const [offers, setOffers] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchOffers();
-  }, []);
-
-  const fetchOffers = async () => {
-    try {
-      const res = await api.get("/admin/offers");
-      setOffers(res.data);
-    } catch (e) {
-      toast.error("فشل تحميل العروض");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateStatus = async (offerId, status) => {
-    try {
-      await api.put(`/admin/offers/${offerId}/status?status=${status}`);
-      setOffers(offers.map(o => o.id === offerId ? { ...o, status } : o));
-      toast.success("تم تحديث الحالة");
-    } catch (e) {
-      toast.error("فشل التحديث");
-    }
-  };
-
-  if (loading) return <Skeleton className="h-96 rounded-3xl" />;
-
-  return (
-    <GlassCard>
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-purple-100">
-              <th className="text-right p-4">العرض</th>
-              <th className="text-right p-4">المالك</th>
-              <th className="text-right p-4">الفئة</th>
-              <th className="text-right p-4">المحافظة</th>
-              <th className="text-right p-4">الحالة</th>
-              <th className="text-right p-4">المشاهدات</th>
-              <th className="text-right p-4">الإجراءات</th>
-            </tr>
-          </thead>
-          <tbody>
-            {offers.map((offer) => (
-              <tr key={offer.id} className="border-b border-purple-50 hover:bg-purple-50/50" data-testid={`offer-row-${offer.id}`}>
-                <td className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-purple-100 rounded-xl overflow-hidden">
-                      {offer.images?.[0] ? (
-                        <img src={offer.images[0]} className="w-full h-full object-cover" alt="" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Package className="w-6 h-6 text-purple-300" />
-                        </div>
-                      )}
-                    </div>
-                    <span className="font-medium">{offer.title}</span>
-                  </div>
-                </td>
-                <td className="p-4">{offer.user_name}</td>
-                <td className="p-4">{offer.category}</td>
-                <td className="p-4">{offer.governorate}</td>
-                <td className="p-4">
-                  <Badge className={offer.status === "active" ? "bg-green-500" : "bg-gray-500"}>
-                    {offer.status === "active" ? "نشط" : "معلق"}
-                  </Badge>
-                </td>
-                <td className="p-4">{offer.views}</td>
-                <td className="p-4">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <Settings className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem onClick={() => updateStatus(offer.id, "active")}>
-                        تفعيل
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => updateStatus(offer.id, "suspended")}>
-                        تعليق
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </GlassCard>
-  );
-};
-
-// Admin Reports Tab
-const AdminReportsTab = () => {
-  const { api } = useAuth();
-  const [reports, setReports] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchReports();
-  }, []);
-
-  const fetchReports = async () => {
-    try {
-      const res = await api.get("/admin/reports");
-      setReports(res.data);
-    } catch (e) {
-      toast.error("فشل تحميل البلاغات");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateStatus = async (reportId, status) => {
-    try {
-      await api.put(`/admin/reports/${reportId}?status=${status}`);
-      setReports(reports.map(r => r.id === reportId ? { ...r, status } : r));
-      toast.success("تم تحديث الحالة");
-    } catch (e) {
-      toast.error("فشل التحديث");
-    }
-  };
-
-  if (loading) return <Skeleton className="h-96 rounded-3xl" />;
-
-  return (
-    <GlassCard>
-      {reports.length === 0 ? (
-        <div className="text-center py-12">
-          <Check className="w-16 h-16 mx-auto mb-4 text-green-500" />
-          <p className="text-xl font-semibold">لا توجد بلاغات معلقة</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {reports.map((report) => (
-            <div key={report.id} className="p-4 border border-purple-100 rounded-2xl" data-testid={`report-${report.id}`}>
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <Badge className={
-                    report.status === "pending" ? "bg-yellow-500" :
-                    report.status === "resolved" ? "bg-green-500" : "bg-gray-500"
-                  }>
-                    {report.status === "pending" ? "معلق" : report.status === "resolved" ? "تم الحل" : "مرفوض"}
-                  </Badge>
-                  <p className="font-bold mt-2">{report.reason}</p>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {new Date(report.created_at).toLocaleDateString("ar-SY")}
-                </p>
-              </div>
-              <p className="text-muted-foreground mb-3">{report.details}</p>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => updateStatus(report.id, "resolved")} className="rounded-xl">
-                  <Check className="w-4 h-4 ml-1" />
-                  تم الحل
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => updateStatus(report.id, "rejected")} className="rounded-xl">
-                  رفض
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </GlassCard>
-  );
-};
-
 // Main App
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <div className="min-h-screen bg-background font-tajawal">
-          <Toaster position="top-center" richColors closeButton dir="rtl" />
-          <Navbar />
-          <main className="pt-4 md:pt-8">
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/browse" element={<BrowsePage />} />
-              <Route path="/offer/:id" element={<OfferDetailPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route
-                path="/add-offer"
-                element={
-                  <ProtectedRoute>
-                    <AddOfferPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/messages"
-                element={
-                  <ProtectedRoute>
-                    <MessagesPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/profile"
-                element={
-                  <ProtectedRoute>
-                    <ProfilePage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/my-offers"
-                element={
-                  <ProtectedRoute>
-                    <MyOffersPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/favorites"
-                element={
-                  <ProtectedRoute>
-                    <FavoritesPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute adminOnly>
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </main>
-        </div>
-      </BrowserRouter>
-    </AuthProvider>
+    <SettingsProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <div className="min-h-screen bg-background font-tajawal">
+            <Toaster position="top-center" richColors closeButton dir="rtl" />
+            <Navbar />
+            <main className="pt-4 md:pt-8">
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/browse" element={<BrowsePage />} />
+                <Route path="/offer/:id" element={<OfferDetailPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/blog" element={<BlogPage />} />
+                <Route path="/add-offer" element={<ProtectedRoute><AddOfferPage /></ProtectedRoute>} />
+                <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
+                <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+                <Route path="/my-offers" element={<ProtectedRoute><MyOffersPage /></ProtectedRoute>} />
+                <Route path="/favorites" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
+                <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </main>
+          </div>
+        </BrowserRouter>
+      </AuthProvider>
+    </SettingsProvider>
   );
 }
 
