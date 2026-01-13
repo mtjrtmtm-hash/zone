@@ -1612,6 +1612,21 @@ const MyOffersPage = () => {
     }
   };
 
+  const updateOfferStatus = async (id, status) => {
+    try {
+      await api.put(`/offers/${id}/status?status=${status}`);
+      setOffers(offers.map(o => o.id === id ? { ...o, status } : o));
+      const statusMessages = {
+        "completed": "تم تحديد العرض كمكتمل",
+        "cancelled": "تم إلغاء العرض",
+        "active": "تم تفعيل العرض"
+      };
+      toast.success(statusMessages[status]);
+    } catch (e) {
+      toast.error("فشل تحديث حالة العرض");
+    }
+  };
+
   return (
     <div className="min-h-screen pb-24 md:pb-8 px-4 py-8">
       <div className="max-w-5xl mx-auto">
