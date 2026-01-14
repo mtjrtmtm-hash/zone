@@ -1,2 +1,3 @@
-2026/01/14-20:59:38.715 693 Creating DB /app/whatsapp-service/.wwebjs_auth/session/Default/shared_proto_db/metadata since it was missing.
-2026/01/14-20:59:38.723 693 Reusing MANIFEST /app/whatsapp-service/.wwebjs_auth/session/Default/shared_proto_db/metadata/MANIFEST-000001
+2026/01/14-21:01:41.733 8a9 Reusing MANIFEST /app/whatsapp-service/.wwebjs_auth/session/Default/shared_proto_db/metadata/MANIFEST-000001
+2026/01/14-21:01:41.734 8a9 Recovering log #3
+2026/01/14-21:01:41.734 8a9 Reusing old log /app/whatsapp-service/.wwebjs_auth/session/Default/shared_proto_db/metadata/000003.log 
