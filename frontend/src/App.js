@@ -797,7 +797,20 @@ const BrowsePage = () => {
             </div>
             <Select value={filters.category} onValueChange={(v) => setFilters({ ...filters, category: v })}>
               <SelectTrigger className="w-48 rounded-xl bg-white/50"><SelectValue placeholder="الفئة" /></SelectTrigger>
-              <SelectContent><SelectItem value="all">جميع الفئات</SelectItem>{CATEGORIES.map((cat) => <SelectItem key={cat.name} value={cat.name}>{cat.icon} {cat.name}</SelectItem>)}</SelectContent>
+              <SelectContent>
+                <SelectItem value="all">جميع الفئات</SelectItem>
+                {CATEGORIES.map((cat) => {
+                  const IconComponent = cat.icon;
+                  return (
+                    <SelectItem key={cat.name} value={cat.name}>
+                      <div className="flex items-center gap-2">
+                        <IconComponent className="w-4 h-4" strokeWidth={1.5} />
+                        <span>{cat.name}</span>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
             </Select>
             <Select value={filters.governorate} onValueChange={(v) => setFilters({ ...filters, governorate: v })}>
               <SelectTrigger className="w-48 rounded-xl bg-white/50"><SelectValue placeholder="المحافظة" /></SelectTrigger>
