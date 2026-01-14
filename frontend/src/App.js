@@ -173,7 +173,7 @@ const Navbar = () => {
     try {
       const token = JSON.parse(localStorage.getItem("badal_token") || "null");
       if (!token) return;
-      await axios.put(`${API}/notifications/mark-all-read`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      await axios.put(`${API}/notifications/read-all`, {}, { headers: { Authorization: `Bearer ${token}` } });
       fetchUnreadCounts();
       setNotifications(notifications.map(n => ({ ...n, is_read: true })));
     } catch (e) { console.error(e); }
