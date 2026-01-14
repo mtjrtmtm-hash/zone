@@ -37,10 +37,10 @@ const API = `${BACKEND_URL}/api`;
 
 const GOVERNORATES = ["دمشق", "ريف دمشق", "حلب", "حمص", "حماة", "اللاذقية", "طرطوس", "إدلب", "الرقة", "دير الزور", "الحسكة", "درعا", "السويداء", "القنيطرة"];
 const CATEGORIES = [
-  { name: "إلكترونيات", icon: "💻" }, { name: "أثاث", icon: "🛋️" }, { name: "سيارات", icon: "🚗" },
-  { name: "عقارات", icon: "🏠" }, { name: "ملابس", icon: "👔" }, { name: "كتب", icon: "📚" },
-  { name: "خدمات", icon: "🔧" }, { name: "أجهزة منزلية", icon: "🏡" }, { name: "رياضة", icon: "⚽" },
-  { name: "أطفال", icon: "🧸" }, { name: "حيوانات", icon: "🐕" }, { name: "طاقة شمسية", icon: "☀️" }, { name: "أخرى", icon: "📦" }
+  { name: "إلكترونيات", icon: Laptop }, { name: "أثاث", icon: Sofa }, { name: "سيارات", icon: Car },
+  { name: "عقارات", icon: Building2 }, { name: "ملابس", icon: Shirt }, { name: "كتب", icon: Book },
+  { name: "خدمات", icon: Wrench }, { name: "أجهزة منزلية", icon: Home }, { name: "رياضة", icon: Dumbbell },
+  { name: "أطفال", icon: Baby }, { name: "حيوانات", icon: Dog }, { name: "طاقة شمسية", icon: Sun }, { name: "أخرى", icon: Box }
 ];
 
 const AuthContext = createContext(null);
