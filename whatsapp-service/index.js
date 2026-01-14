@@ -1,23 +1,28 @@
 /**
- * WhatsApp Web Service
- * خدمة WhatsApp Web الحقيقية باستخدام whatsapp-web.js
+ * WhatsApp Service using Baileys
+ * خدمة WhatsApp باستخدام مكتبة Baileys الأكثر استقراراً
  */
 
-const { Client, LocalAuth } = require('whatsapp-web.js');
-const qrcode = require('qrcode');
+const { default: makeWASocket, DisconnectReason, useMultiFileAuthState } = require('@whiskeysockets/baileys');
+const pino = require('pino');
+const qrcode = require('qrcode-terminal');
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// مسار حفظ الجلسة
+const AUTH_FOLDER = '/app/whatsapp-service/auth_info';
 
 // حالة الخدمة
 let serviceStatus = {
     isReady: false,
     isAuthenticated: false,
     qrCode: null,
-    qrCodeBase64: null,
     connectedNumber: null,
     lastError: null
 };
@@ -25,131 +30,99 @@ let serviceStatus = {
 // OTP Storage
 const otpStorage = new Map();
 
-// إنشاء عميل WhatsApp
-const client = new Client({
-    authStrategy: new LocalAuth({
-        dataPath: '/app/whatsapp-service/.wwebjs_auth'
-    }),
-    puppeteer: {
-        headless: true,
-        executablePath: '/opt/chrome-linux/chrome',
-        args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-accelerated-2d-canvas',
-            '--no-first-run',
-            '--no-zygote',
-            '--disable-gpu',
-            '--single-process'
-        ]
-    }
-});
+// متغير للـ socket
+let sock = null;
 
-// عند توليد QR Code
-client.on('qr', async (qr) => {
-    console.log('📱 QR Code generated - scan with WhatsApp');
-    serviceStatus.qrCode = qr;
-    serviceStatus.isAuthenticated = false;
-    
+// دالة توليد OTP
+function generateOTP() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// دالة بدء الاتصال
+async function connectWhatsApp() {
     try {
-        // تحويل QR إلى صورة base64
-        const qrBase64 = await qrcode.toDataURL(qr, {
-            width: 300,
-            margin: 2,
-            color: {
-                dark: '#000000',
-                light: '#ffffff'
+        // استخدام الجلسة المحفوظة إن وجدت
+        const { state, saveCreds } = await useMultiFileAuthState(AUTH_FOLDER);
+        
+        sock = makeWASocket({
+            auth: state,
+            printQRInTerminal: true,
+            logger: pino({ level: 'silent' }),
+            browser: ['Badel Platform', 'Chrome', '120.0.0']
+        });
+
+        // حفظ بيانات المصادقة
+        sock.ev.on('creds.update', saveCreds);
+
+        // معالجة تحديثات الاتصال
+        sock.ev.on('connection.update', async (update) => {
+            const { connection, lastDisconnect, qr } = update;
+            
+            if (qr) {
+                console.log('📱 QR Code generated');
+                serviceStatus.qrCode = qr;
+                serviceStatus.isAuthenticated = false;
+                serviceStatus.isReady = false;
+                
+                // طباعة QR في الـ terminal
+                qrcode.generate(qr, { small: true });
+            }
+            
+            if (connection === 'close') {
+                const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+                console.log('❌ Connection closed, reconnecting:', shouldReconnect);
+                
+                serviceStatus.isReady = false;
+                serviceStatus.isAuthenticated = false;
+                serviceStatus.lastError = lastDisconnect?.error?.message || 'Connection closed';
+                
+                if (shouldReconnect) {
+                    setTimeout(connectWhatsApp, 3000);
+                } else {
+                    // حذف بيانات الجلسة إذا تم تسجيل الخروج
+                    if (fs.existsSync(AUTH_FOLDER)) {
+                        fs.rmSync(AUTH_FOLDER, { recursive: true });
+                    }
+                    serviceStatus.qrCode = null;
+                    serviceStatus.connectedNumber = null;
+                }
+            }
+            
+            if (connection === 'open') {
+                console.log('✅ WhatsApp connected!');
+                serviceStatus.isReady = true;
+                serviceStatus.isAuthenticated = true;
+                serviceStatus.qrCode = null;
+                serviceStatus.lastError = null;
+                
+                // الحصول على رقم الهاتف
+                if (sock.user) {
+                    serviceStatus.connectedNumber = sock.user.id.split(':')[0];
+                    console.log(`📞 Connected number: ${serviceStatus.connectedNumber}`);
+                }
             }
         });
-        serviceStatus.qrCodeBase64 = qrBase64;
-        console.log('✅ QR Code ready for display');
+
+        // معالجة الرسائل الواردة (اختياري)
+        sock.ev.on('messages.upsert', async ({ messages }) => {
+            // يمكن إضافة معالجة للرسائل الواردة هنا
+        });
+
     } catch (err) {
-        console.error('❌ Error generating QR image:', err);
+        console.error('❌ Failed to connect:', err);
         serviceStatus.lastError = err.message;
+        setTimeout(connectWhatsApp, 5000);
     }
-});
-
-// عند نجاح المصادقة
-client.on('authenticated', async () => {
-    console.log('✅ WhatsApp authenticated successfully');
-    serviceStatus.isAuthenticated = true;
-    serviceStatus.qrCode = null;
-    serviceStatus.qrCodeBase64 = null;
-    
-    // انتظر قليلاً ثم حاول الحصول على المعلومات
-    setTimeout(async () => {
-        try {
-            if (client.info && client.info.wid) {
-                serviceStatus.isReady = true;
-                serviceStatus.connectedNumber = client.info.wid.user;
-                console.log(`📞 Connected number (from auth): ${client.info.wid.user}`);
-            }
-        } catch (err) {
-            console.log('⚠️ Could not get client info after auth:', err.message);
-        }
-    }, 3000);
-});
-
-// عند جاهزية العميل
-client.on('ready', async () => {
-    console.log('✅ WhatsApp client is ready!');
-    serviceStatus.isReady = true;
-    serviceStatus.isAuthenticated = true;
-    
-    try {
-        const info = client.info;
-        if (info && info.wid) {
-            serviceStatus.connectedNumber = info.wid.user;
-            console.log(`📞 Connected number: ${info.wid.user}`);
-        }
-    } catch (err) {
-        console.error('Error getting client info:', err);
-    }
-});
-
-// عند فشل المصادقة
-client.on('auth_failure', (msg) => {
-    console.error('❌ Authentication failed:', msg);
-    serviceStatus.isAuthenticated = false;
-    serviceStatus.lastError = msg;
-});
-
-// عند قطع الاتصال
-client.on('disconnected', (reason) => {
-    console.log('❌ WhatsApp disconnected:', reason);
-    serviceStatus.isReady = false;
-    serviceStatus.isAuthenticated = false;
-    serviceStatus.connectedNumber = null;
-    
-    // إعادة التهيئة
-    setTimeout(() => {
-        console.log('🔄 Reinitializing client...');
-        client.initialize();
-    }, 5000);
-});
+}
 
 // ==================== API ENDPOINTS ====================
 
-// الحصول على حالة الخدمة
-app.get('/status', async (req, res) => {
-    // محاولة الحصول على الرقم إذا كان مفقوداً
-    if (serviceStatus.isAuthenticated && !serviceStatus.connectedNumber) {
-        try {
-            if (client.info && client.info.wid) {
-                serviceStatus.connectedNumber = client.info.wid.user;
-                serviceStatus.isReady = true;
-            }
-        } catch (e) {}
-    }
-    
-    // اعتبار الاتصال ناجحاً إذا تمت المصادقة
-    const isConnected = serviceStatus.isAuthenticated;
-    
+// حالة الخدمة
+app.get('/status', (req, res) => {
     res.json({
-        connected: isConnected,
+        connected: serviceStatus.isReady && serviceStatus.isAuthenticated,
         authenticated: serviceStatus.isAuthenticated,
-        hasQR: serviceStatus.qrCodeBase64 !== null,
+        hasQR: serviceStatus.qrCode !== null,
         connectedNumber: serviceStatus.connectedNumber,
         lastError: serviceStatus.lastError
     });
@@ -157,7 +130,7 @@ app.get('/status', async (req, res) => {
 
 // الحصول على QR Code
 app.get('/qr', (req, res) => {
-    if (serviceStatus.isAuthenticated) {
+    if (serviceStatus.isReady && serviceStatus.isAuthenticated) {
         return res.json({
             status: 'authenticated',
             message: 'WhatsApp متصل بالفعل',
@@ -165,10 +138,10 @@ app.get('/qr', (req, res) => {
         });
     }
     
-    if (serviceStatus.qrCodeBase64) {
+    if (serviceStatus.qrCode) {
         return res.json({
             status: 'pending',
-            qr_code: serviceStatus.qrCodeBase64,
+            qr_code: serviceStatus.qrCode,
             message: 'امسح الكود من WhatsApp على جوالك'
         });
     }
@@ -179,9 +152,31 @@ app.get('/qr', (req, res) => {
     });
 });
 
-// توليد QR جديد (إعادة تهيئة)
+// توليد QR جديد
 app.post('/generate-qr', async (req, res) => {
-    try {
+    if (serviceStatus.isReady && serviceStatus.isAuthenticated) {
+        return res.json({
+            status: 'already_connected',
+            message: 'WhatsApp متصل بالفعل',
+            connectedNumber: serviceStatus.connectedNumber
+        });
+    }
+    
+    // إعادة الاتصال للحصول على QR جديد
+    if (!serviceStatus.qrCode) {
+        // حذف الجلسة القديمة
+        if (fs.existsSync(AUTH_FOLDER)) {
+            fs.rmSync(AUTH_FOLDER, { recursive: true });
+        }
+        connectWhatsApp();
+    }
+    
+    // انتظر حتى يتم توليد QR
+    let attempts = 0;
+    while (!serviceStatus.qrCode && attempts < 30) {
+        await new Promise(r => setTimeout(r, 1000));
+        attempts++;
+        
         if (serviceStatus.isAuthenticated) {
             return res.json({
                 status: 'already_connected',
@@ -189,59 +184,47 @@ app.post('/generate-qr', async (req, res) => {
                 connectedNumber: serviceStatus.connectedNumber
             });
         }
-        
-        // إذا لم يكن هناك QR، أعد تهيئة العميل
-        if (!serviceStatus.qrCodeBase64) {
-            console.log('🔄 Reinitializing for new QR...');
-            await client.initialize();
-        }
-        
-        // انتظر حتى يتم توليد QR
-        let attempts = 0;
-        while (!serviceStatus.qrCodeBase64 && attempts < 30) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            attempts++;
-        }
-        
-        if (serviceStatus.qrCodeBase64) {
-            return res.json({
-                status: 'success',
-                qr_code: serviceStatus.qrCodeBase64,
-                message: 'امسح الكود من WhatsApp على جوالك'
-            });
-        }
-        
-        return res.status(500).json({
-            status: 'error',
-            message: 'فشل توليد QR Code'
-        });
-        
-    } catch (err) {
-        console.error('Error generating QR:', err);
-        return res.status(500).json({
-            status: 'error',
-            message: err.message
+    }
+    
+    if (serviceStatus.qrCode) {
+        return res.json({
+            status: 'success',
+            qr_code: serviceStatus.qrCode,
+            message: 'امسح الكود من WhatsApp على جوالك'
         });
     }
+    
+    return res.status(500).json({
+        status: 'error',
+        message: 'فشل توليد QR Code'
+    });
 });
 
 // قطع الاتصال
 app.post('/disconnect', async (req, res) => {
     try {
-        if (serviceStatus.isReady) {
-            await client.logout();
+        if (sock) {
+            await sock.logout();
+        }
+        
+        // حذف بيانات الجلسة
+        if (fs.existsSync(AUTH_FOLDER)) {
+            fs.rmSync(AUTH_FOLDER, { recursive: true });
         }
         
         serviceStatus.isReady = false;
         serviceStatus.isAuthenticated = false;
         serviceStatus.connectedNumber = null;
         serviceStatus.qrCode = null;
-        serviceStatus.qrCodeBase64 = null;
         
         res.json({
             status: 'disconnected',
             message: 'تم قطع الاتصال بنجاح'
         });
+        
+        // إعادة الاتصال للحصول على QR جديد
+        setTimeout(connectWhatsApp, 2000);
+        
     } catch (err) {
         console.error('Error disconnecting:', err);
         res.status(500).json({
@@ -251,12 +234,7 @@ app.post('/disconnect', async (req, res) => {
     }
 });
 
-// توليد OTP
-function generateOTP() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-// إرسال رسالة OTP
+// إرسال OTP
 app.post('/send-otp', async (req, res) => {
     try {
         const { phone } = req.body;
@@ -268,52 +246,34 @@ app.post('/send-otp', async (req, res) => {
             });
         }
         
-        // التحقق من المصادقة فقط
-        if (!serviceStatus.isAuthenticated) {
+        if (!serviceStatus.isReady || !sock) {
             return res.status(503).json({
                 status: 'error',
                 message: 'خدمة WhatsApp غير متصلة'
             });
         }
         
-        // تنظيف رقم الهاتف - إزالة كل شيء عدا الأرقام
+        // تنظيف الرقم
         let cleanPhone = phone.replace(/[^0-9]/g, '');
+        if (cleanPhone.startsWith('00')) cleanPhone = cleanPhone.substring(2);
+        else if (cleanPhone.startsWith('0')) cleanPhone = cleanPhone.substring(1);
         
-        // إذا بدأ بـ 00 نزيلها
-        if (cleanPhone.startsWith('00')) {
-            cleanPhone = cleanPhone.substring(2);
-        }
-        // إذا بدأ بـ 0 فقط نزيلها
-        else if (cleanPhone.startsWith('0')) {
-            cleanPhone = cleanPhone.substring(1);
-        }
+        console.log(`📱 Sending OTP to: ${cleanPhone}`);
         
-        console.log(`📱 Attempting to send OTP to: ${cleanPhone}`);
-        
-        const chatId = `${cleanPhone}@c.us`;
-        
-        // التحقق من أن الرقم مسجل في WhatsApp
-        try {
-            const isRegistered = await client.isRegisteredUser(chatId);
-            if (!isRegistered) {
-                console.log(`❌ Number ${cleanPhone} is not registered on WhatsApp`);
-                return res.status(400).json({
-                    status: 'error',
-                    message: 'هذا الرقم غير مسجل في WhatsApp'
-                });
-            }
-        } catch (checkErr) {
-            console.log(`⚠️ Could not verify if number is registered: ${checkErr.message}`);
+        // التحقق من تسجيل الرقم
+        const [result] = await sock.onWhatsApp(cleanPhone);
+        if (!result?.exists) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'هذا الرقم غير مسجل في WhatsApp'
+            });
         }
         
         // توليد OTP
         const otp = generateOTP();
-        const expiresAt = Date.now() + (10 * 60 * 1000); // 10 دقائق
-        
-        // حفظ OTP
         otpStorage.set(cleanPhone, {
             code: otp,
-            expiresAt: expiresAt,
+            expiresAt: Date.now() + (10 * 60 * 1000),
             attempts: 0
         });
         
@@ -328,45 +288,22 @@ app.post('/send-otp', async (req, res) => {
 
 شكراً لاستخدام بدل 🇸🇾`;
         
-        // إرسال الرسالة باستخدام getNumberId بدلاً من sendMessage مباشرة
-        console.log(`📤 Sending message to ${chatId}...`);
+        // إرسال الرسالة
+        const jid = result.jid;
+        await sock.sendMessage(jid, { text: message });
         
-        try {
-            // الحصول على chat object
-            const numberId = await client.getNumberId(cleanPhone);
-            if (numberId) {
-                const sentMsg = await client.sendMessage(numberId._serialized, message);
-                console.log(`✅ OTP sent successfully to ${cleanPhone}: ${otp}`);
-                return res.json({
-                    status: 'sent',
-                    message: 'تم إرسال كود التحقق بنجاح'
-                });
-            }
-        } catch (innerErr) {
-            console.log(`⚠️ First method failed, trying alternative: ${innerErr.message}`);
-        }
+        console.log(`✅ OTP sent to ${cleanPhone}: ${otp}`);
         
-        // طريقة بديلة - إرسال مباشر
-        try {
-            const sentMsg = await client.sendMessage(chatId, message);
-            if (sentMsg) {
-                console.log(`✅ OTP sent successfully (alt) to ${cleanPhone}: ${otp}`);
-                return res.json({
-                    status: 'sent',
-                    message: 'تم إرسال كود التحقق بنجاح'
-                });
-            }
-        } catch (altErr) {
-            console.error(`❌ Alternative method also failed: ${altErr.message}`);
-        }
-        
-        throw new Error('Failed to send message with both methods');
+        res.json({
+            status: 'sent',
+            message: 'تم إرسال كود التحقق بنجاح'
+        });
         
     } catch (err) {
-        console.error('❌ Error sending OTP:', err.message);
+        console.error('❌ Error sending OTP:', err);
         res.status(500).json({
             status: 'error',
-            message: 'فشل إرسال الرسالة. تأكد من أن الرقم صحيح ومسجل في WhatsApp'
+            message: 'فشل إرسال الرسالة: ' + err.message
         });
     }
 });
@@ -384,9 +321,8 @@ app.post('/verify-otp', (req, res) => {
         }
         
         let cleanPhone = phone.replace(/[^0-9]/g, '');
-        if (cleanPhone.startsWith('0')) {
-            cleanPhone = cleanPhone.substring(1);
-        }
+        if (cleanPhone.startsWith('00')) cleanPhone = cleanPhone.substring(2);
+        else if (cleanPhone.startsWith('0')) cleanPhone = cleanPhone.substring(1);
         
         const otpData = otpStorage.get(cleanPhone);
         
@@ -397,7 +333,6 @@ app.post('/verify-otp', (req, res) => {
             });
         }
         
-        // التحقق من انتهاء الصلاحية
         if (Date.now() > otpData.expiresAt) {
             otpStorage.delete(cleanPhone);
             return res.status(400).json({
@@ -406,7 +341,6 @@ app.post('/verify-otp', (req, res) => {
             });
         }
         
-        // التحقق من عدد المحاولات
         if (otpData.attempts >= 3) {
             otpStorage.delete(cleanPhone);
             return res.status(400).json({
@@ -415,7 +349,6 @@ app.post('/verify-otp', (req, res) => {
             });
         }
         
-        // التحقق من الكود
         if (otpData.code === code) {
             otpStorage.delete(cleanPhone);
             return res.json({
@@ -424,9 +357,7 @@ app.post('/verify-otp', (req, res) => {
             });
         }
         
-        // زيادة عدد المحاولات
         otpData.attempts++;
-        
         return res.status(400).json({
             status: 'error',
             message: 'كود غير صحيح',
@@ -434,7 +365,6 @@ app.post('/verify-otp', (req, res) => {
         });
         
     } catch (err) {
-        console.error('Error verifying OTP:', err);
         res.status(500).json({
             status: 'error',
             message: err.message
@@ -442,74 +372,7 @@ app.post('/verify-otp', (req, res) => {
     }
 });
 
-// إعادة إرسال OTP
-app.post('/resend-otp', async (req, res) => {
-    try {
-        const { phone } = req.body;
-        
-        // حذف OTP القديم إن وجد
-        let cleanPhone = phone.replace(/[^0-9]/g, '');
-        if (cleanPhone.startsWith('0')) {
-            cleanPhone = cleanPhone.substring(1);
-        }
-        otpStorage.delete(cleanPhone);
-        
-        // إعادة التوجيه لإرسال OTP جديد
-        req.body.phone = phone;
-        return app._router.handle(req, res, () => {});
-        
-    } catch (err) {
-        res.status(500).json({
-            status: 'error',
-            message: err.message
-        });
-    }
-});
-
-// إرسال رسالة عامة
-app.post('/send-message', async (req, res) => {
-    try {
-        const { phone, message } = req.body;
-        
-        if (!phone || !message) {
-            return res.status(400).json({
-                status: 'error',
-                message: 'رقم الهاتف والرسالة مطلوبان'
-            });
-        }
-        
-        if (!serviceStatus.isReady || !serviceStatus.isAuthenticated) {
-            return res.status(503).json({
-                status: 'error',
-                message: 'خدمة WhatsApp غير متصلة'
-            });
-        }
-        
-        let cleanPhone = phone.replace(/[^0-9]/g, '');
-        const chatId = `${cleanPhone}@c.us`;
-        
-        await client.sendMessage(chatId, message);
-        
-        res.json({
-            status: 'sent',
-            message: 'تم إرسال الرسالة بنجاح'
-        });
-        
-    } catch (err) {
-        console.error('Error sending message:', err);
-        res.status(500).json({
-            status: 'error',
-            message: err.message
-        });
-    }
-});
-
-// Health check
-app.get('/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-// اختبار إرسال رسالة (للأدمن)
+// اختبار إرسال رسالة
 app.post('/test-send', async (req, res) => {
     try {
         const { phone, message } = req.body;
@@ -521,31 +384,24 @@ app.post('/test-send', async (req, res) => {
             });
         }
         
-        // التحقق من المصادقة فقط (بدون isReady)
-        if (!serviceStatus.isAuthenticated) {
+        if (!serviceStatus.isReady || !sock) {
             return res.status(503).json({
                 status: 'error',
-                message: 'خدمة WhatsApp غير متصلة - يرجى مسح QR Code',
+                message: 'خدمة WhatsApp غير متصلة',
                 details: serviceStatus
             });
         }
         
-        // تنظيف رقم الهاتف
+        // تنظيف الرقم
         let cleanPhone = phone.replace(/[^0-9]/g, '');
-        if (cleanPhone.startsWith('00')) {
-            cleanPhone = cleanPhone.substring(2);
-        } else if (cleanPhone.startsWith('0')) {
-            cleanPhone = cleanPhone.substring(1);
-        }
-        
-        const testMessage = message || `🔔 رسالة اختبار من منصة بدل\n\nالوقت: ${new Date().toLocaleString('ar-SY')}`;
+        if (cleanPhone.startsWith('00')) cleanPhone = cleanPhone.substring(2);
+        else if (cleanPhone.startsWith('0')) cleanPhone = cleanPhone.substring(1);
         
         console.log(`📤 Test sending to ${cleanPhone}...`);
         
         // التحقق من تسجيل الرقم
-        const numberId = await client.getNumberId(cleanPhone);
-        
-        if (!numberId) {
+        const [result] = await sock.onWhatsApp(cleanPhone);
+        if (!result?.exists) {
             return res.status(400).json({
                 status: 'error',
                 message: 'هذا الرقم غير مسجل في WhatsApp',
@@ -553,28 +409,21 @@ app.post('/test-send', async (req, res) => {
             });
         }
         
-        console.log(`📱 Number ID: ${numberId._serialized}`);
+        const testMessage = message || `🔔 رسالة اختبار من منصة بدل\n\nالوقت: ${new Date().toLocaleString('ar-SY')}`;
         
         // إرسال الرسالة
-        const sentMsg = await client.sendMessage(numberId._serialized, testMessage);
+        await sock.sendMessage(result.jid, { text: testMessage });
         
         console.log(`✅ Test message sent to ${cleanPhone}`);
-        
-        // تحديث الحالة
-        serviceStatus.isReady = true;
-        if (client.info && client.info.wid) {
-            serviceStatus.connectedNumber = client.info.wid.user;
-        }
         
         res.json({
             status: 'sent',
             message: 'تم إرسال رسالة الاختبار بنجاح! تحقق من WhatsApp',
-            to: cleanPhone,
-            messageId: sentMsg?.id?._serialized || 'sent'
+            to: cleanPhone
         });
         
     } catch (err) {
-        console.error('❌ Test send error:', err.message);
+        console.error('❌ Test send error:', err);
         res.status(500).json({
             status: 'error',
             message: 'فشل إرسال الرسالة: ' + err.message
@@ -582,16 +431,16 @@ app.post('/test-send', async (req, res) => {
     }
 });
 
+// Health check
+app.get('/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // بدء الخادم
 const PORT = process.env.WHATSAPP_SERVICE_PORT || 8002;
 
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 WhatsApp Service running on port ${PORT}`);
-    
-    // تهيئة عميل WhatsApp
-    console.log('🔄 Initializing WhatsApp client...');
-    client.initialize().catch(err => {
-        console.error('❌ Failed to initialize WhatsApp client:', err);
-        serviceStatus.lastError = err.message;
-    });
+    console.log(`🚀 WhatsApp Service (Baileys) running on port ${PORT}`);
+    console.log('🔄 Initializing WhatsApp connection...');
+    connectWhatsApp();
 });
