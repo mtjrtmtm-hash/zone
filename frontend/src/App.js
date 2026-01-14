@@ -2794,121 +2794,130 @@ const DynamicPage = () => {
     );
   }
 
+  // استخدام blocks بدلاً من content
+  const components = page.blocks || [];
+
   return (
     <div className="min-h-screen pb-24 md:pb-8">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <h1 className="text-4xl font-bold mb-8 text-center">{page.title}</h1>
         
-        <div className="space-y-8">
-          {page.content && page.content.map((component, index) => {
-            switch (component.type) {
-              case 'hero':
-                return (
-                  <motion.div 
-                    key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="relative h-[400px] rounded-3xl overflow-hidden"
-                  >
-                    {component.data.image && (
-                      <img src={component.data.image} alt={component.data.title} className="w-full h-full object-cover" />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end">
-                      <div className="p-8 text-white">
-                        <h2 className="text-4xl font-bold mb-3">{component.data.title}</h2>
-                        <p className="text-lg opacity-90">{component.data.subtitle}</p>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-
-              case 'text':
-                return (
-                  <motion.div 
-                    key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <GlassCard>
-                      <h3 className="text-2xl font-bold mb-4">{component.data.title}</h3>
-                      <p className="text-lg leading-relaxed whitespace-pre-wrap">{component.data.content}</p>
-                    </GlassCard>
-                  </motion.div>
-                );
-
-              case 'banner':
-                return (
-                  <motion.div 
-                    key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <GlassCard className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-center py-12">
-                      <h3 className="text-3xl font-bold mb-4">{component.data.title}</h3>
-                      <p className="text-xl mb-6 opacity-90">{component.data.content}</p>
-                      {component.data.button_text && (
-                        <Button 
-                          className="bg-white text-purple-600 hover:bg-white/90"
-                          onClick={() => window.location.href = component.data.button_link || '#'}
-                        >
-                          {component.data.button_text}
-                        </Button>
+        {components.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">لا يوجد محتوى في هذه الصفحة بعد</p>
+          </div>
+        ) : (
+          <div className="space-y-8">
+            {components.map((component, index) => {
+              switch (component.type) {
+                case 'hero':
+                  return (
+                    <motion.div 
+                      key={index}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="relative h-[400px] rounded-3xl overflow-hidden"
+                    >
+                      {component.data.image && (
+                        <img src={component.data.image} alt={component.data.title} className="w-full h-full object-cover" />
                       )}
-                    </GlassCard>
-                  </motion.div>
-                );
-
-              case 'contact':
-                return (
-                  <motion.div 
-                    key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <GlassCard>
-                      <h3 className="text-2xl font-bold mb-6 text-center">{component.data.title}</h3>
-                      <div className="grid md:grid-cols-3 gap-6">
-                        {component.data.email && (
-                          <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-xl">
-                            <Mail className="w-6 h-6 text-primary" />
-                            <div>
-                              <p className="text-sm text-muted-foreground">البريد الإلكتروني</p>
-                              <p className="font-medium">{component.data.email}</p>
-                            </div>
-                          </div>
-                        )}
-                        {component.data.phone && (
-                          <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-xl">
-                            <Phone className="w-6 h-6 text-primary" />
-                            <div>
-                              <p className="text-sm text-muted-foreground">الهاتف</p>
-                              <p className="font-medium">{component.data.phone}</p>
-                            </div>
-                          </div>
-                        )}
-                        {component.data.address && (
-                          <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-xl">
-                            <MapPin className="w-6 h-6 text-primary" />
-                            <div>
-                              <p className="text-sm text-muted-foreground">العنوان</p>
-                              <p className="font-medium">{component.data.address}</p>
-                            </div>
-                          </div>
-                        )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end">
+                        <div className="p-8 text-white">
+                          <h2 className="text-4xl font-bold mb-3">{component.data.title}</h2>
+                          {component.data.subtitle && <p className="text-lg opacity-90">{component.data.subtitle}</p>}
+                        </div>
                       </div>
-                    </GlassCard>
-                  </motion.div>
-                );
+                    </motion.div>
+                  );
 
-              default:
-                return null;
-            }
-          })}
-        </div>
+                case 'text':
+                  return (
+                    <motion.div 
+                      key={index}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <GlassCard>
+                        <h3 className="text-2xl font-bold mb-4">{component.data.title}</h3>
+                        <p className="text-lg leading-relaxed whitespace-pre-wrap">{component.data.content}</p>
+                      </GlassCard>
+                    </motion.div>
+                  );
+
+                case 'banner':
+                  return (
+                    <motion.div 
+                      key={index}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <GlassCard className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-center py-12">
+                        <h3 className="text-3xl font-bold mb-4">{component.data.title}</h3>
+                        <p className="text-xl mb-6 opacity-90">{component.data.content}</p>
+                        {component.data.button_text && (
+                          <Button 
+                            className="bg-white text-purple-600 hover:bg-white/90"
+                            onClick={() => window.location.href = component.data.button_link || '#'}
+                          >
+                            {component.data.button_text}
+                          </Button>
+                        )}
+                      </GlassCard>
+                    </motion.div>
+                  );
+
+                case 'contact':
+                  return (
+                    <motion.div 
+                      key={index}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <GlassCard>
+                        <h3 className="text-2xl font-bold mb-6 text-center">{component.data.title}</h3>
+                        <div className="grid md:grid-cols-3 gap-6">
+                          {component.data.email && (
+                            <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-xl">
+                              <Mail className="w-6 h-6 text-primary" />
+                              <div>
+                                <p className="text-sm text-muted-foreground">البريد الإلكتروني</p>
+                                <p className="font-medium">{component.data.email}</p>
+                              </div>
+                            </div>
+                          )}
+                          {component.data.phone && (
+                            <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-xl">
+                              <Phone className="w-6 h-6 text-primary" />
+                              <div>
+                                <p className="text-sm text-muted-foreground">الهاتف</p>
+                                <p className="font-medium">{component.data.phone}</p>
+                              </div>
+                            </div>
+                          )}
+                          {component.data.address && (
+                            <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-xl">
+                              <MapPin className="w-6 h-6 text-primary" />
+                              <div>
+                                <p className="text-sm text-muted-foreground">العنوان</p>
+                                <p className="font-medium">{component.data.address}</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </GlassCard>
+                    </motion.div>
+                  );
+
+                default:
+                  return null;
+              }
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
