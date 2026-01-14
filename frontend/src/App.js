@@ -154,12 +154,17 @@ const Navbar = () => {
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [desktopMenuOpen, setDesktopMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Close menu on route change
+  useEffect(() => { setMobileMenuOpen(false); setDesktopMenuOpen(false); }, [location.pathname]);
 
   const fetchNotifications = async () => {
     try {
@@ -192,10 +197,31 @@ const Navbar = () => {
     } catch (e) { console.error(e); }
   };
 
+  // Default menu items
+  const defaultMenuItems = [
+    { id: "home", label: "الرئيسية", link: "/", icon: "home" },
+    { id: "browse", label: "تصفح العروض", link: "/browse", icon: "search" },
+    { id: "blog", label: "المدونة", link: "/blog", icon: "book" },
+  ];
+
+  // Get menu items from settings or use defaults
+  const menuItems = (settings?.menu_items && settings.menu_items.length > 0) 
+    ? settings.menu_items.filter(item => item.is_visible).sort((a, b) => a.order - b.order)
+    : defaultMenuItems;
+
+  const getMenuIcon = (iconName) => {
+    const icons = {
+      home: HomeIcon, search: Search, book: BookOpen, heart: Heart, user: User,
+      mail: Mail, phone: Phone, star: Star, package: Package, settings: Settings,
+      globe: Globe, calendar: Calendar, award: Award, zap: Zap, map: MapPin
+    };
+    const IconComponent = icons[iconName] || Globe;
+    return <IconComponent className="w-5 h-5" />;
+  };
+
   const guestNavItems = [
     { path: "/", icon: HomeIcon, label: "الرئيسية" },
     { path: "/browse", icon: Search, label: "تصفح" },
-    { path: "/blog", icon: BookOpen, label: "المدونة" },
   ];
 
   const userNavItems = [
@@ -209,18 +235,93 @@ const Navbar = () => {
 
   return (
     <>
+      {/* Desktop Navbar */}
       <nav className={`hidden md:block sticky top-4 mx-auto max-w-7xl z-50 mt-4 transition-all duration-300 ${scrolled ? 'bg-white/95 backdrop-blur-xl shadow-lg' : 'bg-white/80 backdrop-blur-xl'} border border-white/40 rounded-full px-6 py-3`}>
         <div className="flex justify-between items-center">
-          <Link to="/" className="flex items-center gap-3 group">
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-10 h-10 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/25 overflow-hidden">
-              {settings?.site_logo ? (
-                <img src={settings.site_logo} alt={settings.site_name || "بدل"} className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-white font-bold text-xl">ب</span>
-              )}
-            </motion.div>
-            <span className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">{settings?.site_name || "بدل"}</span>
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link to="/" className="flex items-center gap-3 group">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-10 h-10 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/25 overflow-hidden">
+                {settings?.site_logo ? (
+                  <img src={settings.site_logo} alt={settings.site_name || "بدل"} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-white font-bold text-xl">ب</span>
+                )}
+              </motion.div>
+              <span className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">{settings?.site_name || "بدل"}</span>
+            </Link>
+
+            {/* Desktop Menu Button */}
+            <div className="relative">
+              <Button
+                variant="ghost"
+                onClick={() => setDesktopMenuOpen(!desktopMenuOpen)}
+                className="rounded-full px-4 py-2 hover:bg-purple-50 flex items-center gap-2"
+              >
+                <Menu className="w-5 h-5" />
+                <span className="font-medium">القائمة</span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${desktopMenuOpen ? 'rotate-180' : ''}`} />
+              </Button>
+
+              <AnimatePresence>
+                {desktopMenuOpen && (
+                  <>
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="fixed inset-0 z-40"
+                      onClick={() => setDesktopMenuOpen(false)}
+                    />
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute top-full right-0 mt-2 w-64 bg-white/95 backdrop-blur-xl rounded-2xl shadow-xl border border-purple-100 overflow-hidden z-50"
+                    >
+                      <div className="p-2">
+                        {menuItems.map((item, idx) => (
+                          <motion.div
+                            key={item.id}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: idx * 0.05 }}
+                          >
+                            {item.link.startsWith('http') ? (
+                              <a
+                                href={item.link}
+                                target={item.open_in_new_tab ? "_blank" : "_self"}
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-purple-50 transition-colors group"
+                                onClick={() => setDesktopMenuOpen(false)}
+                              >
+                                <span className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+                                  {getMenuIcon(item.icon)}
+                                </span>
+                                <span className="font-medium">{item.label}</span>
+                                {item.open_in_new_tab && <ExternalLink className="w-4 h-4 text-muted-foreground mr-auto" />}
+                              </a>
+                            ) : (
+                              <Link
+                                to={item.link}
+                                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === item.link ? 'bg-primary text-white' : 'hover:bg-purple-50'}`}
+                                onClick={() => setDesktopMenuOpen(false)}
+                              >
+                                <span className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${location.pathname === item.link ? 'bg-white/20' : 'bg-purple-100 group-hover:bg-primary group-hover:text-white'}`}>
+                                  {getMenuIcon(item.icon)}
+                                </span>
+                                <span className="font-medium">{item.label}</span>
+                              </Link>
+                            )}
+                          </motion.div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
+          </div>
 
           <div className="flex items-center gap-2">
             {navItems.map((item) => (
@@ -305,6 +406,7 @@ const Navbar = () => {
         </div>
       </nav>
 
+      {/* Mobile Bottom Navigation */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-purple-100 z-50 pb-safe">
         <div className="flex items-center justify-around h-16">
           {(user ? [
@@ -312,11 +414,11 @@ const Navbar = () => {
             { path: "/browse", icon: Search, label: "تصفح" },
             { path: "/add-offer", icon: Plus, label: "أضف", highlight: true },
             { path: "/messages", icon: MessageCircle, label: "الرسائل", badge: unreadMessages },
-            { path: "/profile", icon: User, label: "حسابي" },
+            { action: () => setMobileMenuOpen(true), icon: Menu, label: "القائمة", isMenu: true },
           ] : [
             { path: "/", icon: HomeIcon, label: "الرئيسية" },
             { path: "/browse", icon: Search, label: "تصفح" },
-            { path: "/blog", icon: BookOpen, label: "المدونة" },
+            { action: () => setMobileMenuOpen(true), icon: Menu, label: "القائمة", isMenu: true },
             { path: "/login", icon: User, label: "دخول" },
           ]).map((item) => (
             <Link key={item.path} to={item.path}
