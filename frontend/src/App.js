@@ -4126,6 +4126,7 @@ function App() {
           <div className="min-h-screen bg-background font-tajawal">
             <Toaster position="top-center" richColors closeButton dir="rtl" />
             <Navbar />
+            <VerificationBanner />
             <main className="pt-4 md:pt-8">
               <Routes>
                 <Route path="/" element={<HomePage />} />
