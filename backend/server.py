@@ -1213,14 +1213,14 @@ from whatsapp_service import whatsapp_service
 import phonenumbers
 
 @api_router.get("/whatsapp/status")
-async def get_whatsapp_status(user=Depends(get_current_admin_user)):
+async def get_whatsapp_status(user=Depends(get_admin_user)):
     """
     الحصول على حالة WhatsApp (Admin فقط)
     """
     return whatsapp_service.get_status()
 
 @api_router.post("/whatsapp/generate-qr")
-async def generate_whatsapp_qr(user=Depends(get_current_admin_user)):
+async def generate_whatsapp_qr(user=Depends(get_admin_user)):
     """
     توليد QR Code لربط WhatsApp (Admin فقط)
     """
@@ -1231,7 +1231,7 @@ async def generate_whatsapp_qr(user=Depends(get_current_admin_user)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.post("/whatsapp/connect")
-async def connect_whatsapp(session_id: str, user=Depends(get_current_admin_user)):
+async def connect_whatsapp(session_id: str, user=Depends(get_admin_user)):
     """
     محاكاة الاتصال بـ WhatsApp (Admin فقط)
     """
@@ -1244,7 +1244,7 @@ async def connect_whatsapp(session_id: str, user=Depends(get_current_admin_user)
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.post("/whatsapp/disconnect")
-async def disconnect_whatsapp(user=Depends(get_current_admin_user)):
+async def disconnect_whatsapp(user=Depends(get_admin_user)):
     """
     قطع اتصال WhatsApp (Admin فقط)
     """
