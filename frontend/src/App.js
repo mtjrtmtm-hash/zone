@@ -2733,6 +2733,7 @@ const AdminDashboard = () => {
           <TabsContent value="reports"><AdminReports /></TabsContent>
           <TabsContent value="blog"><AdminBlog /></TabsContent>
           <TabsContent value="pages"><AdminPages /></TabsContent>
+          <TabsContent value="whatsapp"><AdminWhatsApp /></TabsContent>
           <TabsContent value="settings"><AdminSettings /></TabsContent>
         </Tabs>
       </div>
