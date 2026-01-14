@@ -272,6 +272,20 @@ async def get_admin_user(current_user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="غير مصرح")
     return current_user
 
+async def get_verified_user(current_user: dict = Depends(get_current_user)):
+    """التحقق من أن المستخدم محقق - الأدمن مستثنى"""
+    # الأدمن مستثنى من شرط التحقق
+    if current_user.get("is_admin", False):
+        return current_user
+    
+    # التحقق من حالة التحقق
+    if not current_user.get("verified", False):
+        raise HTTPException(
+            status_code=403, 
+            detail="يجب التحقق من حسابك أولاً. تحقق من رسائل WhatsApp للحصول على كود التحقق"
+        )
+    return current_user
+
 async def get_optional_user(credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False))):
     """Get user if authenticated, otherwise return None"""
     if not credentials:
