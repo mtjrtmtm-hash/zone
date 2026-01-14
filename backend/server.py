@@ -437,7 +437,7 @@ async def update_profile(
 # ==================== OFFERS ENDPOINTS ====================
 
 @api_router.post("/offers", response_model=OfferResponse)
-async def create_offer(offer_data: OfferCreate, current_user: dict = Depends(get_current_user)):
+async def create_offer(offer_data: OfferCreate, current_user: dict = Depends(get_verified_user)):
     offer_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
     
@@ -605,7 +605,7 @@ async def check_favorite(offer_id: str, current_user: dict = Depends(get_current
 # ==================== MESSAGES ENDPOINTS ====================
 
 @api_router.post("/messages", response_model=MessageResponse)
-async def send_message(msg_data: MessageCreate, current_user: dict = Depends(get_current_user)):
+async def send_message(msg_data: MessageCreate, current_user: dict = Depends(get_verified_user)):
     msg_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
     
@@ -762,7 +762,7 @@ async def mark_all_notifications_read(current_user: dict = Depends(get_current_u
 # ==================== REPORTS ENDPOINTS ====================
 
 @api_router.post("/reports")
-async def create_report(report_data: ReportCreate, current_user: dict = Depends(get_current_user)):
+async def create_report(report_data: ReportCreate, current_user: dict = Depends(get_verified_user)):
     report_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
     
