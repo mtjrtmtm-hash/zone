@@ -2723,6 +2723,7 @@ const AdminDashboard = () => {
             <TabsTrigger value="reports" className="rounded-full"><AlertTriangle className="w-4 h-4 ml-2" />البلاغات</TabsTrigger>
             <TabsTrigger value="blog" className="rounded-full"><BookOpen className="w-4 h-4 ml-2" />المدونة</TabsTrigger>
             <TabsTrigger value="pages" className="rounded-full"><Layers className="w-4 h-4 ml-2" />الصفحات</TabsTrigger>
+            <TabsTrigger value="whatsapp" className="rounded-full"><MessageCircle className="w-4 h-4 ml-2" />WhatsApp</TabsTrigger>
             <TabsTrigger value="settings" className="rounded-full"><Settings className="w-4 h-4 ml-2" />الإعدادات</TabsTrigger>
           </TabsList>
 
