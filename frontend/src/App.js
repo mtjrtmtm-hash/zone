@@ -209,8 +209,12 @@ const Navbar = () => {
       <nav className={`hidden md:block sticky top-4 mx-auto max-w-7xl z-50 mt-4 transition-all duration-300 ${scrolled ? 'bg-white/95 backdrop-blur-xl shadow-lg' : 'bg-white/80 backdrop-blur-xl'} border border-white/40 rounded-full px-6 py-3`}>
         <div className="flex justify-between items-center">
           <Link to="/" className="flex items-center gap-3 group">
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-10 h-10 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/25">
-              <span className="text-white font-bold text-xl">ب</span>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-10 h-10 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/25 overflow-hidden">
+              {settings?.site_logo ? (
+                <img src={settings.site_logo} alt={settings.site_name || "بدل"} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-white font-bold text-xl">ب</span>
+              )}
             </motion.div>
             <span className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">{settings?.site_name || "بدل"}</span>
           </Link>
