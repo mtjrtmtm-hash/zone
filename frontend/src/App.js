@@ -2208,10 +2208,32 @@ const AdminSettings = () => {
     contact_email: "",
     contact_phone: "",
     footer_text: "",
-    primary_color: "#8b5cf6"
+    primary_color: "#8b5cf6",
+    menu_items: []
   });
   const [loading, setLoading] = useState(false);
   const [logoPreview, setLogoPreview] = useState("");
+  const [showMenuDialog, setShowMenuDialog] = useState(false);
+  const [editingMenuItem, setEditingMenuItem] = useState(null);
+  const [menuForm, setMenuForm] = useState({ id: "", label: "", link: "", icon: "globe", is_visible: true, order: 0, open_in_new_tab: false });
+
+  const MENU_ICONS = [
+    { value: "home", label: "🏠 الرئيسية" },
+    { value: "search", label: "🔍 بحث" },
+    { value: "book", label: "📖 كتاب" },
+    { value: "heart", label: "❤️ قلب" },
+    { value: "user", label: "👤 مستخدم" },
+    { value: "mail", label: "✉️ بريد" },
+    { value: "phone", label: "📞 هاتف" },
+    { value: "star", label: "⭐ نجمة" },
+    { value: "package", label: "📦 طرد" },
+    { value: "settings", label: "⚙️ إعدادات" },
+    { value: "globe", label: "🌐 عالم" },
+    { value: "calendar", label: "📅 تقويم" },
+    { value: "award", label: "🏆 جائزة" },
+    { value: "zap", label: "⚡ برق" },
+    { value: "map", label: "📍 موقع" },
+  ];
 
   useEffect(() => {
     if (settings) {
@@ -2221,7 +2243,8 @@ const AdminSettings = () => {
         contact_email: settings.contact_email || "",
         contact_phone: settings.contact_phone || "",
         footer_text: settings.footer_text || "",
-        primary_color: settings.primary_color || "#8b5cf6"
+        primary_color: settings.primary_color || "#8b5cf6",
+        menu_items: settings.menu_items || []
       });
       setLogoPreview(settings.site_logo || "");
     }
@@ -2244,6 +2267,48 @@ const AdminSettings = () => {
     try { await api.put("/settings", form); toast.success("تم حفظ الإعدادات"); refreshSettings(); }
     catch (e) { toast.error("فشل الحفظ"); }
     finally { setLoading(false); }
+  };
+
+  // Menu Management Functions
+  const openAddMenu = () => {
+    setEditingMenuItem(null);
+    setMenuForm({ id: `menu_${Date.now()}`, label: "", link: "", icon: "globe", is_visible: true, order: form.menu_items.length, open_in_new_tab: false });
+    setShowMenuDialog(true);
+  };
+
+  const openEditMenu = (item) => {
+    setEditingMenuItem(item);
+    setMenuForm({ ...item });
+    setShowMenuDialog(true);
+  };
+
+  const saveMenuItem = () => {
+    if (!menuForm.label || !menuForm.link) { toast.error("يرجى ملء جميع الحقول"); return; }
+    
+    if (editingMenuItem) {
+      setForm({ ...form, menu_items: form.menu_items.map(item => item.id === editingMenuItem.id ? menuForm : item) });
+    } else {
+      setForm({ ...form, menu_items: [...form.menu_items, menuForm] });
+    }
+    setShowMenuDialog(false);
+    toast.success(editingMenuItem ? "تم تحديث العنصر" : "تم إضافة العنصر");
+  };
+
+  const deleteMenuItem = (itemId) => {
+    setForm({ ...form, menu_items: form.menu_items.filter(item => item.id !== itemId) });
+    toast.success("تم حذف العنصر");
+  };
+
+  const moveMenuItem = (itemId, direction) => {
+    const idx = form.menu_items.findIndex(item => item.id === itemId);
+    if ((direction === -1 && idx === 0) || (direction === 1 && idx === form.menu_items.length - 1)) return;
+    const newItems = [...form.menu_items];
+    [newItems[idx], newItems[idx + direction]] = [newItems[idx + direction], newItems[idx]];
+    setForm({ ...form, menu_items: newItems.map((item, i) => ({ ...item, order: i })) });
+  };
+
+  const toggleMenuVisibility = (itemId) => {
+    setForm({ ...form, menu_items: form.menu_items.map(item => item.id === itemId ? { ...item, is_visible: !item.is_visible } : item) });
   };
 
   return (
@@ -2288,6 +2353,47 @@ const AdminSettings = () => {
         </div>
       </GlassCard>
 
+      {/* Menu Management Section */}
+      <GlassCard hover={false}>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="font-bold flex items-center gap-2"><Menu className="w-5 h-5" />إدارة القائمة الرئيسية</h3>
+          <Button onClick={openAddMenu} size="sm" className="rounded-xl"><PlusCircle className="w-4 h-4 ml-2" />إضافة عنصر</Button>
+        </div>
+        <p className="text-sm text-muted-foreground mb-4">خصّص عناصر القائمة الرئيسية التي تظهر في الموقع على جميع الأجهزة</p>
+        
+        {form.menu_items.length === 0 ? (
+          <div className="text-center py-8 border-2 border-dashed border-purple-200 rounded-xl">
+            <Menu className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-50" />
+            <p className="text-muted-foreground">لم تتم إضافة عناصر للقائمة بعد</p>
+            <p className="text-sm text-muted-foreground mt-1">سيتم استخدام القائمة الافتراضية</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {form.menu_items.sort((a, b) => a.order - b.order).map((item, idx) => (
+              <div key={item.id} className={`flex items-center gap-3 p-3 rounded-xl border ${item.is_visible ? 'border-purple-100 bg-purple-50/50' : 'border-gray-200 bg-gray-50 opacity-60'}`}>
+                <div className="flex flex-col gap-1">
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => moveMenuItem(item.id, -1)} disabled={idx === 0}><ChevronRight className="w-4 h-4" /></Button>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => moveMenuItem(item.id, 1)} disabled={idx === form.menu_items.length - 1}><ChevronLeft className="w-4 h-4" /></Button>
+                </div>
+                <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                  <span className="text-lg">{MENU_ICONS.find(i => i.value === item.icon)?.label.split(' ')[0] || '🌐'}</span>
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium">{item.label}</p>
+                  <p className="text-xs text-muted-foreground" dir="ltr">{item.link}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  {item.open_in_new_tab && <Badge variant="outline" className="text-xs"><ExternalLink className="w-3 h-3 ml-1" />تبويب جديد</Badge>}
+                  <Switch checked={item.is_visible} onCheckedChange={() => toggleMenuVisibility(item.id)} />
+                  <Button variant="ghost" size="icon" onClick={() => openEditMenu(item)}><Edit className="w-4 h-4" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => deleteMenuItem(item.id)} className="text-destructive hover:text-destructive"><Trash2 className="w-4 h-4" /></Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </GlassCard>
+
       <GlassCard hover={false}>
         <h3 className="font-bold mb-4 flex items-center gap-2"><Palette className="w-5 h-5" />الألوان</h3>
         <div className="flex items-center gap-4">
@@ -2300,6 +2406,52 @@ const AdminSettings = () => {
       <Button onClick={saveSettings} disabled={loading} className="rounded-xl w-full h-12">
         {loading ? <Loader2 className="w-5 h-5 animate-spin ml-2" /> : <Save className="w-5 h-5 ml-2" />}حفظ الإعدادات
       </Button>
+
+      {/* Menu Item Dialog */}
+      <Dialog open={showMenuDialog} onOpenChange={setShowMenuDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingMenuItem ? "تعديل عنصر القائمة" : "إضافة عنصر جديد"}</DialogTitle>
+            <DialogDescription>أضف رابطاً جديداً للقائمة الرئيسية</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>اسم العنصر</Label>
+              <Input value={menuForm.label} onChange={(e) => setMenuForm({ ...menuForm, label: e.target.value })} className="mt-2 rounded-xl" placeholder="مثال: من نحن" />
+            </div>
+            <div>
+              <Label>الرابط</Label>
+              <Input value={menuForm.link} onChange={(e) => setMenuForm({ ...menuForm, link: e.target.value })} className="mt-2 rounded-xl" placeholder="/about أو https://..." dir="ltr" />
+              <p className="text-xs text-muted-foreground mt-1">استخدم / للصفحات الداخلية أو رابط كامل للخارجية</p>
+            </div>
+            <div>
+              <Label>الأيقونة</Label>
+              <Select value={menuForm.icon} onValueChange={(v) => setMenuForm({ ...menuForm, icon: v })}>
+                <SelectTrigger className="mt-2 rounded-xl"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {MENU_ICONS.map(icon => (
+                    <SelectItem key={icon.value} value={icon.value}>{icon.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Switch checked={menuForm.is_visible} onCheckedChange={(v) => setMenuForm({ ...menuForm, is_visible: v })} />
+                <Label>ظاهر</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={menuForm.open_in_new_tab} onCheckedChange={(v) => setMenuForm({ ...menuForm, open_in_new_tab: v })} />
+                <Label>فتح في تبويب جديد</Label>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowMenuDialog(false)} className="rounded-xl">إلغاء</Button>
+            <Button onClick={saveMenuItem} className="rounded-xl">{editingMenuItem ? "حفظ التعديلات" : "إضافة"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
