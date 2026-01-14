@@ -332,11 +332,13 @@ async def register(user_data: UserCreate):
     
     await db.users.insert_one(user_doc)
     
-    # إرسال OTP تلقائياً
+    # إرسال OTP تلقائياً عبر خدمة WhatsApp
+    otp_sent = False
     try:
         if whatsapp_service.is_connected:
-            code = whatsapp_service.generate_otp(full_phone)
-            await whatsapp_service.send_otp(full_phone, code)
+            otp_sent = await whatsapp_service.send_otp(full_phone)
+            if otp_sent:
+                logger.info(f"OTP sent successfully to {full_phone}")
     except Exception as e:
         logger.error(f"Failed to send OTP: {e}")
     
