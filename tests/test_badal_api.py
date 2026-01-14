@@ -165,13 +165,15 @@ class TestPages:
         print(f"✓ Got {len(data)} pages")
     
     def test_create_page(self, admin_token):
-        # Create a test page
+        # Create a test page with unique slug
+        import time
+        unique_slug = f"test-page-api-{int(time.time())}"
         response = requests.post(
             f"{BASE_URL}/api/pages",
             headers={"Authorization": f"Bearer {admin_token}"},
             json={
                 "title": "TEST_صفحة اختبار",
-                "slug": "test-page-api",
+                "slug": unique_slug,
                 "is_published": False,
                 "components": []
             }
@@ -180,7 +182,6 @@ class TestPages:
         data = response.json()
         assert "id" in data
         print(f"✓ Created page with id: {data['id']}")
-        return data["id"]
     
     def test_update_page(self, admin_token):
         # First create a page
