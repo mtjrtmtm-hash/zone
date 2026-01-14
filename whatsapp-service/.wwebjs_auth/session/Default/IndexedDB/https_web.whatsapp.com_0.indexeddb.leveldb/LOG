@@ -266,3 +266,7 @@
 2026/01/14-20:59:40.687 685 compacted to: files[ 0 0 1 0 0 0 0 ]
 2026/01/14-20:59:40.687 685 Delete type=2 #70
 2026/01/14-20:59:40.688 685 Manual compaction at level-1 from '\x00\x1c\x00\x00\x05' @ 1484 : 0 .. '\x00\x1d\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/01/14-21:00:40.692 687 Level-0 table #73: started
+2026/01/14-21:00:40.713 687 Level-0 table #73: 1017900 bytes OK
+2026/01/14-21:00:40.715 687 Delete type=2 #68
+2026/01/14-21:00:40.715 687 Delete type=0 #69

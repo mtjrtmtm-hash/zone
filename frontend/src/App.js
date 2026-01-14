@@ -2728,6 +2728,103 @@ const BlogPage = () => {
   );
 };
 
+// Test Message Section Component
+const TestMessageSection = ({ api }) => {
+  const [testPhone, setTestPhone] = useState("");
+  const [testMessage, setTestMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState(null);
+
+  const sendTestMessage = async () => {
+    if (!testPhone) {
+      toast.error("أدخل رقم الهاتف");
+      return;
+    }
+    
+    setSending(true);
+    setResult(null);
+    
+    try {
+      const res = await fetch("http://localhost:8002/test-send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: testPhone, message: testMessage || undefined })
+      });
+      
+      const data = await res.json();
+      
+      if (data.status === "sent") {
+        toast.success("تم إرسال الرسالة بنجاح! ✅");
+        setResult({ success: true, message: data.message });
+      } else {
+        toast.error(data.message || "فشل الإرسال");
+        setResult({ success: false, message: data.message });
+      }
+    } catch (e) {
+      toast.error("فشل الاتصال بالخدمة");
+      setResult({ success: false, message: e.message });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        اختبر إرسال رسالة للتأكد من أن WhatsApp يعمل بشكل صحيح
+      </p>
+      
+      <div className="grid gap-4">
+        <div>
+          <label className="text-sm font-medium mb-1 block">رقم الهاتف (مع كود الدولة)</label>
+          <Input
+            value={testPhone}
+            onChange={(e) => setTestPhone(e.target.value)}
+            placeholder="963955123456"
+            dir="ltr"
+            className="font-mono"
+          />
+          <p className="text-xs text-muted-foreground mt-1">مثال: 963955123456 (بدون + أو 00)</p>
+        </div>
+        
+        <div>
+          <label className="text-sm font-medium mb-1 block">الرسالة (اختياري)</label>
+          <Input
+            value={testMessage}
+            onChange={(e) => setTestMessage(e.target.value)}
+            placeholder="رسالة اختبار من منصة بدل"
+          />
+        </div>
+        
+        <Button
+          onClick={sendTestMessage}
+          disabled={sending || !testPhone}
+          className="w-full rounded-xl"
+        >
+          {sending ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin ml-2" />
+              جاري الإرسال...
+            </>
+          ) : (
+            <>
+              <Send className="w-4 h-4 ml-2" />
+              إرسال رسالة اختبار
+            </>
+          )}
+        </Button>
+        
+        {result && (
+          <div className={`p-3 rounded-xl text-sm ${result.success ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+            {result.success ? <CheckCircle className="w-4 h-4 inline ml-1" /> : <XCircle className="w-4 h-4 inline ml-1" />}
+            {result.message}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // Admin WhatsApp Component
 const AdminWhatsApp = () => {
   const { api } = useAuth();
