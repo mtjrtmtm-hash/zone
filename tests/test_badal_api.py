@@ -286,7 +286,7 @@ class TestOffers:
     def test_update_offer(self, admin_token):
         # Get admin's offers
         response = requests.get(
-            f"{BASE_URL}/api/offers/my",
+            f"{BASE_URL}/api/my-offers",
             headers={"Authorization": f"Bearer {admin_token}"}
         )
         offers = response.json()
