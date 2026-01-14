@@ -71,9 +71,9 @@ class UserResponse(BaseModel):
     id: str
     name: str
     email: str
-    phone: str
-    country_code: str
-    governorate: str
+    phone: Optional[str] = ""
+    country_code: Optional[str] = "+963"
+    governorate: Optional[str] = "دمشق"
     is_admin: bool = False
     verified: bool = False  # حالة التحقق
     trust_score: int = 0
