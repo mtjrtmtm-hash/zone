@@ -520,10 +520,11 @@ app.post('/test-send', async (req, res) => {
             });
         }
         
-        if (!serviceStatus.isReady || !serviceStatus.isAuthenticated) {
+        // التحقق من المصادقة فقط (بدون isReady)
+        if (!serviceStatus.isAuthenticated) {
             return res.status(503).json({
                 status: 'error',
-                message: 'خدمة WhatsApp غير متصلة',
+                message: 'خدمة WhatsApp غير متصلة - يرجى مسح QR Code',
                 details: serviceStatus
             });
         }
@@ -557,6 +558,12 @@ app.post('/test-send', async (req, res) => {
         const sentMsg = await client.sendMessage(numberId._serialized, testMessage);
         
         console.log(`✅ Test message sent to ${cleanPhone}`);
+        
+        // تحديث الحالة
+        serviceStatus.isReady = true;
+        if (client.info && client.info.wid) {
+            serviceStatus.connectedNumber = client.info.wid.user;
+        }
         
         res.json({
             status: 'sent',
