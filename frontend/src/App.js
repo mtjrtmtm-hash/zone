@@ -654,13 +654,17 @@ const HomePage = () => {
         <div className="max-w-7xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">تصفح حسب الفئة</h2>
           <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-7 gap-3 md:gap-4">
-            {CATEGORIES.map((cat, idx) => (
-              <motion.div key={cat.name} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.03 }} whileHover={{ scale: 1.05, y: -5 }}>
-                <Link to={`/browse?category=${cat.name}`} className="glass-card flex flex-col items-center justify-center p-4 cursor-pointer text-center">
-                  <span className="text-3xl mb-2">{cat.icon}</span><span className="text-sm font-medium">{cat.name}</span>
-                </Link>
-              </motion.div>
-            ))}
+            {CATEGORIES.map((cat, idx) => {
+              const IconComponent = cat.icon;
+              return (
+                <motion.div key={cat.name} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.03 }} whileHover={{ scale: 1.05, y: -5 }}>
+                  <Link to={`/browse?category=${cat.name}`} className="glass-card flex flex-col items-center justify-center p-4 cursor-pointer text-center">
+                    <IconComponent className="w-8 h-8 mb-2 text-primary" strokeWidth={1.5} />
+                    <span className="text-sm font-medium">{cat.name}</span>
+                  </Link>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
