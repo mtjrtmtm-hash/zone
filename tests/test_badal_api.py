@@ -324,11 +324,10 @@ class TestOffers:
             offer_id = offers[0]["id"]
             current_status = offers[0]["status"]
             
-            # Update status
+            # Update status - status is a query parameter
             response = requests.put(
-                f"{BASE_URL}/api/offers/{offer_id}/status",
-                headers={"Authorization": f"Bearer {admin_token}"},
-                json={"status": current_status}  # Keep same status
+                f"{BASE_URL}/api/offers/{offer_id}/status?status={current_status}",
+                headers={"Authorization": f"Bearer {admin_token}"}
             )
             assert response.status_code == 200
             print("✓ Offer status update working")
