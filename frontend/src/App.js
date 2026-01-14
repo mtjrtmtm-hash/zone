@@ -1715,23 +1715,29 @@ const RegisterPage = () => {
 const VerifyPhonePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { api } = useAuth();
-  const phone = location.state?.phone || "";
+  const { api, user, refreshUser } = useAuth();
+  const phone = location.state?.phone || user?.phone || "";
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
-  const [resending, setResending] = useState(false);
-  const [timer, setTimer] = useState(600); // 10 minutes
+  const [requesting, setRequesting] = useState(false);
+  const [codeRequested, setCodeRequested] = useState(false);
+  const [cooldown, setCooldown] = useState(0); // عداد تنازلي للانتظار
   const inputs = useRef([]);
 
   useEffect(() => {
-    if (!phone) {
+    if (!phone && !user) {
       navigate("/register");
       return;
     }
+  }, [phone, user, navigate]);
 
+  // عداد تنازلي للـ cooldown
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    
     const interval = setInterval(() => {
-      setTimer((prev) => {
-        if (prev <= 0) {
+      setCooldown((prev) => {
+        if (prev <= 1) {
           clearInterval(interval);
           return 0;
         }
@@ -1740,7 +1746,7 @@ const VerifyPhonePage = () => {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [phone, navigate]);
+  }, [cooldown]);
 
   const handleChange = (index, value) => {
     if (!/^\d*$/.test(value)) return;
@@ -1749,7 +1755,6 @@ const VerifyPhonePage = () => {
     newCode[index] = value.slice(-1);
     setCode(newCode);
 
-    // الانتقال للحقل التالي تلقائياً
     if (value && index < 5) {
       inputs.current[index + 1]?.focus();
     }
@@ -1772,6 +1777,42 @@ const VerifyPhonePage = () => {
     inputs.current[Math.min(pastedData.length, 5)]?.focus();
   };
 
+  // طلب إرسال الكود
+  const handleRequestCode = async () => {
+    setRequesting(true);
+    try {
+      // استخراج رقم الهاتف وكود الدولة
+      let phoneNum = phone.replace(/[^0-9]/g, '');
+      let countryCode = "+963";
+      
+      if (phone.startsWith('+')) {
+        countryCode = phone.match(/^\+\d{1,3}/)?.[0] || "+963";
+        phoneNum = phone.replace(countryCode, '');
+      }
+      
+      await api.post("/auth/send-otp", null, {
+        params: { phone: phoneNum, country_code: countryCode }
+      });
+      
+      toast.success("تم إرسال كود التحقق إلى WhatsApp الخاص بك");
+      setCodeRequested(true);
+      setCooldown(120); // 2 دقيقة
+      setCode(["", "", "", "", "", ""]);
+      inputs.current[0]?.focus();
+    } catch (e) {
+      const detail = e.response?.data?.detail || "فشل إرسال الكود";
+      toast.error(detail);
+      
+      // إذا كان الخطأ بسبب الانتظار، نضبط العداد
+      const match = detail.match(/(\d+) ثانية/);
+      if (match) {
+        setCooldown(parseInt(match[1]));
+      }
+    } finally {
+      setRequesting(false);
+    }
+  };
+
   const handleVerify = async () => {
     const otp = code.join("");
     if (otp.length !== 6) {
@@ -1783,6 +1824,7 @@ const VerifyPhonePage = () => {
     try {
       await api.post("/auth/verify-otp", { phone, code: otp });
       toast.success("تم التحقق بنجاح! 🎉");
+      if (refreshUser) await refreshUser();
       navigate("/");
     } catch (e) {
       toast.error(e.response?.data?.detail || "كود غير صحيح");
@@ -1793,27 +1835,11 @@ const VerifyPhonePage = () => {
     }
   };
 
-  const handleResend = async () => {
-    setResending(true);
-    try {
-      const [country_code, ...rest] = phone.split(/(\d+)/);
-      const phoneNum = rest.join("");
-      await api.post("/auth/resend-otp", null, {
-        params: { phone: phoneNum, country_code: country_code || "+963" }
-      });
-      toast.success("تم إعادة إرسال الكود");
-      setTimer(600);
-      setCode(["", "", "", "", "", ""]);
-      inputs.current[0]?.focus();
-    } catch (e) {
-      toast.error("فشل إعادة الإرسال");
-    } finally {
-      setResending(false);
-    }
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
-
-  const minutes = Math.floor(timer / 60);
-  const seconds = timer % 60;
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-8 pb-24 md:pb-8">
@@ -1829,7 +1855,7 @@ const VerifyPhonePage = () => {
           </motion.div>
           <h1 className="text-2xl font-bold mb-2">تحقق من رقم الهاتف</h1>
           <p className="text-muted-foreground mb-4">
-            أرسلنا لك كود التحقق عبر WhatsApp
+            {codeRequested ? "أدخل كود التحقق المرسل إلى WhatsApp" : "اطلب كود التحقق عبر WhatsApp"}
           </p>
           <div className="flex items-center justify-center gap-2 text-sm">
             <Phone className="w-4 h-4 text-primary" />
@@ -1837,17 +1863,113 @@ const VerifyPhonePage = () => {
           </div>
         </div>
 
-        {/* OTP Input */}
-        <div className="mb-8">
-          <Label className="block text-center mb-4">أدخل الكود المكون من 6 أرقام</Label>
-          <div className="flex gap-2 justify-center" dir="ltr">
-            {code.map((digit, index) => (
-              <Input
-                key={index}
-                ref={(el) => (inputs.current[index] = el)}
-                type="text"
-                inputMode="numeric"
-                maxLength={1}
+        {/* زر طلب الكود */}
+        {!codeRequested ? (
+          <div className="text-center mb-6">
+            <Button
+              onClick={handleRequestCode}
+              disabled={requesting || cooldown > 0}
+              className="w-full rounded-xl h-12 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+            >
+              {requesting ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin ml-2" />
+                  جاري الإرسال...
+                </>
+              ) : cooldown > 0 ? (
+                <>
+                  <Clock className="w-5 h-5 ml-2" />
+                  انتظر {formatTime(cooldown)}
+                </>
+              ) : (
+                <>
+                  <Send className="w-5 h-5 ml-2" />
+                  إرسال كود التحقق
+                </>
+              )}
+            </Button>
+            <p className="text-xs text-muted-foreground mt-3">
+              سيتم إرسال كود مكون من 6 أرقام إلى WhatsApp الخاص بك
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* OTP Input */}
+            <div className="mb-6">
+              <Label className="block text-center mb-4">أدخل الكود المكون من 6 أرقام</Label>
+              <div className="flex gap-2 justify-center" dir="ltr">
+                {code.map((digit, index) => (
+                  <Input
+                    key={index}
+                    ref={(el) => (inputs.current[index] = el)}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleChange(index, e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(index, e)}
+                    onPaste={handlePaste}
+                    className="w-12 h-14 text-center text-2xl font-bold rounded-xl"
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* زر التحقق */}
+            <Button
+              onClick={handleVerify}
+              disabled={loading || code.join("").length !== 6}
+              className="w-full rounded-xl h-12 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 mb-4"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin ml-2" />
+                  جاري التحقق...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-5 h-5 ml-2" />
+                  تحقق من الكود
+                </>
+              )}
+            </Button>
+
+            {/* إعادة إرسال الكود */}
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground mb-2">
+                لم يصلك الكود؟
+              </p>
+              <Button
+                variant="ghost"
+                onClick={handleRequestCode}
+                disabled={requesting || cooldown > 0}
+                className="text-primary"
+              >
+                {cooldown > 0 ? (
+                  <>
+                    <Clock className="w-4 h-4 ml-1" />
+                    إعادة الإرسال بعد {formatTime(cooldown)}
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4 ml-1" />
+                    إعادة إرسال الكود
+                  </>
+                )}
+              </Button>
+            </div>
+          </>
+        )}
+
+        <div className="mt-6 pt-6 border-t text-center">
+          <Link to="/" className="text-muted-foreground hover:text-primary text-sm">
+            العودة للصفحة الرئيسية
+          </Link>
+        </div>
+      </GlassCard>
+    </div>
+  );
+};
                 value={digit}
                 onChange={(e) => handleChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
