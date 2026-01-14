@@ -2064,6 +2064,7 @@ function App() {
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/blog" element={<BlogPage />} />
                 <Route path="/add-offer" element={<ProtectedRoute><AddOfferPage /></ProtectedRoute>} />
+                <Route path="/edit-offer/:id" element={<ProtectedRoute><EditOfferPage /></ProtectedRoute>} />
                 <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
                 <Route path="/my-offers" element={<ProtectedRoute><MyOffersPage /></ProtectedRoute>} />
