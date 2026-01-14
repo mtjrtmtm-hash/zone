@@ -102,10 +102,10 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "تحسين صفحة المراسلات لتكون متجاوبة على الجوال وتجربة مستخدم أفضل شبيهة بتطبيقات المراسلة"
+user_problem_statement: "تحسين صفحة المراسلات لتكون متجاوبة على الجوال وتجربة مستخدم أفضل شبيهة بتطبيقات المراسلة مع إضافة menu button إبداعي"
 
 frontend:
-  - task: "تحسين صفحة المراسلات - Mobile Responsive"
+  - task: "تحسين صفحة المراسلات - Mobile Responsive مع Drawer Menu"
     implemented: true
     working: "NA"  # needs testing
     file: "/app/frontend/src/App.js"
@@ -115,21 +115,21 @@ frontend:
     status_history:
         - working: "NA"
           agent: "main"
-          comment: "تم إعادة تصميم صفحة المراسلات بالكامل لتكون responsive على الجوال. التحسينات تشمل: 1) عرض شاشة واحدة على الجوال (قائمة المحادثات أو المحادثة)، 2) زر رجوع في شاشة المحادثة، 3) استخدام AnimatePresence للتحولات السلسة، 4) تحسين تصميم فقاعات الرسائل مع gradients، 5) تحسين الـ avatars والـ headers، 6) إضافة animations، 7) استخدام full screen height على الجوال"
+          comment: "تم إعادة تصميم صفحة المراسلات بالكامل مع التحسينات التالية: 1) Drawer منزلق من اليمين لقائمة المحادثات، 2) Menu button إبداعي مع badge للرسائل غير المقروءة، 3) تحسين responsive design بالكامل، 4) تحسين فقاعات الرسائل والألوان، 5) إضافة DropdownMenu في الـ header، 6) استخدام full screen height، 7) Animations سلسة للـ drawer والرسائل، 8) تحسين Input area وإصلاح الأجزاء المفقودة، 9) دعم safe area للهواتف الحديثة"
 
 metadata:
   created_by: "main_agent"
-  version: "1.0"
+  version: "2.0"
   test_sequence: 1
   run_ui: false
 
 test_plan:
   current_focus:
-    - "تحسين صفحة المراسلات - Mobile Responsive"
+    - "تحسين صفحة المراسلات - Mobile Responsive مع Drawer Menu"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
     - agent: "main"
-      message: "تم إعادة تصميم صفحة المراسلات بالكامل لتكون responsive وشبيهة بتطبيقات المراسلة الحديثة. التطبيق جاهز للاختبار. يرجى التأكد من: 1) تجربة الصفحة على الجوال والـ desktop، 2) التنقل بين قائمة المحادثات والمحادثة، 3) إرسال الرسائل، 4) الـ animations والـ transitions، 5) responsive design على مختلف أحجام الشاشات"
+      message: "تم إعادة تصميم صفحة المراسلات بالكامل مع drawer menu إبداعي. التحسينات الرئيسية: 1) Menu button في أعلى شاشة المحادثة مع badge للرسائل غير المقروءة، 2) Drawer منزلق من اليمين لقائمة المحادثات، 3) Overlay مع backdrop blur، 4) تحسين جميع العناصر لتكون responsive، 5) إضافة DropdownMenu للإجراءات الإضافية، 6) تحسين Input area والـ bubbles، 7) دعم safe area. التطبيق جاهز للاختبار"
