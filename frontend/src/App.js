@@ -421,15 +421,164 @@ const Navbar = () => {
             { action: () => setMobileMenuOpen(true), icon: Menu, label: "القائمة", isMenu: true },
             { path: "/login", icon: User, label: "دخول" },
           ]).map((item) => (
-            <Link key={item.path} to={item.path}
-              className={`relative flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${item.highlight ? "bg-primary text-white -mt-4 shadow-lg shadow-primary/25 rounded-full w-14 h-14 justify-center" : location.pathname === item.path ? "text-primary" : "text-muted-foreground"}`}>
-              <item.icon className={item.highlight ? "w-6 h-6" : "w-5 h-5"} />
-              {!item.highlight && <span className="text-xs">{item.label}</span>}
-              {item.badge > 0 && <span className="absolute -top-1 right-0 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">{item.badge}</span>}
-            </Link>
+            item.isMenu ? (
+              <button key="menu" onClick={item.action}
+                className="relative flex flex-col items-center gap-1 p-2 rounded-xl transition-all text-muted-foreground hover:text-primary">
+                <item.icon className="w-5 h-5" />
+                <span className="text-xs">{item.label}</span>
+              </button>
+            ) : (
+              <Link key={item.path} to={item.path}
+                className={`relative flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${item.highlight ? "bg-primary text-white -mt-4 shadow-lg shadow-primary/25 rounded-full w-14 h-14 justify-center" : location.pathname === item.path ? "text-primary" : "text-muted-foreground"}`}>
+                <item.icon className={item.highlight ? "w-6 h-6" : "w-5 h-5"} />
+                {!item.highlight && <span className="text-xs">{item.label}</span>}
+                {item.badge > 0 && <span className="absolute -top-1 right-0 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">{item.badge}</span>}
+              </Link>
+            )
           ))}
         </div>
       </nav>
+
+      {/* Mobile Full Screen Menu */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="md:hidden fixed inset-0 z-[100] bg-gradient-to-br from-purple-600 via-indigo-600 to-purple-800"
+          >
+            {/* Decorative Background */}
+            <div className="absolute inset-0 overflow-hidden">
+              <div className="absolute top-20 left-10 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
+              <div className="absolute bottom-40 right-10 w-48 h-48 bg-indigo-300/20 rounded-full blur-2xl" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-400/10 rounded-full blur-3xl" />
+            </div>
+
+            {/* Close Button */}
+            <motion.button
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 }}
+              onClick={() => setMobileMenuOpen(false)}
+              className="absolute top-6 left-6 w-12 h-12 bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center text-white z-10"
+            >
+              <X className="w-6 h-6" />
+            </motion.button>
+
+            {/* Logo */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="absolute top-6 right-6 flex items-center gap-3"
+            >
+              <div className="w-12 h-12 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center overflow-hidden">
+                {settings?.site_logo ? (
+                  <img src={settings.site_logo} alt={settings.site_name || "بدل"} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-white font-bold text-2xl">ب</span>
+                )}
+              </div>
+              <span className="text-2xl font-bold text-white">{settings?.site_name || "بدل"}</span>
+            </motion.div>
+
+            {/* Menu Items */}
+            <div className="absolute inset-0 flex flex-col justify-center px-8 pt-20 pb-32 overflow-y-auto">
+              <div className="space-y-3">
+                {menuItems.map((item, idx) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 + idx * 0.05 }}
+                  >
+                    {item.link.startsWith('http') ? (
+                      <a
+                        href={item.link}
+                        target={item.open_in_new_tab ? "_blank" : "_self"}
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-4 p-4 bg-white/10 backdrop-blur-xl rounded-2xl text-white hover:bg-white/20 transition-colors group"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <span className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                          {getMenuIcon(item.icon)}
+                        </span>
+                        <span className="text-xl font-medium">{item.label}</span>
+                        {item.open_in_new_tab && <ExternalLink className="w-5 h-5 mr-auto opacity-50" />}
+                      </a>
+                    ) : (
+                      <Link
+                        to={item.link}
+                        className={`flex items-center gap-4 p-4 backdrop-blur-xl rounded-2xl text-white transition-colors group ${location.pathname === item.link ? 'bg-white/30' : 'bg-white/10 hover:bg-white/20'}`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <span className={`w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform ${location.pathname === item.link ? 'bg-white text-primary' : 'bg-white/20'}`}>
+                          {getMenuIcon(item.icon)}
+                        </span>
+                        <span className="text-xl font-medium">{item.label}</span>
+                      </Link>
+                    )}
+                  </motion.div>
+                ))}
+
+                {/* User Section */}
+                <motion.div
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.1 + menuItems.length * 0.05 }}
+                  className="pt-4 border-t border-white/20 mt-6"
+                >
+                  {user ? (
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-4 p-4 bg-white/10 backdrop-blur-xl rounded-2xl">
+                        <Avatar className="w-14 h-14 border-2 border-white/30">
+                          <AvatarFallback className="bg-white text-primary text-xl">{user.name?.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="text-xl font-bold text-white">{user.name}</p>
+                          <p className="text-white/70 text-sm">{user.email}</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <Link to="/profile" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center gap-2 p-3 bg-white/10 rounded-xl text-white hover:bg-white/20 transition-colors">
+                          <User className="w-5 h-5" /><span>حسابي</span>
+                        </Link>
+                        <Link to="/my-offers" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center gap-2 p-3 bg-white/10 rounded-xl text-white hover:bg-white/20 transition-colors">
+                          <Package className="w-5 h-5" /><span>عروضي</span>
+                        </Link>
+                        <Link to="/favorites" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center gap-2 p-3 bg-white/10 rounded-xl text-white hover:bg-white/20 transition-colors">
+                          <Heart className="w-5 h-5" /><span>المفضلة</span>
+                        </Link>
+                        {user.is_admin && (
+                          <Link to="/admin" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center gap-2 p-3 bg-yellow-500/20 rounded-xl text-yellow-300 hover:bg-yellow-500/30 transition-colors">
+                            <LayoutDashboard className="w-5 h-5" /><span>الإدارة</span>
+                          </Link>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => { logout(); setMobileMenuOpen(false); }}
+                        className="w-full flex items-center justify-center gap-2 p-4 bg-red-500/20 rounded-xl text-red-300 hover:bg-red-500/30 transition-colors"
+                      >
+                        <LogOut className="w-5 h-5" /><span>تسجيل الخروج</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-3">
+                      <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center gap-2 p-4 bg-white text-primary rounded-xl font-bold">
+                        <User className="w-5 h-5" /><span>تسجيل الدخول</span>
+                      </Link>
+                      <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center gap-2 p-4 bg-white/20 text-white rounded-xl font-bold">
+                        <Plus className="w-5 h-5" /><span>حساب جديد</span>
+                      </Link>
+                    </div>
+                  )}
+                </motion.div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };
