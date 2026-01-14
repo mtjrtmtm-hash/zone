@@ -1272,7 +1272,7 @@ const OfferForm = ({ form, setForm, handleImageUpload, getAISuggestions, aiLoadi
     </Button>
   </form>
 );
-// Messages Page - MOBILE OPTIMIZED
+// Messages Page - MOBILE OPTIMIZED WITH DRAWER
 const MessagesPage = () => {
   const { api, user } = useAuth();
   const navigate = useNavigate();
@@ -1283,7 +1283,7 @@ const MessagesPage = () => {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const [showConversation, setShowConversation] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -1311,18 +1311,13 @@ const MessagesPage = () => {
 
   const selectConversation = async (conv) => {
     setSelectedConv(conv);
-    setShowConversation(true);
+    setDrawerOpen(false);
     try { 
       const res = await api.get(`/messages/${conv.offer_id}/${conv.other_user_id}`); 
       setMessages(res.data);
       setTimeout(scrollToBottom, 100);
     }
     catch (e) { console.error(e); }
-  };
-
-  const goBackToList = () => {
-    setShowConversation(false);
-    setSelectedConv(null);
   };
 
   const sendMessage = async () => {
@@ -1337,9 +1332,73 @@ const MessagesPage = () => {
     finally { setSending(false); }
   };
 
+  // Conversations List Component
+  const ConversationsList = ({ mobile = false, onSelect }) => (
+    <div className={mobile ? "h-full flex flex-col" : ""}>
+      {mobile && (
+        <div className="p-4 border-b border-purple-200 bg-gradient-to-r from-purple-500 to-purple-600">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-xl font-bold text-white">المحادثات</h2>
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={() => setDrawerOpen(false)}
+              className="text-white hover:bg-white/20 rounded-full"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </div>
+          <p className="text-sm text-purple-100">{conversations.length} محادثة نشطة</p>
+        </div>
+      )}
+      <ScrollArea className={mobile ? "flex-1" : "h-[520px]"}>
+        {conversations.length === 0 ? (
+          <div className="p-8 text-center text-muted-foreground">
+            <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+            <p>لا توجد محادثات</p>
+          </div>
+        ) : (
+          <div className={mobile ? "" : ""}>
+            {conversations.map((conv) => (
+              <motion.div 
+                key={conv.id} 
+                onClick={() => onSelect ? onSelect(conv) : selectConversation(conv)} 
+                className={`p-4 cursor-pointer border-b border-purple-100 hover:bg-purple-50 active:bg-purple-100 transition-all duration-200 ${
+                  !mobile && selectedConv?.id === conv.id ? "bg-purple-100" : "bg-white"
+                }`}
+                whileHover={{ scale: mobile ? 1 : 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <div className="flex items-center gap-3">
+                  <Avatar className="w-12 h-12 border-2 border-purple-200 shadow-sm flex-shrink-0">
+                    <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white font-bold">
+                      {conv.other_user_name?.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start mb-1">
+                      <p className="font-bold truncate text-gray-900 text-[15px]">{conv.other_user_name}</p>
+                      {conv.unread_count > 0 && (
+                        <Badge className="bg-primary text-white text-xs px-2 py-0.5 rounded-full ml-2 flex-shrink-0">
+                          {conv.unread_count}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-xs font-medium text-purple-600 truncate mb-1">{conv.offer_title}</p>
+                    <p className="text-xs text-gray-500 truncate leading-tight">{conv.last_message}</p>
+                  </div>
+                  {mobile && <ChevronLeft className="w-4 h-4 text-gray-400 flex-shrink-0" />}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </ScrollArea>
+    </div>
+  );
+
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
-  // Mobile View - Full Screen
   return (
     <div className="min-h-screen">
       {/* Desktop View */}
@@ -1349,40 +1408,10 @@ const MessagesPage = () => {
           <div className="grid grid-cols-3 gap-6 h-[600px]">
             {/* Conversations List */}
             <GlassCard className="col-span-1 p-0 overflow-hidden" hover={false}>
-              <div className="p-4 border-b border-purple-100"><h2 className="font-bold">المحادثات</h2></div>
-              <ScrollArea className="h-[520px]">
-                {conversations.length === 0 ? (
-                  <div className="p-8 text-center text-muted-foreground"><MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" /><p>لا توجد محادثات</p></div>
-                ) : (
-                  conversations.map((conv) => (
-                    <motion.div 
-                      key={conv.id} 
-                      onClick={() => selectConversation(conv)} 
-                      className={`p-4 cursor-pointer border-b border-purple-50 hover:bg-purple-50 transition-all duration-200 ${selectedConv?.id === conv.id ? "bg-purple-100" : ""}`}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Avatar className="w-12 h-12 border-2 border-purple-200">
-                          <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white font-bold">
-                            {conv.other_user_name?.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-center mb-1">
-                            <p className="font-bold truncate text-gray-900">{conv.other_user_name}</p>
-                            {conv.unread_count > 0 && (
-                              <Badge className="bg-primary text-white text-xs px-2 py-0.5 rounded-full">{conv.unread_count}</Badge>
-                            )}
-                          </div>
-                          <p className="text-sm font-medium text-purple-600 truncate mb-0.5">{conv.offer_title}</p>
-                          <p className="text-xs text-gray-500 truncate">{conv.last_message}</p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))
-                )}
-              </ScrollArea>
+              <div className="p-4 border-b border-purple-100">
+                <h2 className="font-bold">المحادثات</h2>
+              </div>
+              <ConversationsList />
             </GlassCard>
 
             {/* Chat Area */}
@@ -1453,7 +1482,10 @@ const MessagesPage = () => {
                 </>
               ) : (
                 <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                  <div className="text-center"><MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-50" /><p>اختر محادثة للبدء</p></div>
+                  <div className="text-center">
+                    <MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                    <p>اختر محادثة للبدء</p>
+                  </div>
                 </div>
               )}
             </GlassCard>
@@ -1461,141 +1493,170 @@ const MessagesPage = () => {
         </div>
       </div>
 
-      {/* Mobile View - Full Screen with Better UX */}
-      <div className="md:hidden h-screen flex flex-col">
-        <AnimatePresence mode="wait">
-          {!showConversation ? (
-            /* Conversations List Mobile */
-            <motion.div 
-              key="list"
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              className="flex-1 flex flex-col bg-gradient-to-b from-purple-50 to-white"
-            >
-              {/* Header */}
-              <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 pb-6 shadow-lg">
-                <h1 className="text-2xl font-bold">الرسائل</h1>
-                <p className="text-sm text-purple-100 mt-1">{conversations.length} محادثة</p>
-              </div>
-
-              {/* Conversations */}
-              <ScrollArea className="flex-1">
-                {conversations.length === 0 ? (
-                  <div className="p-12 text-center text-muted-foreground">
-                    <MessageCircle className="w-20 h-20 mx-auto mb-4 opacity-30" />
-                    <p className="text-lg">لا توجد محادثات</p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-purple-100">
-                    {conversations.map((conv) => (
-                      <motion.div 
-                        key={conv.id} 
-                        onClick={() => selectConversation(conv)} 
-                        className="p-4 bg-white hover:bg-purple-50 active:bg-purple-100 transition-colors cursor-pointer"
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Avatar className="w-14 h-14 border-2 border-purple-200 shadow-sm">
-                            <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white font-bold text-lg">
-                              {conv.other_user_name?.charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-center mb-1">
-                              <p className="font-bold text-gray-900 text-base truncate">{conv.other_user_name}</p>
-                              {conv.unread_count > 0 && (
-                                <Badge className="bg-primary text-white text-xs px-2 py-0.5 rounded-full ml-2">{conv.unread_count}</Badge>
-                              )}
-                            </div>
-                            <p className="text-sm font-medium text-purple-600 truncate mb-1">{conv.offer_title}</p>
-                            <p className="text-sm text-gray-500 truncate">{conv.last_message}</p>
-                          </div>
-                          <ChevronLeft className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </ScrollArea>
-            </motion.div>
-          ) : (
-            /* Chat View Mobile */
-            <motion.div 
-              key="chat"
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 50 }}
-              className="flex-1 flex flex-col h-full"
-            >
-              {/* Header */}
-              <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-3 shadow-lg flex items-center gap-3">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={goBackToList}
-                  className="text-white hover:bg-purple-400/30 rounded-full"
+      {/* Mobile View - With Drawer */}
+      <div className="md:hidden h-screen flex flex-col relative">
+        {selectedConv ? (
+          <>
+            {/* Chat Header with Menu Button */}
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg relative z-10">
+              <div className="flex items-center gap-2 p-3">
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setDrawerOpen(true)}
+                  className="relative flex items-center justify-center w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-all"
                 >
-                  <ChevronRight className="w-6 h-6" />
-                </Button>
-                <Avatar className="w-10 h-10 border-2 border-white/50">
+                  <motion.div
+                    animate={{ rotate: drawerOpen ? 180 : 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Menu className="w-5 h-5" />
+                  </motion.div>
+                  {conversations.filter(c => c.unread_count > 0).length > 0 && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-1 -right-1 w-4 h-4 bg-pink-500 rounded-full flex items-center justify-center text-[10px] font-bold border-2 border-purple-600"
+                    >
+                      {conversations.filter(c => c.unread_count > 0).length}
+                    </motion.div>
+                  )}
+                </motion.button>
+
+                <Avatar className="w-10 h-10 border-2 border-white/30 flex-shrink-0">
                   <AvatarFallback className="bg-white/20 text-white font-bold">
-                    {selectedConv?.other_user_name?.charAt(0)}
+                    {selectedConv.other_user_name?.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold truncate">{selectedConv?.other_user_name}</p>
-                  <p className="text-xs text-purple-100 truncate">{selectedConv?.offer_title}</p>
-                </div>
-              </div>
 
-              {/* Messages */}
-              <ScrollArea className="flex-1 p-3 bg-gradient-to-b from-purple-50/50 to-white">
-                <div className="space-y-2">
-                  {messages.map((msg, idx) => (
-                    <motion.div 
-                      key={msg.id}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.2 }}
-                      className={`flex ${msg.sender_id === user.id ? "justify-end" : "justify-start"}`}
-                    >
-                      <div className={`max-w-[80%] px-3 py-2 rounded-2xl shadow-sm ${
-                        msg.sender_id === user.id 
-                          ? "bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-br-sm" 
-                          : "bg-white border border-purple-100 text-gray-800 rounded-bl-sm"
-                      }`}>
-                        <p className="leading-relaxed text-[15px]">{msg.content}</p>
-                        <p className={`text-[10px] mt-1 ${msg.sender_id === user.id ? "text-purple-100" : "text-gray-400"}`}>
-                          {new Date(msg.created_at).toLocaleTimeString("ar-SY", { hour: "2-digit", minute: "2-digit" })}
-                        </p>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold truncate text-[15px]">{selectedConv.other_user_name}</p>
+                  <p className="text-xs text-purple-100 truncate">{selectedConv.offer_title}</p>
+                </div>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 rounded-full flex-shrink-0">
+                      <MoreVertical className="w-5 h-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={() => navigate(`/offer/${selectedConv.offer_id}`)}>
+                      <Eye className="w-4 h-4 ml-2" />
+                      عرض العرض
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate(`/profile/${selectedConv.other_user_id}`)}>
+                      <User className="w-4 h-4 ml-2" />
+                      عرض الملف الشخصي
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+
+            {/* Messages Area */}
+            <div className="flex-1 overflow-hidden bg-gradient-to-b from-purple-50/30 via-white to-purple-50/20">
+              <ScrollArea className="h-full">
+                <div className="p-3 space-y-2 pb-20">
+                  {messages.length === 0 ? (
+                    <div className="flex items-center justify-center h-64">
+                      <div className="text-center text-muted-foreground">
+                        <MessageCircle className="w-16 h-16 mx-auto mb-3 opacity-30" />
+                        <p className="text-sm">ابدأ المحادثة الآن</p>
                       </div>
-                    </motion.div>
-                  ))}
+                    </div>
+                  ) : (
+                    messages.map((msg) => (
+                      <motion.div 
+                        key={msg.id}
+                        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className={`flex ${msg.sender_id === user.id ? "justify-end" : "justify-start"}`}
+                      >
+                        <div className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl shadow-sm ${
+                          msg.sender_id === user.id 
+                            ? "bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-br-md" 
+                            : "bg-white border border-purple-100 text-gray-800 rounded-bl-md"
+                        }`}>
+                          <p className="leading-relaxed text-[15px] break-words">{msg.content}</p>
+                          <p className={`text-[10px] mt-1.5 ${msg.sender_id === user.id ? "text-purple-100" : "text-gray-400"}`}>
+                            {new Date(msg.created_at).toLocaleTimeString("ar-SY", { hour: "2-digit", minute: "2-digit" })}
+                          </p>
+                        </div>
+                      </motion.div>
+                    ))
+                  )}
                   <div ref={messagesEndRef} />
                 </div>
               </ScrollArea>
+            </div>
 
-              {/* Input */}
-              <div className="p-3 border-t border-purple-100 bg-white shadow-lg">
-                <div className="flex gap-2">
-                  <Input 
-                    placeholder="اكتب رسالة..." 
-                    value={newMessage} 
-                    onChange={(e) => setNewMessage(e.target.value)} 
-                    onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && sendMessage()} 
-                    className="rounded-full border-purple-200 focus:border-purple-400 px-4 text-base"
-                  />
+            {/* Input Area - Fixed at bottom */}
+            <div className="border-t border-purple-100 bg-white/95 backdrop-blur-md shadow-lg p-3 pb-safe">
+              <div className="flex gap-2 items-end">
+                <Input 
+                  placeholder="اكتب رسالة..." 
+                  value={newMessage} 
+                  onChange={(e) => setNewMessage(e.target.value)} 
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      sendMessage();
+                    }
+                  }}
+                  className="rounded-full border-purple-200 focus:border-purple-400 px-4 py-2.5 text-base resize-none"
+                  style={{ minHeight: '44px' }}
+                />
+                <motion.div whileTap={{ scale: 0.9 }}>
                   <Button 
                     onClick={sendMessage} 
                     disabled={sending || !newMessage.trim()} 
-                    className="rounded-full w-11 h-11 p-0 bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 flex-shrink-0"
+                    className="rounded-full w-11 h-11 p-0 bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 flex-shrink-0 shadow-lg"
                   >
                     {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                   </Button>
-                </div>
+                </motion.div>
               </div>
-            </motion.div>
+            </div>
+          </>
+        ) : (
+          /* No conversation selected - Show list */
+          <div className="flex-1 flex flex-col bg-white">
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 pb-6 shadow-lg">
+              <h1 className="text-2xl font-bold">الرسائل</h1>
+              <p className="text-sm text-purple-100 mt-1">{conversations.length} محادثة</p>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <ConversationsList mobile={true} onSelect={selectConversation} />
+            </div>
+          </div>
+        )}
+
+        {/* Conversations Drawer - Slide from Right */}
+        <AnimatePresence>
+          {drawerOpen && (
+            <>
+              {/* Overlay */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+                onClick={() => setDrawerOpen(false)}
+              />
+
+              {/* Drawer */}
+              <motion.div
+                initial={{ x: "100%" }}
+                animate={{ x: 0 }}
+                exit={{ x: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-white shadow-2xl z-50 overflow-hidden"
+              >
+                <ConversationsList mobile={true} onSelect={selectConversation} />
+              </motion.div>
+            </>
           )}
         </AnimatePresence>
       </div>
