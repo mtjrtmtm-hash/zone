@@ -2717,12 +2717,27 @@ const AdminSettings = () => {
   );
 };
 
+// Scroll To Top Component - يعيد التمرير للأعلى عند تغيير الصفحة
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  
+  useEffect(() => {
+    // لا تقم بالتمرير للأعلى في صفحة المراسلات لأن لديها تمرير خاص
+    if (!pathname.startsWith('/messages')) {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  }, [pathname]);
+
+  return null;
+};
+
 // Main App
 function App() {
   return (
     <SettingsProvider>
       <AuthProvider>
         <BrowserRouter>
+          <ScrollToTop />
           <div className="min-h-screen bg-background font-tajawal">
             <Toaster position="top-center" richColors closeButton dir="rtl" />
             <Navbar />
