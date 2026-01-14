@@ -2332,6 +2332,7 @@ const AdminPages = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge className={page.is_published ? "bg-green-500" : "bg-gray-500"}>{page.is_published ? "منشور" : "مسودة"}</Badge>
+                  <Button variant="outline" size="sm" onClick={() => window.open(`/page/${page.slug}`, '_blank')} className="rounded-xl"><ExternalLink className="w-4 h-4" /></Button>
                   <Button variant="outline" size="sm" onClick={() => openEditPage(page)} className="rounded-xl"><Edit className="w-4 h-4" /></Button>
                   <Button variant="ghost" size="sm" onClick={() => deletePage(page.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                 </div>
