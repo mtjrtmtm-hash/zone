@@ -65,8 +65,17 @@ async function connectWhatsApp() {
                 serviceStatus.isAuthenticated = false;
                 serviceStatus.isReady = false;
                 
-                // طباعة QR في الـ terminal
-                qrcode.generate(qr, { small: true });
+                // تحويل QR إلى صورة base64
+                try {
+                    const qrBase64 = await QRCode.toDataURL(qr, {
+                        width: 300,
+                        margin: 2
+                    });
+                    serviceStatus.qrCodeBase64 = qrBase64;
+                    console.log('✅ QR Code image ready');
+                } catch (err) {
+                    console.error('Error generating QR image:', err);
+                }
             }
             
             if (connection === 'close') {
