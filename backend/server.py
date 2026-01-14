@@ -1284,16 +1284,17 @@ async def send_otp(phone: str, country_code: str = "+963"):
         
         # التحقق من أن WhatsApp متصل
         if not whatsapp_service.is_connected:
-            raise HTTPException(status_code=503, detail="خدمة WhatsApp غير متصلة")
+            raise HTTPException(status_code=503, detail="خدمة WhatsApp غير متصلة. يرجى ربط WhatsApp من لوحة التحكم أولاً")
         
-        # توليد وإرسال OTP
-        code = whatsapp_service.generate_otp(full_phone)
-        success = await whatsapp_service.send_otp(full_phone, code)
+        # إرسال OTP (يتم توليده في خدمة Node.js)
+        success = await whatsapp_service.send_otp(full_phone)
         
         if success:
             return {"status": "sent", "message": "تم إرسال الكود بنجاح"}
         raise HTTPException(status_code=500, detail="فشل إرسال الكود")
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Send OTP error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
