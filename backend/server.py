@@ -1286,6 +1286,31 @@ async def disconnect_whatsapp(user=Depends(get_admin_user)):
         return {"status": "disconnected", "message": "تم قطع الاتصال"}
     raise HTTPException(status_code=500, detail="فشل قطع الاتصال")
 
+@api_router.post("/whatsapp/test-send")
+async def test_send_message(phone: str, message: str = None, user=Depends(get_admin_user)):
+    """
+    اختبار إرسال رسالة عبر WhatsApp (Admin فقط)
+    """
+    try:
+        import httpx
+        
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                "http://localhost:8002/test-send",
+                json={"phone": phone, "message": message}
+            )
+            data = response.json()
+            
+            if response.status_code == 200 and data.get("status") == "sent":
+                return {"status": "sent", "message": data.get("message", "تم الإرسال بنجاح")}
+            else:
+                raise HTTPException(status_code=response.status_code, detail=data.get("message", "فشل الإرسال"))
+                
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=503, detail="فشل الاتصال بخدمة WhatsApp")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @api_router.post("/auth/send-otp")
 async def send_otp(phone: str, country_code: str = "+963"):
     """
