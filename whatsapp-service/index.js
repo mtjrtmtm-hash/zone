@@ -268,7 +268,8 @@ app.post('/send-otp', async (req, res) => {
             });
         }
         
-        if (!serviceStatus.isReady || !serviceStatus.isAuthenticated) {
+        // التحقق من المصادقة فقط
+        if (!serviceStatus.isAuthenticated) {
             return res.status(503).json({
                 status: 'error',
                 message: 'خدمة WhatsApp غير متصلة'
