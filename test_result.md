@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "تحسين صفحة المراسلات لتكون متجاوبة على الجوال وتجربة مستخدم أفضل شبيهة بتطبيقات المراسلة مع إضافة menu button إبداعي وإصلاح خانة الكتابة المختفية وإصلاح مشكلة التمرير في الصفحات الأخرى وإصلاح عرض الرسائل الأخيرة"
+user_problem_statement: "تحسين صفحة المراسلات لتكون متجاوبة على الجوال وتجربة مستخدم أفضل شبيهة بتطبيقات المراسلة مع إضافة menu button إبداعي وإصلاح خانة الكتابة المختفية وإصلاح مشكلة التمرير في الصفحات الأخرى وإصلاح عرض الرسائل الأخيرة وإصلاح الصفحات الديناميكية"
 
 frontend:
   - task: "تحسين صفحة المراسلات - Mobile Responsive مع Drawer Menu"
@@ -115,21 +115,34 @@ frontend:
     status_history:
         - working: "NA"
           agent: "main"
-          comment: "تم إعادة تصميم صفحة المراسلات بالكامل مع التحسينات التالية: 1) Drawer منزلق من اليمين لقائمة المحادثات، 2) Menu button إبداعي مع badge للرسائل غير المقروءة، 3) تحسين responsive design بالكامل، 4) تحسين فقاعات الرسائل والألوان، 5) إضافة DropdownMenu في الـ header، 6) استخدام full screen height، 7) Animations سلسة للـ drawer والرسائل، 8) تحسين Input area وإصلاح الأجزاء المفقودة، 9) دعم safe area للهواتف الحديثة، 10) إصلاح مشكلة خانة الكتابة المختفية تحت Mobile Navigation - أصبحت الآن absolute positioned فوق Mobile Nav مباشرة (bottom-16)، 11) إضافة ScrollToTop component لإصلاح مشكلة التمرير التلقائي في الصفحات الأخرى - الآن كل صفحة تبدأ من الأعلى ماعدا صفحة المراسلات التي تبدأ من آخر رسالة، 12) إصلاح مشكلة عرض الرسائل - استبدال ScrollArea بـ div عادي مع overflow-y-auto لتحكم أفضل، 13) تحسين scrollToBottom لاستخدام messagesContainerRef.scrollTop بدلاً من scrollIntoView، 14) إضافة WebkitOverflowScrolling للجوال، 15) الآن عند الدخول على محادثة تعرض آخر رسالة ويمكن التمرير للأعلى لرؤية الرسائل السابقة - مثل واتساب تماماً"
+          comment: "تم إعادة تصميم صفحة المراسلات بالكامل + إصلاح التمرير والرسائل + إضافة الصفحات الديناميكية. التحسينات: 1) Drawer منزلق من اليمين، 2) Menu button إبداعي مع badge، 3) responsive design كامل، 4) تحسين فقاعات الرسائل، 5) DropdownMenu في header، 6) full screen height، 7) Animations سلسة، 8) Input area فوق Mobile Nav، 9) ScrollToTop component، 10) تبسيط Layout للمراسلات، 11) استخدام overflow-y-auto بدلاً من ScrollArea، 12) pb-24 للرسائل وpb-20 للـ Input، 13) إضافة DynamicPage component لعرض الصفحات المنشأة من Page Builder، 14) إضافة Route: /page/:slug، 15) زر عرض الصفحة في Admin Pages"
+
+  - task: "إضافة الصفحات الديناميكية"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "تم إنشاء DynamicPage component لعرض الصفحات التي يتم إنشاؤها من Page Builder. المميزات: 1) دعم جميع أنواع المكونات (hero, text, banner, contact)، 2) عرض جميل مع animations، 3) loading state، 4) error handling، 5) زر عرض الصفحة في لوحة Admin، 6) Route: /page/:slug"
 
 metadata:
   created_by: "main_agent"
-  version: "2.3"
+  version: "2.4"
   test_sequence: 1
   run_ui: false
 
 test_plan:
   current_focus:
     - "تحسين صفحة المراسلات - Mobile Responsive مع Drawer Menu"
+    - "إضافة الصفحات الديناميكية"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
     - agent: "main"
-      message: "تم إصلاح مشكلة عرض الرسائل بشكل كامل! التحسينات: 1) استبدال ScrollArea بـ div عادي مع overflow-y-auto لتحكم أفضل، 2) تحسين scrollToBottom لاستخدام scrollTop مباشرة، 3) إضافة WebkitOverflowScrolling: touch للجوال، 4) إضافة scrollBehavior: smooth، 5) الآن عند الدخول على محادثة تعرض آخر رسالة تلقائياً، 6) عند إرسال رسالة جديدة يتم التمرير لها تلقائياً، 7) يمكن التمرير للأعلى بسهولة لرؤية الرسائل السابقة، 8) التجربة أصبحت مطابقة لواتساب. التطبيق جاهز للاختبار"
+      message: "تم إصلاح مشكلة الصفحات الديناميكية! الآن يمكن الدخول على الصفحات التي يتم إنشاؤها من Page Builder عبر الرابط /page/:slug. التحسينات: 1) إضافة DynamicPage component كامل، 2) دعم جميع أنواع المكونات مع تصميم جميل، 3) إضافة Route للصفحات الديناميكية، 4) زر عرض الصفحة في لوحة Admin، 5) loading وerror handling. الصفحات المراسلات أيضاً تم تحسينها بشكل كامل. التطبيق جاهز للاختبار"
