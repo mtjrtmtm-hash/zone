@@ -860,57 +860,160 @@ const AddOfferPage = () => {
     <div className="min-h-screen pb-24 md:pb-8 px-4 py-8">
       <div className="max-w-3xl mx-auto">
         <h1 className="text-3xl font-bold mb-8">إضافة عرض جديد</h1>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <GlassCard hover={false}>
-            <div className="space-y-4">
-              <div><Label>عنوان العرض *</Label><Input placeholder="مثال: لابتوب Dell للمقايضة" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="mt-2 rounded-xl" /></div>
-              <div><Label>وصف الغرض *</Label><Textarea placeholder="اكتب وصفاً تفصيلياً للغرض..." value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="mt-2 rounded-xl min-h-[120px]" /></div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>الفئة *</Label>
-                  <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                    <SelectTrigger className="mt-2 rounded-xl"><SelectValue placeholder="اختر الفئة" /></SelectTrigger>
-                    <SelectContent>{CATEGORIES.map((cat) => <SelectItem key={cat.name} value={cat.name}>{cat.icon} {cat.name}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>المحافظة *</Label>
-                  <Select value={form.governorate} onValueChange={(v) => setForm({ ...form, governorate: v })}>
-                    <SelectTrigger className="mt-2 rounded-xl"><SelectValue placeholder="اختر المحافظة" /></SelectTrigger>
-                    <SelectContent>{GOVERNORATES.map((gov) => <SelectItem key={gov} value={gov}>{gov}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
+        <OfferForm form={form} setForm={setForm} handleImageUpload={handleImageUpload} getAISuggestions={getAISuggestions} aiLoading={aiLoading} suggestions={suggestions} handleSubmit={handleSubmit} loading={loading} buttonText="نشر العرض" />
+      </div>
+    </div>
+  );
+};
+
+// Edit Offer Page
+const EditOfferPage = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { api } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [fetchLoading, setFetchLoading] = useState(true);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState(null);
+  const [form, setForm] = useState({ title: "", description: "", category: "", governorate: "", wanted_items: "", images: [], is_quick_trade: false });
+
+  useEffect(() => { fetchOffer(); }, [id]);
+
+  const fetchOffer = async () => {
+    try {
+      const res = await api.get(`/offers/${id}`);
+      const offer = res.data;
+      setForm({
+        title: offer.title,
+        description: offer.description,
+        category: offer.category,
+        governorate: offer.governorate,
+        wanted_items: offer.wanted_items,
+        images: offer.images || [],
+        is_quick_trade: offer.is_quick_trade
+      });
+    } catch (e) { toast.error("فشل تحميل العرض"); navigate("/my-offers"); }
+    finally { setFetchLoading(false); }
+  };
+
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    files.forEach((file) => {
+      if (file.size > 2 * 1024 * 1024) { toast.error("حجم الصورة يجب أن يكون أقل من 2MB"); return; }
+      const reader = new FileReader();
+      reader.onload = () => setForm((prev) => ({ ...prev, images: [...prev.images.slice(0, 4), reader.result] }));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const getAISuggestions = async () => {
+    if (!form.description) { toast.error("يرجى كتابة وصف الغرض أولاً"); return; }
+    setAiLoading(true);
+    try { const res = await api.post("/ai/suggest", { item_description: form.description }); setSuggestions(res.data); toast.success("تم الحصول على الاقتراحات"); }
+    catch (e) { toast.error("فشل الحصول على الاقتراحات"); }
+    finally { setAiLoading(false); }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.title || !form.description || !form.category || !form.governorate || !form.wanted_items) { toast.error("يرجى ملء جميع الحقول المطلوبة"); return; }
+    setLoading(true);
+    try { await api.put(`/offers/${id}`, form); toast.success("تم تحديث العرض بنجاح!"); navigate(`/offer/${id}`); }
+    catch (e) { toast.error("فشل تحديث العرض"); }
+    finally { setLoading(false); }
+  };
+
+  if (fetchLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+
+  return (
+    <div className="min-h-screen pb-24 md:pb-8 px-4 py-8">
+      <div className="max-w-3xl mx-auto">
+        <div className="flex items-center gap-4 mb-8">
+          <Button variant="ghost" onClick={() => navigate(-1)}><ChevronRight className="w-5 h-5" /></Button>
+          <h1 className="text-3xl font-bold">تعديل العرض</h1>
+        </div>
+        <OfferForm form={form} setForm={setForm} handleImageUpload={handleImageUpload} getAISuggestions={getAISuggestions} aiLoading={aiLoading} suggestions={suggestions} handleSubmit={handleSubmit} loading={loading} buttonText="حفظ التعديلات" />
+      </div>
+    </div>
+  );
+};
+
+// Shared Offer Form Component
+const OfferForm = ({ form, setForm, handleImageUpload, getAISuggestions, aiLoading, suggestions, handleSubmit, loading, buttonText }) => (
+  <form onSubmit={handleSubmit} className="space-y-6">
+    <GlassCard hover={false}>
+      <div className="space-y-4">
+        <div><Label>عنوان العرض *</Label><Input placeholder="مثال: لابتوب Dell للمقايضة" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="mt-2 rounded-xl" /></div>
+        <div><Label>وصف الغرض *</Label><Textarea placeholder="اكتب وصفاً تفصيلياً للغرض..." value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="mt-2 rounded-xl min-h-[120px]" /></div>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label>الفئة *</Label>
+            <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+              <SelectTrigger className="mt-2 rounded-xl"><SelectValue placeholder="اختر الفئة" /></SelectTrigger>
+              <SelectContent>{CATEGORIES.map((cat) => <SelectItem key={cat.name} value={cat.name}>{cat.icon} {cat.name}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>المحافظة *</Label>
+            <Select value={form.governorate} onValueChange={(v) => setForm({ ...form, governorate: v })}>
+              <SelectTrigger className="mt-2 rounded-xl"><SelectValue placeholder="اختر المحافظة" /></SelectTrigger>
+              <SelectContent>{GOVERNORATES.map((gov) => <SelectItem key={gov} value={gov}>{gov}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="border-2 border-dashed border-indigo-200 rounded-2xl p-4 bg-gradient-to-br from-indigo-50/50 to-purple-50/50">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2"><Sparkles className="w-5 h-5 text-indigo-600" /><span className="font-medium">اقتراح بالذكاء الاصطناعي</span></div>
+            <Button type="button" variant="outline" size="sm" onClick={getAISuggestions} disabled={aiLoading || !form.description} className="rounded-full bg-white">
+              {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 ml-1" />}اقترح لي
+            </Button>
+          </div>
+          {suggestions && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
+              <p className="text-sm text-muted-foreground">القيمة التقديرية: <span className="font-bold text-indigo-600">{suggestions.market_value}</span></p>
+              <div className="flex flex-wrap gap-2">
+                {suggestions.suggestions.map((s, idx) => (
+                  <Badge key={idx} variant="secondary" className="cursor-pointer hover:bg-indigo-100 rounded-full px-3 py-1.5 transition-colors" onClick={() => setForm({ ...form, wanted_items: form.wanted_items ? `${form.wanted_items}, ${s}` : s })}>
+                    <Plus className="w-3 h-3 ml-1" />{s}
+                  </Badge>
+                ))}
               </div>
+            </motion.div>
+          )}
+        </div>
 
-              <div className="border-2 border-dashed border-indigo-200 rounded-2xl p-4 bg-gradient-to-br from-indigo-50/50 to-purple-50/50">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2"><Sparkles className="w-5 h-5 text-indigo-600" /><span className="font-medium">اقتراح بالذكاء الاصطناعي</span></div>
-                  <Button type="button" variant="outline" size="sm" onClick={getAISuggestions} disabled={aiLoading || !form.description} className="rounded-full bg-white">
-                    {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 ml-1" />}اقترح لي
-                  </Button>
-                </div>
-                {suggestions && (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
-                    <p className="text-sm text-muted-foreground">القيمة التقديرية: <span className="font-bold text-indigo-600">{suggestions.market_value}</span></p>
-                    <div className="flex flex-wrap gap-2">
-                      {suggestions.suggestions.map((s, idx) => (
-                        <Badge key={idx} variant="secondary" className="cursor-pointer hover:bg-indigo-100 rounded-full px-3 py-1.5 transition-colors" onClick={() => setForm({ ...form, wanted_items: form.wanted_items ? `${form.wanted_items}, ${s}` : s })}>
-                          <Plus className="w-3 h-3 ml-1" />{s}
-                        </Badge>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
+        <div><Label>ماذا تريد مقابله؟ *</Label><Textarea placeholder="مثال: منظومة طاقة شمسية، موبايل حديث..." value={form.wanted_items} onChange={(e) => setForm({ ...form, wanted_items: e.target.value })} className="mt-2 rounded-xl" /></div>
+
+        <div>
+          <Label>صور الغرض (حتى 5 صور)</Label>
+          <div className="mt-2 flex flex-wrap gap-3">
+            {form.images.map((img, idx) => (
+              <div key={idx} className="relative w-24 h-24 rounded-xl overflow-hidden group">
+                <img src={img} alt="" className="w-full h-full object-cover" />
+                <button type="button" onClick={() => setForm(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== idx) }))} className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"><X className="w-6 h-6 text-white" /></button>
               </div>
+            ))}
+            {form.images.length < 5 && (
+              <label className="w-24 h-24 rounded-xl border-2 border-dashed border-purple-200 flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-purple-50/50 transition-colors">
+                <Paperclip className="w-6 h-6 text-muted-foreground" /><span className="text-xs text-muted-foreground mt-1">إضافة</span>
+                <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+              </label>
+            )}
+          </div>
+        </div>
 
-              <div><Label>ماذا تريد مقابله؟ *</Label><Textarea placeholder="مثال: منظومة طاقة شمسية، موبايل حديث..." value={form.wanted_items} onChange={(e) => setForm({ ...form, wanted_items: e.target.value })} className="mt-2 rounded-xl" /></div>
-
-              <div>
-                <Label>صور الغرض (حتى 5 صور)</Label>
-                <div className="mt-2 flex flex-wrap gap-3">
-                  {form.images.map((img, idx) => (
-                    <div key={idx} className="relative w-24 h-24 rounded-xl overflow-hidden group">
-                      <img src={img} alt="" className="w-full h-full object-cover" />
+        <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-xl">
+          <div className="flex items-center gap-3"><Zap className="w-5 h-5 text-yellow-500" /><div><p className="font-medium">مقايضة سريعة</p><p className="text-sm text-muted-foreground">للعروض الجاهزة للتنفيذ فوراً</p></div></div>
+          <Switch checked={form.is_quick_trade} onCheckedChange={(v) => setForm({ ...form, is_quick_trade: v })} />
+        </div>
+      </div>
+    </GlassCard>
+    <Button type="submit" size="lg" className="w-full rounded-xl h-14 shadow-lg shadow-primary/25" disabled={loading}>
+      {loading ? <Loader2 className="w-5 h-5 animate-spin ml-2" /> : <Save className="w-5 h-5 ml-2" />}{buttonText}
+    </Button>
+  </form>
+);
                       <button type="button" onClick={() => setForm(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== idx) }))} className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"><X className="w-6 h-6 text-white" /></button>
                     </div>
                   ))}
