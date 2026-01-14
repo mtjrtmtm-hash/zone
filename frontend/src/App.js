@@ -1662,12 +1662,22 @@ const AdminBlog = () => {
   );
 };
 
-// Admin Pages Tab
+// Admin Pages Tab - Page Builder
+const BLOCK_TYPES = [
+  { type: "hero", label: "بطل الصفحة", icon: Layout, description: "قسم رئيسي بصورة وعنوان" },
+  { type: "text", label: "نص", icon: Type, description: "فقرة نصية" },
+  { type: "slider", label: "سلايدر", icon: Layers, description: "عرض شرائح صور" },
+  { type: "listings", label: "عروض", icon: Grid3X3, description: "عرض أحدث العروض" },
+  { type: "banner", label: "بانر", icon: ImageIcon, description: "صورة إعلانية" },
+  { type: "contact", label: "تواصل", icon: Mail, description: "نموذج تواصل" },
+];
+
 const AdminPages = () => {
   const { api } = useAuth();
   const [pages, setPages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
+  const [editingPage, setEditingPage] = useState(null);
   const [form, setForm] = useState({ title: "", slug: "", blocks: [], is_published: false });
 
   useEffect(() => { fetchPages(); }, []);
@@ -1679,14 +1689,77 @@ const AdminPages = () => {
   };
 
   const createPage = async () => {
-    try { await api.post("/pages", form); toast.success("تم إنشاء الصفحة"); setShowDialog(false); setForm({ title: "", slug: "", blocks: [], is_published: false }); fetchPages(); }
+    try { 
+      await api.post("/pages", form); 
+      toast.success("تم إنشاء الصفحة"); 
+      setShowDialog(false); 
+      setForm({ title: "", slug: "", blocks: [], is_published: false }); 
+      fetchPages(); 
+    }
     catch (e) { toast.error(e.response?.data?.detail || "فشل الإنشاء"); }
+  };
+
+  const updatePage = async () => {
+    try { 
+      await api.put(`/pages/${editingPage.id}`, form); 
+      toast.success("تم تحديث الصفحة"); 
+      setEditingPage(null); 
+      setForm({ title: "", slug: "", blocks: [], is_published: false }); 
+      fetchPages(); 
+    }
+    catch (e) { toast.error(e.response?.data?.detail || "فشل التحديث"); }
   };
 
   const deletePage = async (id) => {
     if (!window.confirm("هل تريد حذف هذه الصفحة؟")) return;
     try { await api.delete(`/pages/${id}`); setPages(pages.filter(p => p.id !== id)); toast.success("تم الحذف"); }
     catch (e) { toast.error("فشل الحذف"); }
+  };
+
+  const openEditPage = (page) => {
+    setEditingPage(page);
+    setForm({ title: page.title, slug: page.slug, blocks: page.blocks || [], is_published: page.is_published });
+  };
+
+  const addBlock = (type) => {
+    const newBlock = {
+      id: `block_${Date.now()}`,
+      type,
+      content: getDefaultBlockContent(type),
+      order: form.blocks.length
+    };
+    setForm({ ...form, blocks: [...form.blocks, newBlock] });
+  };
+
+  const getDefaultBlockContent = (type) => {
+    switch (type) {
+      case "hero": return { title: "عنوان رئيسي", subtitle: "نص فرعي", buttonText: "ابدأ الآن", buttonLink: "/browse", backgroundImage: "" };
+      case "text": return { title: "عنوان القسم", content: "محتوى النص هنا..." };
+      case "slider": return { images: [], autoPlay: true };
+      case "listings": return { title: "أحدث العروض", count: 4 };
+      case "banner": return { image: "", link: "", alt: "بانر" };
+      case "contact": return { title: "تواصل معنا", email: "", phone: "" };
+      default: return {};
+    }
+  };
+
+  const updateBlockContent = (blockId, newContent) => {
+    setForm({
+      ...form,
+      blocks: form.blocks.map(b => b.id === blockId ? { ...b, content: { ...b.content, ...newContent } } : b)
+    });
+  };
+
+  const removeBlock = (blockId) => {
+    setForm({ ...form, blocks: form.blocks.filter(b => b.id !== blockId) });
+  };
+
+  const moveBlock = (blockId, direction) => {
+    const idx = form.blocks.findIndex(b => b.id === blockId);
+    if ((direction === -1 && idx === 0) || (direction === 1 && idx === form.blocks.length - 1)) return;
+    const newBlocks = [...form.blocks];
+    [newBlocks[idx], newBlocks[idx + direction]] = [newBlocks[idx + direction], newBlocks[idx]];
+    setForm({ ...form, blocks: newBlocks.map((b, i) => ({ ...b, order: i })) });
   };
 
   if (loading) return <Skeleton className="h-96 rounded-3xl" />;
@@ -1707,10 +1780,11 @@ const AdminPages = () => {
               <div key={page.id} className="flex items-center justify-between p-4 border border-purple-100 rounded-xl">
                 <div>
                   <h3 className="font-bold">{page.title}</h3>
-                  <p className="text-sm text-muted-foreground">/{page.slug}</p>
+                  <p className="text-sm text-muted-foreground">/{page.slug} • {page.blocks?.length || 0} مكونات</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge className={page.is_published ? "bg-green-500" : "bg-gray-500"}>{page.is_published ? "منشور" : "مسودة"}</Badge>
+                  <Button variant="outline" size="sm" onClick={() => openEditPage(page)} className="rounded-xl"><Edit className="w-4 h-4" /></Button>
                   <Button variant="ghost" size="sm" onClick={() => deletePage(page.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                 </div>
               </div>
@@ -1719,6 +1793,7 @@ const AdminPages = () => {
         )}
       </GlassCard>
 
+      {/* Create Page Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
         <DialogContent>
           <DialogHeader><DialogTitle>إنشاء صفحة جديدة</DialogTitle></DialogHeader>
@@ -1730,8 +1805,139 @@ const AdminPages = () => {
           <DialogFooter><Button onClick={createPage} className="rounded-xl">إنشاء الصفحة</Button></DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Page Dialog (Page Builder) */}
+      <Dialog open={!!editingPage} onOpenChange={() => { setEditingPage(null); setForm({ title: "", slug: "", blocks: [], is_published: false }); }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>تعديل الصفحة: {editingPage?.title}</DialogTitle>
+            <DialogDescription>استخدم المكعبات لبناء صفحتك</DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div><Label>عنوان الصفحة</Label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} className="mt-2 rounded-xl" /></div>
+              <div><Label>الرابط</Label><Input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} className="mt-2 rounded-xl" dir="ltr" /></div>
+            </div>
+
+            {/* Add Block Section */}
+            <div className="border-2 border-dashed border-purple-200 rounded-xl p-4">
+              <p className="text-sm font-medium mb-3">إضافة مكون جديد:</p>
+              <div className="flex flex-wrap gap-2">
+                {BLOCK_TYPES.map((bt) => (
+                  <Button key={bt.type} variant="outline" size="sm" onClick={() => addBlock(bt.type)} className="rounded-xl">
+                    <bt.icon className="w-4 h-4 ml-2" />{bt.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Blocks List */}
+            <div className="space-y-4">
+              {form.blocks.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Layers className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>لا توجد مكونات. أضف مكوناً للبدء</p>
+                </div>
+              ) : (
+                form.blocks.map((block, idx) => (
+                  <div key={block.id} className="border border-purple-100 rounded-xl p-4 bg-white">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary">{BLOCK_TYPES.find(bt => bt.type === block.type)?.label || block.type}</Badge>
+                        <span className="text-sm text-muted-foreground">#{idx + 1}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => moveBlock(block.id, -1)} disabled={idx === 0}><ChevronRight className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => moveBlock(block.id, 1)} disabled={idx === form.blocks.length - 1}><ChevronLeft className="w-4 h-4" /></Button>
+                        <Button variant="ghost" size="icon" onClick={() => removeBlock(block.id)} className="text-destructive"><Trash2 className="w-4 h-4" /></Button>
+                      </div>
+                    </div>
+                    <BlockEditor block={block} onUpdate={(content) => updateBlockContent(block.id, content)} />
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Switch checked={form.is_published} onCheckedChange={(v) => setForm({ ...form, is_published: v })} />
+              <Label>نشر الصفحة</Label>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setEditingPage(null); setForm({ title: "", slug: "", blocks: [], is_published: false }); }} className="rounded-xl">إلغاء</Button>
+            <Button onClick={updatePage} className="rounded-xl"><Save className="w-4 h-4 ml-2" />حفظ التغييرات</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
+};
+
+// Block Editor Component
+const BlockEditor = ({ block, onUpdate }) => {
+  const content = block.content || {};
+  
+  switch (block.type) {
+    case "hero":
+      return (
+        <div className="grid gap-3">
+          <Input placeholder="العنوان الرئيسي" value={content.title || ""} onChange={(e) => onUpdate({ title: e.target.value })} className="rounded-xl" />
+          <Input placeholder="النص الفرعي" value={content.subtitle || ""} onChange={(e) => onUpdate({ subtitle: e.target.value })} className="rounded-xl" />
+          <div className="grid grid-cols-2 gap-2">
+            <Input placeholder="نص الزر" value={content.buttonText || ""} onChange={(e) => onUpdate({ buttonText: e.target.value })} className="rounded-xl" />
+            <Input placeholder="رابط الزر" value={content.buttonLink || ""} onChange={(e) => onUpdate({ buttonLink: e.target.value })} className="rounded-xl" dir="ltr" />
+          </div>
+        </div>
+      );
+    case "text":
+      return (
+        <div className="grid gap-3">
+          <Input placeholder="عنوان القسم" value={content.title || ""} onChange={(e) => onUpdate({ title: e.target.value })} className="rounded-xl" />
+          <Textarea placeholder="المحتوى" value={content.content || ""} onChange={(e) => onUpdate({ content: e.target.value })} className="rounded-xl" rows={4} />
+        </div>
+      );
+    case "listings":
+      return (
+        <div className="grid gap-3">
+          <Input placeholder="عنوان القسم" value={content.title || ""} onChange={(e) => onUpdate({ title: e.target.value })} className="rounded-xl" />
+          <div className="flex items-center gap-2">
+            <Label>عدد العروض:</Label>
+            <Input type="number" min="1" max="12" value={content.count || 4} onChange={(e) => onUpdate({ count: parseInt(e.target.value) })} className="w-20 rounded-xl" />
+          </div>
+        </div>
+      );
+    case "banner":
+      return (
+        <div className="grid gap-3">
+          <Input placeholder="رابط الصورة" value={content.image || ""} onChange={(e) => onUpdate({ image: e.target.value })} className="rounded-xl" dir="ltr" />
+          <Input placeholder="رابط البانر" value={content.link || ""} onChange={(e) => onUpdate({ link: e.target.value })} className="rounded-xl" dir="ltr" />
+          <Input placeholder="النص البديل" value={content.alt || ""} onChange={(e) => onUpdate({ alt: e.target.value })} className="rounded-xl" />
+        </div>
+      );
+    case "contact":
+      return (
+        <div className="grid gap-3">
+          <Input placeholder="عنوان القسم" value={content.title || ""} onChange={(e) => onUpdate({ title: e.target.value })} className="rounded-xl" />
+          <Input placeholder="البريد الإلكتروني" value={content.email || ""} onChange={(e) => onUpdate({ email: e.target.value })} className="rounded-xl" dir="ltr" />
+          <Input placeholder="رقم الهاتف" value={content.phone || ""} onChange={(e) => onUpdate({ phone: e.target.value })} className="rounded-xl" />
+        </div>
+      );
+    case "slider":
+      return (
+        <div className="grid gap-3">
+          <div className="flex items-center gap-2">
+            <Switch checked={content.autoPlay !== false} onCheckedChange={(v) => onUpdate({ autoPlay: v })} />
+            <Label>تشغيل تلقائي</Label>
+          </div>
+          <p className="text-sm text-muted-foreground">يمكنك إضافة الصور عبر روابط مفصولة بفاصلة</p>
+          <Textarea placeholder="روابط الصور (كل رابط في سطر)" value={(content.images || []).join("\n")} onChange={(e) => onUpdate({ images: e.target.value.split("\n").filter(Boolean) })} className="rounded-xl" rows={3} />
+        </div>
+      );
+    default:
+      return <p className="text-sm text-muted-foreground">مكون غير معروف</p>;
+  }
 };
 
 // Admin Settings Tab
