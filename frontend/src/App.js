@@ -2952,6 +2952,7 @@ function App() {
                 <Route path="/my-offers" element={<ProtectedRoute><MyOffersPage /></ProtectedRoute>} />
                 <Route path="/favorites" element={<ProtectedRoute><FavoritesPage /></ProtectedRoute>} />
                 <Route path="/admin" element={<ProtectedRoute adminOnly><AdminDashboard /></ProtectedRoute>} />
+                <Route path="/page/:slug" element={<DynamicPage />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </main>
