@@ -3880,6 +3880,7 @@ function App() {
                 <Route path="/offer/:id" element={<OfferDetailPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
+                <Route path="/verify-phone" element={<VerifyPhonePage />} />
                 <Route path="/blog" element={<BlogPage />} />
                 <Route path="/add-offer" element={<ProtectedRoute><AddOfferPage /></ProtectedRoute>} />
                 <Route path="/edit-offer/:id" element={<ProtectedRoute><EditOfferPage /></ProtectedRoute>} />
