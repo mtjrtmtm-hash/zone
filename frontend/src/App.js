@@ -2910,6 +2910,17 @@ const AdminWhatsApp = () => {
         )}
       </GlassCard>
 
+      {/* اختبار الإرسال */}
+      {status?.connected && (
+        <GlassCard>
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Send className="w-5 h-5 text-green-500" />
+            اختبار إرسال رسالة
+          </h3>
+          <TestMessageSection api={api} />
+        </GlassCard>
+      )}
+
       {/* معلومات وإرشادات */}
       <GlassCard>
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
