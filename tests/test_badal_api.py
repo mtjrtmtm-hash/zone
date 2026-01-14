@@ -184,13 +184,15 @@ class TestPages:
         print(f"✓ Created page with id: {data['id']}")
     
     def test_update_page(self, admin_token):
-        # First create a page
+        # First create a page with unique slug
+        import time
+        unique_slug = f"test-update-page-{int(time.time())}"
         create_response = requests.post(
             f"{BASE_URL}/api/pages",
             headers={"Authorization": f"Bearer {admin_token}"},
             json={
                 "title": "TEST_صفحة للتحديث",
-                "slug": "test-update-page",
+                "slug": unique_slug,
                 "is_published": False,
                 "components": []
             }
