@@ -161,8 +161,6 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  useEffect(() => { if (user) { fetchNotifications(); fetchUnreadCounts(); } }, [user]);
-
   const fetchNotifications = async () => {
     try {
       const token = JSON.parse(localStorage.getItem("badal_token") || "null");
@@ -171,6 +169,8 @@ const Navbar = () => {
       setNotifications(res.data.slice(0, 5));
     } catch (e) { console.error(e); }
   };
+
+  useEffect(() => { if (user) { fetchNotifications(); fetchUnreadCounts(); } }, [user, fetchUnreadCounts]);
 
   const markNotificationsAsRead = async () => {
     try {
