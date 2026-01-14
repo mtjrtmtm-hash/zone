@@ -1285,12 +1285,22 @@ const MessagesPage = () => {
   const [sending, setSending] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  const scrollToBottom = (smooth = true) => {
+    if (messagesContainerRef.current) {
+      const scrollHeight = messagesContainerRef.current.scrollHeight;
+      const height = messagesContainerRef.current.clientHeight;
+      const maxScrollTop = scrollHeight - height;
+      messagesContainerRef.current.scrollTop = maxScrollTop > 0 ? maxScrollTop : 0;
+    }
   };
 
-  useEffect(() => { scrollToBottom(); }, [messages]);
+  useEffect(() => {
+    if (messages.length > 0) {
+      setTimeout(() => scrollToBottom(true), 100);
+    }
+  }, [messages]);
 
   useEffect(() => { fetchConversations(); }, []);
 
@@ -1312,10 +1322,10 @@ const MessagesPage = () => {
   const selectConversation = async (conv) => {
     setSelectedConv(conv);
     setDrawerOpen(false);
+    setMessages([]);
     try { 
       const res = await api.get(`/messages/${conv.offer_id}/${conv.other_user_id}`); 
       setMessages(res.data);
-      setTimeout(scrollToBottom, 100);
     }
     catch (e) { console.error(e); }
   };
@@ -1325,9 +1335,8 @@ const MessagesPage = () => {
     setSending(true);
     try {
       const res = await api.post("/messages", { receiver_id: selectedConv.other_user_id, offer_id: selectedConv.offer_id, content: newMessage, message_type: "text" });
-      setMessages([...messages, res.data]);
+      setMessages(prev => [...prev, res.data]);
       setNewMessage("");
-      setTimeout(scrollToBottom, 100);
     } catch (e) { toast.error("فشل إرسال الرسالة"); }
     finally { setSending(false); }
   };
