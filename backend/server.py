@@ -290,9 +290,25 @@ async def get_optional_user(credentials: Optional[HTTPAuthorizationCredentials] 
 
 @api_router.post("/auth/register", response_model=TokenResponse)
 async def register(user_data: UserCreate):
+    # التحقق من البريد الإلكتروني
     existing = await db.users.find_one({"email": user_data.email}, {"_id": 0})
     if existing:
         raise HTTPException(status_code=400, detail="البريد الإلكتروني مستخدم بالفعل")
+    
+    # التحقق من رقم الهاتف
+    full_phone = f"{user_data.country_code}{user_data.phone}"
+    existing_phone = await db.users.find_one({"phone": full_phone}, {"_id": 0})
+    if existing_phone:
+        raise HTTPException(status_code=400, detail="رقم الهاتف مستخدم بالفعل")
+    
+    # التحقق من صحة رقم الهاتف
+    try:
+        import phonenumbers
+        parsed = phonenumbers.parse(full_phone, None)
+        if not phonenumbers.is_valid_number(parsed):
+            raise HTTPException(status_code=400, detail="رقم الهاتف غير صحيح")
+    except:
+        raise HTTPException(status_code=400, detail="رقم الهاتف غير صحيح")
     
     user_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
@@ -302,9 +318,11 @@ async def register(user_data: UserCreate):
         "name": user_data.name,
         "email": user_data.email,
         "password": get_password_hash(user_data.password),
-        "phone": user_data.phone,
+        "phone": full_phone,
+        "country_code": user_data.country_code,
         "governorate": user_data.governorate or "دمشق",
         "is_admin": False,
+        "verified": False,  # غير مفعّل افتراضياً
         "trust_score": 0,
         "trades_count": 0,
         "favorites": [],
@@ -314,14 +332,24 @@ async def register(user_data: UserCreate):
     
     await db.users.insert_one(user_doc)
     
+    # إرسال OTP تلقائياً
+    try:
+        if whatsapp_service.is_connected:
+            code = whatsapp_service.generate_otp(full_phone)
+            await whatsapp_service.send_otp(full_phone, code)
+    except Exception as e:
+        logger.error(f"Failed to send OTP: {e}")
+    
     token = create_access_token({"sub": user_id})
     user_response = UserResponse(
         id=user_id,
         name=user_data.name,
         email=user_data.email,
-        phone=user_data.phone,
+        phone=full_phone,
+        country_code=user_data.country_code,
         governorate=user_data.governorate or "دمشق",
         is_admin=False,
+        verified=False,
         trust_score=0,
         trades_count=0,
         avatar=None,
