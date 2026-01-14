@@ -1,2 +1,2 @@
-2026/01/14-21:04:27.835 adf Creating DB /app/whatsapp-service/.wwebjs_auth/session/Default/Sync Data/LevelDB since it was missing.
-2026/01/14-21:04:27.840 adf Reusing MANIFEST /app/whatsapp-service/.wwebjs_auth/session/Default/Sync Data/LevelDB/MANIFEST-000001
+2026/01/14-21:06:44.003 b7d Creating DB /app/whatsapp-service/.wwebjs_auth/session/Default/Sync Data/LevelDB since it was missing.
+2026/01/14-21:06:44.011 b7d Reusing MANIFEST /app/whatsapp-service/.wwebjs_auth/session/Default/Sync Data/LevelDB/MANIFEST-000001
