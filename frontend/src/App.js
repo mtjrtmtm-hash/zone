@@ -1014,33 +1014,6 @@ const OfferForm = ({ form, setForm, handleImageUpload, getAISuggestions, aiLoadi
     </Button>
   </form>
 );
-                      <button type="button" onClick={() => setForm(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== idx) }))} className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"><X className="w-6 h-6 text-white" /></button>
-                    </div>
-                  ))}
-                  {form.images.length < 5 && (
-                    <label className="w-24 h-24 rounded-xl border-2 border-dashed border-purple-200 flex flex-col items-center justify-center cursor-pointer hover:border-primary hover:bg-purple-50/50 transition-colors">
-                      <Paperclip className="w-6 h-6 text-muted-foreground" /><span className="text-xs text-muted-foreground mt-1">إضافة</span>
-                      <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-                    </label>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-xl">
-                <div className="flex items-center gap-3"><Zap className="w-5 h-5 text-yellow-500" /><div><p className="font-medium">مقايضة سريعة</p><p className="text-sm text-muted-foreground">للعروض الجاهزة للتنفيذ فوراً</p></div></div>
-                <Switch checked={form.is_quick_trade} onCheckedChange={(v) => setForm({ ...form, is_quick_trade: v })} />
-              </div>
-            </div>
-          </GlassCard>
-          <Button type="submit" size="lg" className="w-full rounded-xl h-14 shadow-lg shadow-primary/25" disabled={loading}>
-            {loading ? <Loader2 className="w-5 h-5 animate-spin ml-2" /> : <Plus className="w-5 h-5 ml-2" />}نشر العرض
-          </Button>
-        </form>
-      </div>
-    </div>
-  );
-};
-
 // Messages Page - COMPLETE
 const MessagesPage = () => {
   const { api, user } = useAuth();
