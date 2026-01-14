@@ -208,6 +208,15 @@ class PageResponse(BaseModel):
     updated_at: str
 
 # Site Settings Models
+class MenuItem(BaseModel):
+    id: str
+    label: str
+    link: str
+    icon: Optional[str] = None
+    is_visible: bool = True
+    order: int = 0
+    open_in_new_tab: bool = False
+
 class SiteSettingsUpdate(BaseModel):
     site_name: Optional[str] = None
     site_logo: Optional[str] = None
@@ -219,6 +228,7 @@ class SiteSettingsUpdate(BaseModel):
     contact_phone: Optional[str] = None
     social_links: Optional[Dict[str, str]] = None
     footer_text: Optional[str] = None
+    menu_items: Optional[List[MenuItem]] = None
 
 # ==================== HELPER FUNCTIONS ====================
 
