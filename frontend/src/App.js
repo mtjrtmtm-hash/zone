@@ -2745,24 +2745,19 @@ const TestMessageSection = ({ api }) => {
     setResult(null);
     
     try {
-      const res = await fetch("http://localhost:8002/test-send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: testPhone, message: testMessage || undefined })
-      });
+      const res = await api.post(`/whatsapp/test-send?phone=${encodeURIComponent(testPhone)}${testMessage ? `&message=${encodeURIComponent(testMessage)}` : ''}`);
       
-      const data = await res.json();
-      
-      if (data.status === "sent") {
+      if (res.data.status === "sent") {
         toast.success("تم إرسال الرسالة بنجاح! ✅");
-        setResult({ success: true, message: data.message });
+        setResult({ success: true, message: res.data.message });
       } else {
-        toast.error(data.message || "فشل الإرسال");
-        setResult({ success: false, message: data.message });
+        toast.error(res.data.message || "فشل الإرسال");
+        setResult({ success: false, message: res.data.message });
       }
     } catch (e) {
-      toast.error("فشل الاتصال بالخدمة");
-      setResult({ success: false, message: e.message });
+      const errorMsg = e.response?.data?.detail || e.message || "فشل الاتصال بالخدمة";
+      toast.error(errorMsg);
+      setResult({ success: false, message: errorMsg });
     } finally {
       setSending(false);
     }
