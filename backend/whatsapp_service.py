@@ -1,185 +1,127 @@
 """
-WhatsApp Web Emulator Service
-محاكي WhatsApp Web لإرسال رسائل التحقق
+WhatsApp Service Client
+يتصل بخدمة WhatsApp Web الحقيقية (Node.js)
 """
 
-import asyncio
-import json
-import os
-import random
-import qrcode
-import io
-import base64
-from datetime import datetime, timedelta
-from typing import Optional, Dict
+import httpx
 import logging
+from typing import Optional, Dict
 
 logger = logging.getLogger(__name__)
 
-class WhatsAppService:
+WHATSAPP_SERVICE_URL = "http://localhost:8002"
+
+class WhatsAppServiceClient:
     """
-    خدمة WhatsApp محاكية
-    تعمل بطريقة مشابهة لـ WhatsApp Web
+    عميل للاتصال بخدمة WhatsApp Web
     """
     
-    def __init__(self):
-        self.is_connected = False
-        self.qr_code = None
-        self.phone_number = None
-        self.session_data = None
-        self.otp_storage: Dict[str, Dict] = {}  # {phone: {code, expires, attempts}}
-        
-    def generate_qr_code(self) -> str:
-        """
-        توليد QR Code للمسح من WhatsApp
-        """
-        # في الواقع، سيتم استبدال هذا بـ QR من whatsapp-web.js
-        # الآن سنستخدم محاكي بسيط
-        
-        session_id = f"BADAL-{random.randint(100000, 999999)}"
-        qr_data = f"whatsapp://connect?session={session_id}"
-        
-        # توليد QR Code
-        qr = qrcode.QRCode(version=1, box_size=10, border=4)
-        qr.add_data(qr_data)
-        qr.make(fit=True)
-        
-        img = qr.make_image(fill_color="black", back_color="white")
-        
-        # تحويل إلى base64
-        buffer = io.BytesIO()
-        img.save(buffer, format='PNG')
-        img_str = base64.b64encode(buffer.getvalue()).decode()
-        
-        self.qr_code = f"data:image/png;base64,{img_str}"
-        return self.qr_code
+    def __init__(self, base_url: str = WHATSAPP_SERVICE_URL):
+        self.base_url = base_url
+        self._client = httpx.AsyncClient(timeout=30.0)
     
-    async def connect_session(self, session_id: str) -> bool:
-        """
-        محاكاة الاتصال بـ WhatsApp
-        في الواقع، سيتم استبداله بـ whatsapp-web.js
-        """
-        # محاكاة تأخير الاتصال
-        await asyncio.sleep(2)
-        
-        self.is_connected = True
-        self.session_data = {
-            "session_id": session_id,
-            "connected_at": datetime.now().isoformat(),
-            "phone": "+963xxxxxxxxx"  # سيتم استبداله بالرقم الفعلي
-        }
-        
-        logger.info(f"WhatsApp connected: {session_id}")
-        return True
-    
-    def disconnect(self):
-        """
-        قطع الاتصال
-        """
-        self.is_connected = False
-        self.session_data = None
-        logger.info("WhatsApp disconnected")
+    @property
+    def is_connected(self) -> bool:
+        """التحقق من حالة الاتصال"""
+        try:
+            response = httpx.get(f"{self.base_url}/status", timeout=5.0)
+            data = response.json()
+            return data.get("connected", False)
+        except Exception as e:
+            logger.error(f"Error checking WhatsApp status: {e}")
+            return False
     
     def get_status(self) -> Dict:
-        """
-        الحصول على حالة الاتصال
-        """
-        return {
-            "connected": self.is_connected,
-            "has_qr": self.qr_code is not None,
-            "session": self.session_data
-        }
-    
-    def generate_otp(self, phone_number: str) -> str:
-        """
-        توليد كود OTP
-        """
-        code = f"{random.randint(100000, 999999)}"
-        
-        self.otp_storage[phone_number] = {
-            "code": code,
-            "expires": datetime.now() + timedelta(minutes=10),
-            "attempts": 0
-        }
-        
-        return code
-    
-    async def send_otp(self, phone_number: str, code: str) -> bool:
-        """
-        إرسال كود التحقق عبر WhatsApp
-        """
-        if not self.is_connected:
-            logger.error("WhatsApp not connected")
-            return False
-        
+        """الحصول على حالة الخدمة"""
         try:
-            # محاكاة إرسال الرسالة
-            # في الواقع، سيتم استخدام whatsapp-web.js
-            message = f"""
-مرحباً بك في منصة بدل! 🎉
-
-رمز التحقق الخاص بك:
-*{code}*
-
-صالح لمدة 10 دقائق.
-لا تشارك هذا الرمز مع أي شخص.
-
-شكراً لاستخدام بدل 🇸🇾
-            """.strip()
-            
-            logger.info(f"Sending OTP to {phone_number}: {code}")
-            
-            # محاكاة تأخير الإرسال
-            await asyncio.sleep(1)
-            
-            # في الواقع:
-            # await self.client.send_message(phone_number, message)
-            
-            return True
-            
+            response = httpx.get(f"{self.base_url}/status", timeout=5.0)
+            return response.json()
         except Exception as e:
-            logger.error(f"Failed to send OTP: {e}")
+            logger.error(f"Error getting WhatsApp status: {e}")
+            return {
+                "connected": False,
+                "authenticated": False,
+                "hasQR": False,
+                "error": str(e)
+            }
+    
+    def generate_qr_code(self) -> Optional[str]:
+        """توليد QR Code جديد"""
+        try:
+            response = httpx.post(f"{self.base_url}/generate-qr", timeout=60.0)
+            data = response.json()
+            
+            if data.get("status") == "already_connected":
+                return None  # متصل بالفعل
+            
+            return data.get("qr_code")
+        except Exception as e:
+            logger.error(f"Error generating QR code: {e}")
+            raise Exception(f"فشل توليد QR Code: {e}")
+    
+    def get_qr_code(self) -> Dict:
+        """الحصول على QR Code الحالي"""
+        try:
+            response = httpx.get(f"{self.base_url}/qr", timeout=10.0)
+            return response.json()
+        except Exception as e:
+            logger.error(f"Error getting QR code: {e}")
+            return {"status": "error", "message": str(e)}
+    
+    def disconnect(self) -> bool:
+        """قطع الاتصال"""
+        try:
+            response = httpx.post(f"{self.base_url}/disconnect", timeout=10.0)
+            return response.json().get("status") == "disconnected"
+        except Exception as e:
+            logger.error(f"Error disconnecting: {e}")
             return False
     
-    def verify_otp(self, phone_number: str, code: str) -> bool:
-        """
-        التحقق من كود OTP
-        """
-        if phone_number not in self.otp_storage:
+    async def send_otp(self, phone: str, code: str = None) -> bool:
+        """إرسال OTP عبر WhatsApp"""
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    f"{self.base_url}/send-otp",
+                    json={"phone": phone}
+                )
+                data = response.json()
+                return data.get("status") == "sent"
+        except Exception as e:
+            logger.error(f"Error sending OTP: {e}")
             return False
-        
-        otp_data = self.otp_storage[phone_number]
-        
-        # التحقق من انتهاء الصلاحية
-        if datetime.now() > otp_data["expires"]:
-            del self.otp_storage[phone_number]
-            return False
-        
-        # التحقق من عدد المحاولات
-        if otp_data["attempts"] >= 3:
-            del self.otp_storage[phone_number]
-            return False
-        
-        # التحقق من الكود
-        if otp_data["code"] == code:
-            del self.otp_storage[phone_number]
-            return True
-        
-        # زيادة عدد المحاولات
-        otp_data["attempts"] += 1
-        return False
     
-    def resend_otp(self, phone_number: str) -> Optional[str]:
-        """
-        إعادة إرسال OTP
-        """
-        if phone_number in self.otp_storage:
-            # حذف القديم
-            del self.otp_storage[phone_number]
-        
-        # توليد جديد
-        return self.generate_otp(phone_number)
+    def verify_otp(self, phone: str, code: str) -> bool:
+        """التحقق من OTP"""
+        try:
+            response = httpx.post(
+                f"{self.base_url}/verify-otp",
+                json={"phone": phone, "code": code},
+                timeout=10.0
+            )
+            data = response.json()
+            return data.get("status") == "verified"
+        except Exception as e:
+            logger.error(f"Error verifying OTP: {e}")
+            return False
+    
+    def generate_otp(self, phone: str) -> str:
+        """هذه الدالة لا تُستخدم - OTP يُولّد في خدمة Node.js"""
+        return ""
+    
+    def resend_otp(self, phone: str) -> Optional[str]:
+        """إعادة إرسال OTP"""
+        try:
+            response = httpx.post(
+                f"{self.base_url}/resend-otp",
+                json={"phone": phone},
+                timeout=30.0
+            )
+            return response.json().get("status") == "sent"
+        except Exception as e:
+            logger.error(f"Error resending OTP: {e}")
+            return None
 
 
 # Instance عام
-whatsapp_service = WhatsAppService()
+whatsapp_service = WhatsAppServiceClient()
