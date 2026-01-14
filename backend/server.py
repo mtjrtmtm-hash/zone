@@ -1304,11 +1304,28 @@ async def test_send_message(phone: str, message: str = None, user=Depends(get_ad
         raise HTTPException(status_code=500, detail=str(e))
 
 @api_router.post("/auth/send-otp")
-async def send_otp(phone: str, country_code: str = "+963"):
+async def send_otp(phone: str, country_code: str = "+963", current_user: dict = Depends(get_current_user)):
     """
-    إرسال كود التحقق عبر WhatsApp
+    إرسال كود التحقق عبر WhatsApp - المستخدم يطلبه بنفسه
+    فاصل 2 دقيقة بين كل طلب
     """
     try:
+        # التحقق من أن المستخدم غير محقق
+        if current_user.get("verified", False):
+            raise HTTPException(status_code=400, detail="حسابك محقق بالفعل")
+        
+        # التحقق من الفاصل الزمني (2 دقيقة)
+        last_otp_request = current_user.get("last_otp_request")
+        if last_otp_request:
+            last_request_time = datetime.fromisoformat(last_otp_request.replace('Z', '+00:00'))
+            time_diff = datetime.now(timezone.utc) - last_request_time
+            if time_diff.total_seconds() < 120:  # 2 دقيقة = 120 ثانية
+                remaining = 120 - int(time_diff.total_seconds())
+                raise HTTPException(
+                    status_code=429, 
+                    detail=f"يرجى الانتظار {remaining} ثانية قبل طلب كود جديد"
+                )
+        
         # التحقق من صحة رقم الهاتف
         full_phone = f"{country_code}{phone}"
         parsed = phonenumbers.parse(full_phone, None)
@@ -1317,13 +1334,19 @@ async def send_otp(phone: str, country_code: str = "+963"):
         
         # التحقق من أن WhatsApp متصل
         if not whatsapp_service.is_connected:
-            raise HTTPException(status_code=503, detail="خدمة WhatsApp غير متصلة. يرجى ربط WhatsApp من لوحة التحكم أولاً")
+            raise HTTPException(status_code=503, detail="خدمة WhatsApp غير متصلة. يرجى التواصل مع الإدارة")
         
-        # إرسال OTP (يتم توليده في خدمة Node.js)
+        # تحديث وقت آخر طلب
+        await db.users.update_one(
+            {"id": current_user["id"]},
+            {"$set": {"last_otp_request": datetime.now(timezone.utc).isoformat()}}
+        )
+        
+        # إرسال OTP
         success = await whatsapp_service.send_otp(full_phone)
         
         if success:
-            return {"status": "sent", "message": "تم إرسال الكود بنجاح"}
+            return {"status": "sent", "message": "تم إرسال الكود بنجاح إلى WhatsApp الخاص بك"}
         raise HTTPException(status_code=500, detail="فشل إرسال الكود")
         
     except HTTPException:
