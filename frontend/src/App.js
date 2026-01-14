@@ -1501,42 +1501,176 @@ const LoginPage = () => {
 const RegisterPage = () => {
   const navigate = useNavigate();
   const { register, user } = useAuth();
-  const [form, setForm] = useState({ name: "", email: "", password: "", phone: "", governorate: "دمشق" });
+  const [form, setForm] = useState({ 
+    name: "", 
+    email: "", 
+    password: "", 
+    phone: "", 
+    country_code: "+963",
+    governorate: "دمشق" 
+  });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => { if (user) navigate("/"); }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // التحقق من رقم الهاتف
+    if (!form.phone || form.phone.length < 9) {
+      toast.error("يرجى إدخال رقم هاتف صحيح");
+      return;
+    }
+    
     setLoading(true);
-    try { await register(form); toast.success("تم إنشاء الحساب بنجاح"); navigate("/"); }
-    catch (e) { toast.error(e.response?.data?.detail || "فشل إنشاء الحساب"); }
+    try { 
+      await register(form); 
+      toast.success("تم إنشاء الحساب بنجاح! تحقق من WhatsApp للكود");
+      // الانتقال لصفحة التحقق
+      navigate("/verify-phone", { state: { phone: `${form.country_code}${form.phone}` } });
+    }
+    catch (e) { 
+      toast.error(e.response?.data?.detail || "فشل إنشاء الحساب"); 
+    }
     finally { setLoading(false); }
   };
 
+  const countryCodes = [
+    { code: "+963", country: "سوريا 🇸🇾", flag: "🇸🇾" },
+    { code: "+961", country: "لبنان 🇱🇧", flag: "🇱🇧" },
+    { code: "+962", country: "الأردن 🇯🇴", flag: "🇯🇴" },
+    { code: "+20", country: "مصر 🇪🇬", flag: "🇪🇬" },
+    { code: "+966", country: "السعودية 🇸🇦", flag: "🇸🇦" },
+    { code: "+971", country: "الإمارات 🇦🇪", flag: "🇦🇪" },
+    { code: "+964", country: "العراق 🇮🇶", flag: "🇮🇶" },
+    { code: "+90", country: "تركيا 🇹🇷", flag: "🇹🇷" },
+  ];
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen flex items-center justify-center px-4 py-8 pb-24 md:pb-8">
       <GlassCard className="w-full max-w-md" hover={false}>
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl shadow-primary/25"><span className="text-white font-bold text-2xl">ب</span></div>
+          <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl">
+            <span className="text-white font-bold text-2xl">ب</span>
+          </div>
           <h1 className="text-2xl font-bold">إنشاء حساب جديد</h1>
           <p className="text-muted-foreground">انضم إلى مجتمع بدل</p>
         </div>
+        
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div><Label>الاسم الكامل</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-2 rounded-xl" placeholder="أحمد محمد" required /></div>
-          <div><Label>البريد الإلكتروني</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-2 rounded-xl" placeholder="example@email.com" required /></div>
-          <div><Label>رقم الهاتف</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="mt-2 rounded-xl" placeholder="+963 9XX XXX XXX" /></div>
+          {/* الاسم */}
+          <div>
+            <Label>الاسم الكامل</Label>
+            <Input 
+              value={form.name} 
+              onChange={(e) => setForm({ ...form, name: e.target.value })} 
+              className="mt-2 rounded-xl" 
+              placeholder="أحمد محمد" 
+              required 
+            />
+          </div>
+
+          {/* البريد الإلكتروني */}
+          <div>
+            <Label>البريد الإلكتروني</Label>
+            <Input 
+              type="email" 
+              value={form.email} 
+              onChange={(e) => setForm({ ...form, email: e.target.value })} 
+              className="mt-2 rounded-xl" 
+              placeholder="example@email.com" 
+              required 
+            />
+          </div>
+
+          {/* رقم الهاتف مع كود الدولة */}
+          <div>
+            <Label className="flex items-center gap-2">
+              <Phone className="w-4 h-4" />
+              رقم WhatsApp
+              <Badge variant="secondary" className="text-xs">إجباري</Badge>
+            </Label>
+            <div className="flex gap-2 mt-2">
+              <Select value={form.country_code} onValueChange={(v) => setForm({ ...form, country_code: v })}>
+                <SelectTrigger className="w-32 rounded-xl">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {countryCodes.map((item) => (
+                    <SelectItem key={item.code} value={item.code}>
+                      <div className="flex items-center gap-2">
+                        <span>{item.flag}</span>
+                        <span>{item.code}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input 
+                type="tel"
+                value={form.phone} 
+                onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/[^0-9]/g, '') })} 
+                className="flex-1 rounded-xl" 
+                placeholder="9XX XXX XXX"
+                required
+                maxLength={10}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+              <MessageCircle className="w-3 h-3" />
+              سنرسل لك كود التحقق عبر WhatsApp
+            </p>
+          </div>
+
+          {/* المحافظة */}
           <div>
             <Label>المحافظة</Label>
             <Select value={form.governorate} onValueChange={(v) => setForm({ ...form, governorate: v })}>
               <SelectTrigger className="mt-2 rounded-xl"><SelectValue /></SelectTrigger>
-              <SelectContent>{GOVERNORATES.map((gov) => <SelectItem key={gov} value={gov}>{gov}</SelectItem>)}</SelectContent>
+              <SelectContent>
+                {GOVERNORATES.map((gov) => <SelectItem key={gov} value={gov}>{gov}</SelectItem>)}
+              </SelectContent>
             </Select>
           </div>
-          <div><Label>كلمة المرور</Label><Input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className="mt-2 rounded-xl" placeholder="••••••••" required /></div>
-          <Button type="submit" className="w-full rounded-xl h-12" disabled={loading}>{loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "إنشاء الحساب"}</Button>
+
+          {/* كلمة المرور */}
+          <div>
+            <Label>كلمة المرور</Label>
+            <Input 
+              type="password" 
+              value={form.password} 
+              onChange={(e) => setForm({ ...form, password: e.target.value })} 
+              className="mt-2 rounded-xl" 
+              placeholder="••••••••" 
+              required 
+              minLength={6}
+            />
+            <p className="text-xs text-muted-foreground mt-1">على الأقل 6 أحرف</p>
+          </div>
+
+          {/* زر التسجيل */}
+          <Button 
+            type="submit" 
+            className="w-full rounded-xl h-12 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600" 
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin ml-2" />
+                جاري الإنشاء...
+              </>
+            ) : (
+              <>
+                <UserCheck className="w-5 h-5 ml-2" />
+                إنشاء الحساب
+              </>
+            )}
+          </Button>
         </form>
-        <p className="text-center mt-6 text-muted-foreground">لديك حساب؟ <Link to="/login" className="text-primary hover:underline font-medium">سجل دخول</Link></p>
+
+        <p className="text-center mt-6 text-muted-foreground">
+          لديك حساب؟ <Link to="/login" className="text-primary hover:underline font-medium">سجل دخول</Link>
+        </p>
       </GlassCard>
     </div>
   );
