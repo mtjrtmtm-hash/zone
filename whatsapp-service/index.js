@@ -71,11 +71,24 @@ client.on('qr', async (qr) => {
 });
 
 // عند نجاح المصادقة
-client.on('authenticated', () => {
+client.on('authenticated', async () => {
     console.log('✅ WhatsApp authenticated successfully');
     serviceStatus.isAuthenticated = true;
     serviceStatus.qrCode = null;
     serviceStatus.qrCodeBase64 = null;
+    
+    // انتظر قليلاً ثم حاول الحصول على المعلومات
+    setTimeout(async () => {
+        try {
+            if (client.info && client.info.wid) {
+                serviceStatus.isReady = true;
+                serviceStatus.connectedNumber = client.info.wid.user;
+                console.log(`📞 Connected number (from auth): ${client.info.wid.user}`);
+            }
+        } catch (err) {
+            console.log('⚠️ Could not get client info after auth:', err.message);
+        }
+    }, 3000);
 });
 
 // عند جاهزية العميل
@@ -86,8 +99,10 @@ client.on('ready', async () => {
     
     try {
         const info = client.info;
-        serviceStatus.connectedNumber = info.wid.user;
-        console.log(`📞 Connected number: ${info.wid.user}`);
+        if (info && info.wid) {
+            serviceStatus.connectedNumber = info.wid.user;
+            console.log(`📞 Connected number: ${info.wid.user}`);
+        }
     } catch (err) {
         console.error('Error getting client info:', err);
     }
