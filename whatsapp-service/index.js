@@ -261,9 +261,9 @@ app.post('/send-otp', async (req, res) => {
         
         console.log(`📱 Attempting to send OTP to: ${cleanPhone}`);
         
-        // التحقق من أن الرقم مسجل في WhatsApp
         const chatId = `${cleanPhone}@c.us`;
         
+        // التحقق من أن الرقم مسجل في WhatsApp
         try {
             const isRegistered = await client.isRegisteredUser(chatId);
             if (!isRegistered) {
@@ -275,7 +275,6 @@ app.post('/send-otp', async (req, res) => {
             }
         } catch (checkErr) {
             console.log(`⚠️ Could not verify if number is registered: ${checkErr.message}`);
-            // نستمر في المحاولة حتى لو فشل التحقق
         }
         
         // توليد OTP
@@ -300,19 +299,39 @@ app.post('/send-otp', async (req, res) => {
 
 شكراً لاستخدام بدل 🇸🇾`;
         
-        // إرسال الرسالة
+        // إرسال الرسالة باستخدام getNumberId بدلاً من sendMessage مباشرة
         console.log(`📤 Sending message to ${chatId}...`);
-        const sentMsg = await client.sendMessage(chatId, message);
         
-        if (sentMsg) {
-            console.log(`✅ OTP sent successfully to ${cleanPhone}: ${otp}`);
-            res.json({
-                status: 'sent',
-                message: 'تم إرسال كود التحقق بنجاح'
-            });
-        } else {
-            throw new Error('Failed to send message');
+        try {
+            // الحصول على chat object
+            const numberId = await client.getNumberId(cleanPhone);
+            if (numberId) {
+                const sentMsg = await client.sendMessage(numberId._serialized, message);
+                console.log(`✅ OTP sent successfully to ${cleanPhone}: ${otp}`);
+                return res.json({
+                    status: 'sent',
+                    message: 'تم إرسال كود التحقق بنجاح'
+                });
+            }
+        } catch (innerErr) {
+            console.log(`⚠️ First method failed, trying alternative: ${innerErr.message}`);
         }
+        
+        // طريقة بديلة - إرسال مباشر
+        try {
+            const sentMsg = await client.sendMessage(chatId, message);
+            if (sentMsg) {
+                console.log(`✅ OTP sent successfully (alt) to ${cleanPhone}: ${otp}`);
+                return res.json({
+                    status: 'sent',
+                    message: 'تم إرسال كود التحقق بنجاح'
+                });
+            }
+        } catch (altErr) {
+            console.error(`❌ Alternative method also failed: ${altErr.message}`);
+        }
+        
+        throw new Error('Failed to send message with both methods');
         
     } catch (err) {
         console.error('❌ Error sending OTP:', err.message);
