@@ -508,36 +508,33 @@ app.post('/test-send', async (req, res) => {
             cleanPhone = cleanPhone.substring(1);
         }
         
-        const chatId = `${cleanPhone}@c.us`;
         const testMessage = message || `🔔 رسالة اختبار من منصة بدل\n\nالوقت: ${new Date().toLocaleString('ar-SY')}`;
         
-        console.log(`📤 Test sending to ${chatId}...`);
+        console.log(`📤 Test sending to ${cleanPhone}...`);
         
         // التحقق من تسجيل الرقم
-        try {
-            const isRegistered = await client.isRegisteredUser(chatId);
-            console.log(`📱 Is registered: ${isRegistered}`);
-            if (!isRegistered) {
-                return res.status(400).json({
-                    status: 'error',
-                    message: 'هذا الرقم غير مسجل في WhatsApp',
-                    phone: cleanPhone
-                });
-            }
-        } catch (checkErr) {
-            console.log(`⚠️ Registration check failed: ${checkErr.message}`);
+        const numberId = await client.getNumberId(cleanPhone);
+        
+        if (!numberId) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'هذا الرقم غير مسجل في WhatsApp',
+                phone: cleanPhone
+            });
         }
         
+        console.log(`📱 Number ID: ${numberId._serialized}`);
+        
         // إرسال الرسالة
-        const sentMsg = await client.sendMessage(chatId, testMessage);
+        const sentMsg = await client.sendMessage(numberId._serialized, testMessage);
         
         console.log(`✅ Test message sent to ${cleanPhone}`);
         
         res.json({
             status: 'sent',
-            message: 'تم إرسال رسالة الاختبار بنجاح',
+            message: 'تم إرسال رسالة الاختبار بنجاح! تحقق من WhatsApp',
             to: cleanPhone,
-            messageId: sentMsg?.id?._serialized || 'unknown'
+            messageId: sentMsg?.id?._serialized || 'sent'
         });
         
     } catch (err) {
