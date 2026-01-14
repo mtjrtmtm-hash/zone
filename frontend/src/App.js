@@ -13,7 +13,7 @@ import {
   Award, BookOpen, Palette, Upload, Save, Play, Pause, CheckCircle, XCircle,
   MoreVertical, Copy, ExternalLink, Globe, Type, Layout, Layers, Sliders, Ban,
   UserCheck, RefreshCw, PlusCircle, Laptop, Sofa, Car, Building2, Shirt, Book,
-  Wrench, Home, Dumbbell, Baby, Dog, Sun, Box
+  Wrench, Home, Dumbbell, Baby, Dog, Sun, Box, AlertCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
