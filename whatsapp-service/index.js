@@ -132,9 +132,22 @@ client.on('disconnected', (reason) => {
 // ==================== API ENDPOINTS ====================
 
 // الحصول على حالة الخدمة
-app.get('/status', (req, res) => {
+app.get('/status', async (req, res) => {
+    // محاولة الحصول على الرقم إذا كان مفقوداً
+    if (serviceStatus.isAuthenticated && !serviceStatus.connectedNumber) {
+        try {
+            if (client.info && client.info.wid) {
+                serviceStatus.connectedNumber = client.info.wid.user;
+                serviceStatus.isReady = true;
+            }
+        } catch (e) {}
+    }
+    
+    // اعتبار الاتصال ناجحاً إذا تمت المصادقة
+    const isConnected = serviceStatus.isAuthenticated;
+    
     res.json({
-        connected: serviceStatus.isReady && serviceStatus.isAuthenticated,
+        connected: isConnected,
         authenticated: serviceStatus.isAuthenticated,
         hasQR: serviceStatus.qrCodeBase64 !== null,
         connectedNumber: serviceStatus.connectedNumber,
