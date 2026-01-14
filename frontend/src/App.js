@@ -454,9 +454,9 @@ const OfferCard = ({ offer, delay = 0, showActions = false, onStatusChange, onDe
   const { user, api } = useAuth();
   const [isFavorite, setIsFavorite] = useState(false);
 
-  useEffect(() => { if (user) checkFavorite(); }, [user, offer.id]);
-
   const checkFavorite = async () => { try { const res = await api.get(`/favorites/check/${offer.id}`); setIsFavorite(res.data.is_favorite); } catch (e) {} };
+
+  useEffect(() => { if (user) checkFavorite(); }, [user, offer.id]);
 
   const toggleFavorite = async (e) => {
     e.stopPropagation();
