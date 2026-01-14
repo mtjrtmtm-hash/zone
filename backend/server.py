@@ -1125,9 +1125,7 @@ async def root():
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
 
-# Include router and setup app
-app.include_router(api_router)
-
+# Setup middleware
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
