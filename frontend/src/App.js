@@ -169,6 +169,26 @@ const Navbar = () => {
     } catch (e) { console.error(e); }
   };
 
+  const markNotificationsAsRead = async () => {
+    try {
+      const token = JSON.parse(localStorage.getItem("badal_token") || "null");
+      if (!token) return;
+      await axios.put(`${API}/notifications/mark-all-read`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      fetchUnreadCounts();
+      setNotifications(notifications.map(n => ({ ...n, is_read: true })));
+    } catch (e) { console.error(e); }
+  };
+
+  const markSingleNotificationRead = async (notifId) => {
+    try {
+      const token = JSON.parse(localStorage.getItem("badal_token") || "null");
+      if (!token) return;
+      await axios.put(`${API}/notifications/${notifId}/read`, {}, { headers: { Authorization: `Bearer ${token}` } });
+      fetchUnreadCounts();
+      setNotifications(notifications.map(n => n.id === notifId ? { ...n, is_read: true } : n));
+    } catch (e) { console.error(e); }
+  };
+
   const guestNavItems = [
     { path: "/", icon: HomeIcon, label: "الرئيسية" },
     { path: "/browse", icon: Search, label: "تصفح" },
@@ -214,7 +234,7 @@ const Navbar = () => {
                 </Link>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="relative">
+                    <Button variant="ghost" size="icon" className="relative" onClick={markNotificationsAsRead}>
                       <Bell className="w-5 h-5" />
                       {unreadNotifications > 0 && <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center animate-pulse">{unreadNotifications}</span>}
                     </Button>
@@ -230,7 +250,7 @@ const Navbar = () => {
                         <div className="p-4 text-center text-muted-foreground">لا توجد إشعارات</div>
                       ) : (
                         notifications.map((n) => (
-                          <DropdownMenuItem key={n.id} className={`p-3 cursor-pointer ${!n.is_read ? "bg-purple-50" : ""}`} onClick={() => n.link && navigate(n.link)}>
+                          <DropdownMenuItem key={n.id} className={`p-3 cursor-pointer ${!n.is_read ? "bg-purple-50" : ""}`} onClick={() => { markSingleNotificationRead(n.id); n.link && navigate(n.link); }}>
                             <div><p className="font-medium">{n.title}</p><p className="text-sm text-muted-foreground line-clamp-1">{n.message}</p></div>
                           </DropdownMenuItem>
                         ))
@@ -836,6 +856,13 @@ const MessagesPage = () => {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => { scrollToBottom(); }, [messages]);
 
   useEffect(() => { fetchConversations(); }, []);
 
@@ -856,7 +883,11 @@ const MessagesPage = () => {
 
   const selectConversation = async (conv) => {
     setSelectedConv(conv);
-    try { const res = await api.get(`/messages/${conv.offer_id}/${conv.other_user_id}`); setMessages(res.data); }
+    try { 
+      const res = await api.get(`/messages/${conv.offer_id}/${conv.other_user_id}`); 
+      setMessages(res.data);
+      setTimeout(scrollToBottom, 100);
+    }
     catch (e) { console.error(e); }
   };
 
@@ -867,6 +898,7 @@ const MessagesPage = () => {
       const res = await api.post("/messages", { receiver_id: selectedConv.other_user_id, offer_id: selectedConv.offer_id, content: newMessage, message_type: "text" });
       setMessages([...messages, res.data]);
       setNewMessage("");
+      setTimeout(scrollToBottom, 100);
     } catch (e) { toast.error("فشل إرسال الرسالة"); }
     finally { setSending(false); }
   };
@@ -922,6 +954,7 @@ const MessagesPage = () => {
                         </div>
                       </div>
                     ))}
+                    <div ref={messagesEndRef} />
                   </div>
                 </ScrollArea>
                 <div className="p-4 border-t border-purple-100">
