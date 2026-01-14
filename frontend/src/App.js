@@ -567,6 +567,9 @@ const OfferDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [showStatusDialog, setShowStatusDialog] = useState(false);
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [reportReason, setReportReason] = useState("");
 
   useEffect(() => { fetchOffer(); }, [id]);
 
@@ -589,8 +592,41 @@ const OfferDetailPage = () => {
     finally { setSending(false); }
   };
 
+  const changeStatus = async (newStatus) => {
+    try {
+      await api.put(`/offers/${offer.id}/status?status=${newStatus}`);
+      setOffer({ ...offer, status: newStatus });
+      toast.success("تم تغيير حالة العرض");
+      setShowStatusDialog(false);
+    } catch (e) { toast.error("فشل تغيير الحالة"); }
+  };
+
+  const shareOffer = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: offer.title, text: offer.description, url });
+      } catch (e) { }
+    } else {
+      navigator.clipboard.writeText(url);
+      toast.success("تم نسخ الرابط");
+    }
+  };
+
+  const submitReport = async () => {
+    if (!reportReason.trim()) { toast.error("يرجى كتابة سبب البلاغ"); return; }
+    try {
+      await api.post("/reports", { reported_id: offer.id, report_type: "offer", reason: reportReason });
+      toast.success("تم إرسال البلاغ");
+      setShowReportDialog(false);
+      setReportReason("");
+    } catch (e) { toast.error("فشل إرسال البلاغ"); }
+  };
+
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   if (!offer) return null;
+
+  const isOwner = user?.id === offer.user_id;
 
   return (
     <div className="min-h-screen pb-24 md:pb-8 px-4 py-8">
@@ -601,12 +637,22 @@ const OfferDetailPage = () => {
             <div className="aspect-square bg-gradient-to-br from-purple-50 to-indigo-50">
               {offer.images?.[0] ? <img src={offer.images[0]} alt={offer.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Package className="w-24 h-24 text-purple-200" /></div>}
             </div>
+            {offer.images?.length > 1 && (
+              <div className="p-3 flex gap-2 overflow-x-auto">
+                {offer.images.map((img, idx) => (
+                  <img key={idx} src={img} alt="" className="w-16 h-16 object-cover rounded-xl border-2 border-transparent hover:border-primary cursor-pointer" />
+                ))}
+              </div>
+            )}
           </GlassCard>
           <div className="space-y-6">
             <div>
-              <div className="flex gap-2 mb-3">
+              <div className="flex gap-2 mb-3 flex-wrap">
                 {offer.is_quick_trade && <Badge className="bg-yellow-500 text-white"><Zap className="w-3 h-3 ml-1" />مقايضة سريعة</Badge>}
                 <Badge variant="secondary" className="rounded-full">{CATEGORIES.find(c => c.name === offer.category)?.icon} {offer.category}</Badge>
+                <Badge className={`${offer.status === 'active' ? 'bg-green-500' : offer.status === 'completed' ? 'bg-blue-500' : 'bg-gray-500'} text-white`}>
+                  {offer.status === 'active' ? 'نشط' : offer.status === 'completed' ? 'مكتمل' : offer.status === 'cancelled' ? 'ملغي' : 'معلق'}
+                </Badge>
               </div>
               <h1 className="text-2xl md:text-3xl font-bold mb-4">{offer.title}</h1>
               <p className="text-muted-foreground leading-relaxed">{offer.description}</p>
@@ -614,6 +660,7 @@ const OfferDetailPage = () => {
             <div className="flex flex-wrap gap-3">
               <Badge variant="outline" className="rounded-full px-3 py-1"><MapPin className="w-4 h-4 ml-1" />{offer.governorate}</Badge>
               <Badge variant="outline" className="rounded-full px-3 py-1"><Eye className="w-4 h-4 ml-1" />{offer.views} مشاهدة</Badge>
+              <Badge variant="outline" className="rounded-full px-3 py-1"><Clock className="w-4 h-4 ml-1" />{new Date(offer.created_at).toLocaleDateString("ar-SY")}</Badge>
             </div>
             <Separator />
             <div>
@@ -625,7 +672,29 @@ const OfferDetailPage = () => {
               <Avatar className="w-14 h-14 border-2 border-primary/20"><AvatarFallback className="bg-primary text-white text-xl">{offer.user_name?.charAt(0)}</AvatarFallback></Avatar>
               <div className="flex-1"><p className="font-bold text-lg">{offer.user_name}</p><TrustBadge score={offer.user_trust_score} /></div>
             </div>
-            {user?.id !== offer.user_id && (
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-3">
+              {isOwner ? (
+                <>
+                  <Button onClick={() => navigate(`/edit-offer/${offer.id}`)} className="flex-1 rounded-xl"><Edit className="w-4 h-4 ml-2" />تعديل العرض</Button>
+                  <Button variant="outline" onClick={() => setShowStatusDialog(true)} className="flex-1 rounded-xl"><RefreshCw className="w-4 h-4 ml-2" />تغيير الحالة</Button>
+                  <Button variant="outline" onClick={shareOffer} className="rounded-xl"><ExternalLink className="w-4 h-4" /></Button>
+                </>
+              ) : (
+                <>
+                  {user && (
+                    <Button onClick={() => navigate(`/messages?offer=${offer.id}&user=${offer.user_id}`)} className="flex-1 rounded-xl"><MessageCircle className="w-4 h-4 ml-2" />تقديم عرض</Button>
+                  )}
+                  <Button variant="outline" onClick={shareOffer} className="rounded-xl"><ExternalLink className="w-4 h-4 ml-2" />مشاركة</Button>
+                  {user && (
+                    <Button variant="ghost" onClick={() => setShowReportDialog(true)} className="rounded-xl text-destructive hover:text-destructive"><Flag className="w-4 h-4" /></Button>
+                  )}
+                </>
+              )}
+            </div>
+
+            {!isOwner && user && (
               <GlassCard className="p-4" hover={false}>
                 <Label className="mb-2 block font-medium">تواصل مع صاحب العرض</Label>
                 <Textarea placeholder="مرحباً، أنا مهتم بالمقايضة..." value={message} onChange={(e) => setMessage(e.target.value)} className="rounded-xl min-h-[100px] mb-3" />
@@ -638,6 +707,30 @@ const OfferDetailPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Status Change Dialog */}
+      <Dialog open={showStatusDialog} onOpenChange={setShowStatusDialog}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>تغيير حالة العرض</DialogTitle><DialogDescription>اختر الحالة الجديدة لعرضك</DialogDescription></DialogHeader>
+          <div className="grid gap-3">
+            <Button variant={offer.status === 'active' ? 'default' : 'outline'} onClick={() => changeStatus('active')} className="justify-start rounded-xl"><CheckCircle className="w-4 h-4 ml-2 text-green-500" />نشط</Button>
+            <Button variant={offer.status === 'completed' ? 'default' : 'outline'} onClick={() => changeStatus('completed')} className="justify-start rounded-xl"><Check className="w-4 h-4 ml-2 text-blue-500" />مكتمل (تمت المقايضة)</Button>
+            <Button variant={offer.status === 'cancelled' ? 'default' : 'outline'} onClick={() => changeStatus('cancelled')} className="justify-start rounded-xl"><XCircle className="w-4 h-4 ml-2 text-gray-500" />ملغي</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Report Dialog */}
+      <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>الإبلاغ عن العرض</DialogTitle><DialogDescription>أخبرنا بسبب البلاغ</DialogDescription></DialogHeader>
+          <Textarea placeholder="سبب البلاغ..." value={reportReason} onChange={(e) => setReportReason(e.target.value)} className="rounded-xl" />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowReportDialog(false)} className="rounded-xl">إلغاء</Button>
+            <Button onClick={submitReport} className="rounded-xl bg-destructive hover:bg-destructive/90">إرسال البلاغ</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
