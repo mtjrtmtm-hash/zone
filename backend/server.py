@@ -1178,3 +1178,127 @@ async def create_default_users():
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
+# ==================== WHATSAPP ENDPOINTS ====================
+
+from whatsapp_service import whatsapp_service
+import phonenumbers
+
+@api_router.get("/whatsapp/status")
+async def get_whatsapp_status(user=Depends(get_current_admin_user)):
+    """
+    الحصول على حالة WhatsApp (Admin فقط)
+    """
+    return whatsapp_service.get_status()
+
+@api_router.post("/whatsapp/generate-qr")
+async def generate_whatsapp_qr(user=Depends(get_current_admin_user)):
+    """
+    توليد QR Code لربط WhatsApp (Admin فقط)
+    """
+    try:
+        qr_code = whatsapp_service.generate_qr_code()
+        return {"qr_code": qr_code, "status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/whatsapp/connect")
+async def connect_whatsapp(session_id: str, user=Depends(get_current_admin_user)):
+    """
+    محاكاة الاتصال بـ WhatsApp (Admin فقط)
+    """
+    try:
+        success = await whatsapp_service.connect_session(session_id)
+        if success:
+            return {"status": "connected", "message": "تم الاتصال بنجاح"}
+        raise HTTPException(status_code=500, detail="فشل الاتصال")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/whatsapp/disconnect")
+async def disconnect_whatsapp(user=Depends(get_current_admin_user)):
+    """
+    قطع اتصال WhatsApp (Admin فقط)
+    """
+    whatsapp_service.disconnect()
+    return {"status": "disconnected", "message": "تم قطع الاتصال"}
+
+@api_router.post("/auth/send-otp")
+async def send_otp(phone: str, country_code: str = "+963"):
+    """
+    إرسال كود التحقق عبر WhatsApp
+    """
+    try:
+        # التحقق من صحة رقم الهاتف
+        full_phone = f"{country_code}{phone}"
+        parsed = phonenumbers.parse(full_phone, None)
+        if not phonenumbers.is_valid_number(parsed):
+            raise HTTPException(status_code=400, detail="رقم الهاتف غير صحيح")
+        
+        # التحقق من أن WhatsApp متصل
+        if not whatsapp_service.is_connected:
+            raise HTTPException(status_code=503, detail="خدمة WhatsApp غير متصلة")
+        
+        # توليد وإرسال OTP
+        code = whatsapp_service.generate_otp(full_phone)
+        success = await whatsapp_service.send_otp(full_phone, code)
+        
+        if success:
+            return {"status": "sent", "message": "تم إرسال الكود بنجاح"}
+        raise HTTPException(status_code=500, detail="فشل إرسال الكود")
+        
+    except Exception as e:
+        logger.error(f"Send OTP error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/auth/verify-otp")
+async def verify_otp(data: OTPVerify):
+    """
+    التحقق من كود OTP
+    """
+    try:
+        # التحقق من الكود
+        is_valid = whatsapp_service.verify_otp(data.phone, data.code)
+        
+        if is_valid:
+            # تحديث حالة المستخدم
+            await db.users.update_one(
+                {"phone": data.phone},
+                {"$set": {"verified": True}}
+            )
+            return {"status": "verified", "message": "تم التحقق بنجاح"}
+        
+        raise HTTPException(status_code=400, detail="كود التحقق غير صحيح أو منتهي الصلاحية")
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Verify OTP error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/auth/resend-otp")
+async def resend_otp(phone: str, country_code: str = "+963"):
+    """
+    إعادة إرسال كود التحقق
+    """
+    try:
+        full_phone = f"{country_code}{phone}"
+        
+        # التحقق من أن WhatsApp متصل
+        if not whatsapp_service.is_connected:
+            raise HTTPException(status_code=503, detail="خدمة WhatsApp غير متصلة")
+        
+        # إعادة توليد وإرسال OTP
+        code = whatsapp_service.resend_otp(full_phone)
+        if code:
+            success = await whatsapp_service.send_otp(full_phone, code)
+            if success:
+                return {"status": "sent", "message": "تم إعادة إرسال الكود"}
+        
+        raise HTTPException(status_code=500, detail="فشل إعادة إرسال الكود")
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Resend OTP error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
