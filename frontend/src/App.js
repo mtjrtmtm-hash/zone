@@ -1563,41 +1563,46 @@ const MessagesPage = () => {
             </div>
 
             {/* Messages Area */}
-            <div className="flex-1 overflow-hidden bg-gradient-to-b from-purple-50/30 via-white to-purple-50/20">
-              <ScrollArea className="h-full">
-                <div className="p-3 space-y-2 pb-32">
-                  {messages.length === 0 ? (
-                    <div className="flex items-center justify-center h-64">
-                      <div className="text-center text-muted-foreground">
-                        <MessageCircle className="w-16 h-16 mx-auto mb-3 opacity-30" />
-                        <p className="text-sm">ابدأ المحادثة الآن</p>
-                      </div>
+            <div 
+              ref={messagesContainerRef}
+              className="flex-1 overflow-y-auto overflow-x-hidden bg-gradient-to-b from-purple-50/30 via-white to-purple-50/20"
+              style={{ 
+                WebkitOverflowScrolling: 'touch',
+                scrollBehavior: 'smooth'
+              }}
+            >
+              <div className="p-3 space-y-2 pb-24 min-h-full">
+                {messages.length === 0 ? (
+                  <div className="flex items-center justify-center h-64">
+                    <div className="text-center text-muted-foreground">
+                      <MessageCircle className="w-16 h-16 mx-auto mb-3 opacity-30" />
+                      <p className="text-sm">ابدأ المحادثة الآن</p>
                     </div>
-                  ) : (
-                    messages.map((msg) => (
-                      <motion.div 
-                        key={msg.id}
-                        initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        transition={{ duration: 0.2 }}
-                        className={`flex ${msg.sender_id === user.id ? "justify-end" : "justify-start"}`}
-                      >
-                        <div className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl shadow-sm ${
-                          msg.sender_id === user.id 
-                            ? "bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-br-md" 
-                            : "bg-white border border-purple-100 text-gray-800 rounded-bl-md"
-                        }`}>
-                          <p className="leading-relaxed text-[15px] break-words">{msg.content}</p>
-                          <p className={`text-[10px] mt-1.5 ${msg.sender_id === user.id ? "text-purple-100" : "text-gray-400"}`}>
-                            {new Date(msg.created_at).toLocaleTimeString("ar-SY", { hour: "2-digit", minute: "2-digit" })}
-                          </p>
-                        </div>
-                      </motion.div>
-                    ))
-                  )}
-                  <div ref={messagesEndRef} />
-                </div>
-              </ScrollArea>
+                  </div>
+                ) : (
+                  messages.map((msg, index) => (
+                    <motion.div 
+                      key={msg.id}
+                      initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className={`flex ${msg.sender_id === user.id ? "justify-end" : "justify-start"}`}
+                    >
+                      <div className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl shadow-sm ${
+                        msg.sender_id === user.id 
+                          ? "bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-br-md" 
+                          : "bg-white border border-purple-100 text-gray-800 rounded-bl-md"
+                      }`}>
+                        <p className="leading-relaxed text-[15px] break-words">{msg.content}</p>
+                        <p className={`text-[10px] mt-1.5 ${msg.sender_id === user.id ? "text-purple-100" : "text-gray-400"}`}>
+                          {new Date(msg.created_at).toLocaleTimeString("ar-SY", { hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))
+                )}
+                <div ref={messagesEndRef} />
+              </div>
             </div>
 
             {/* Input Area - Fixed at bottom above mobile nav */}
