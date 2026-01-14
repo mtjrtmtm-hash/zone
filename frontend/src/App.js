@@ -12,7 +12,8 @@ import {
   Trash2, Edit, Check, Loader2, ArrowRight, ArrowLeft, Phone, Mail, Calendar,
   Award, BookOpen, Palette, Upload, Save, Play, Pause, CheckCircle, XCircle,
   MoreVertical, Copy, ExternalLink, Globe, Type, Layout, Layers, Sliders, Ban,
-  UserCheck, RefreshCw, PlusCircle
+  UserCheck, RefreshCw, PlusCircle, Laptop, Sofa, Car, Building2, Shirt, Book,
+  Wrench, Home, Dumbbell, Baby, Dog, Sun, Box
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
