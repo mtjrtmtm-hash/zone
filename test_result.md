@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "تحسين صفحة المراسلات لتكون متجاوبة على الجوال وتجربة مستخدم أفضل شبيهة بتطبيقات المراسلة مع إضافة menu button إبداعي"
+user_problem_statement: "تحسين صفحة المراسلات لتكون متجاوبة على الجوال وتجربة مستخدم أفضل شبيهة بتطبيقات المراسلة مع إضافة menu button إبداعي وإصلاح خانة الكتابة المختفية"
 
 frontend:
   - task: "تحسين صفحة المراسلات - Mobile Responsive مع Drawer Menu"
@@ -115,11 +115,11 @@ frontend:
     status_history:
         - working: "NA"
           agent: "main"
-          comment: "تم إعادة تصميم صفحة المراسلات بالكامل مع التحسينات التالية: 1) Drawer منزلق من اليمين لقائمة المحادثات، 2) Menu button إبداعي مع badge للرسائل غير المقروءة، 3) تحسين responsive design بالكامل، 4) تحسين فقاعات الرسائل والألوان، 5) إضافة DropdownMenu في الـ header، 6) استخدام full screen height، 7) Animations سلسة للـ drawer والرسائل، 8) تحسين Input area وإصلاح الأجزاء المفقودة، 9) دعم safe area للهواتف الحديثة"
+          comment: "تم إعادة تصميم صفحة المراسلات بالكامل مع التحسينات التالية: 1) Drawer منزلق من اليمين لقائمة المحادثات، 2) Menu button إبداعي مع badge للرسائل غير المقروءة، 3) تحسين responsive design بالكامل، 4) تحسين فقاعات الرسائل والألوان، 5) إضافة DropdownMenu في الـ header، 6) استخدام full screen height، 7) Animations سلسة للـ drawer والرسائل، 8) تحسين Input area وإصلاح الأجزاء المفقودة، 9) دعم safe area للهواتف الحديثة، 10) إصلاح مشكلة خانة الكتابة المختفية تحت Mobile Navigation - أصبحت الآن absolute positioned فوق Mobile Nav مباشرة (bottom-16)"
 
 metadata:
   created_by: "main_agent"
-  version: "2.0"
+  version: "2.1"
   test_sequence: 1
   run_ui: false
 
@@ -132,4 +132,4 @@ test_plan:
 
 agent_communication:
     - agent: "main"
-      message: "تم إعادة تصميم صفحة المراسلات بالكامل مع drawer menu إبداعي. التحسينات الرئيسية: 1) Menu button في أعلى شاشة المحادثة مع badge للرسائل غير المقروءة، 2) Drawer منزلق من اليمين لقائمة المحادثات، 3) Overlay مع backdrop blur، 4) تحسين جميع العناصر لتكون responsive، 5) إضافة DropdownMenu للإجراءات الإضافية، 6) تحسين Input area والـ bubbles، 7) دعم safe area. التطبيق جاهز للاختبار"
+      message: "تم إصلاح مشكلة خانة الكتابة المختفية! التحسينات: 1) Input Area الآن positioned بـ absolute bottom-16 لتكون فوق Mobile Nav، 2) إضافة z-30 للـ Input Area، 3) إضافة pb-32 في Messages Area، 4) استخدام fixed inset-0 للـ container. الآن خانة الكتابة ظاهرة وقابلة للاستخدام على الجوال فوق Mobile Navigation مباشرة. التطبيق جاهز للاختبار"
