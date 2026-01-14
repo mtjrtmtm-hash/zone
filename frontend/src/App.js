@@ -131,6 +131,41 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
   return children;
 };
 
+// شريط تنبيه للمستخدمين غير المحققين
+const VerificationBanner = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  
+  // لا تظهر للأدمن أو المستخدمين المحققين أو غير المسجلين
+  if (!user || user.is_admin || user.verified) return null;
+  
+  return (
+    <motion.div 
+      initial={{ y: -100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      className="fixed top-16 left-0 right-0 z-40 bg-gradient-to-r from-amber-500 to-orange-500 text-white py-3 px-4 shadow-lg"
+    >
+      <div className="container mx-auto flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          <AlertCircle className="w-5 h-5" />
+          <span className="text-sm md:text-base font-medium">
+            حسابك غير مفعّل! يرجى التحقق من رقم WhatsApp لاستخدام جميع ميزات الموقع
+          </span>
+        </div>
+        <Button 
+          size="sm" 
+          variant="secondary" 
+          className="bg-white text-orange-600 hover:bg-orange-50"
+          onClick={() => navigate("/verify-phone", { state: { phone: user.phone } })}
+        >
+          <Shield className="w-4 h-4 ml-1" />
+          تفعيل الآن
+        </Button>
+      </div>
+    </motion.div>
+  );
+};
+
 const TrustBadge = ({ score }) => {
   let color, label;
   if (score >= 75) { color = "bg-gradient-to-r from-gray-300 to-gray-400"; label = "بلاتيني"; }
