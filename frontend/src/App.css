@@ -322,6 +322,16 @@ textarea::placeholder {
   background: hsl(258 90% 66% / 0.5);
 }
 
+/* Hide scrollbar for mobile horizontal scroll */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Disable text selection on certain elements */
 .no-select {
   user-select: none;
