@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 class SyrianBarterAPITester:
-    def __init__(self, base_url: str = "https://msg-ux-improve.preview.emergentagent.com"):
+    def __init__(self, base_url: str = "https://otpsecure-1.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.admin_token = None
