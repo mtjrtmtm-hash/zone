@@ -1,94 +1,118 @@
-# منصة بدل - المقايضة السورية الذكية
-## Syrian Barter Platform (Badal) - Enhanced Version
+# منصة بدل - للمقايضة السورية
+## Product Requirements Document (PRD)
 
-### Problem Statement
-بناء منصة تفاعلية سورية رائدة تعيد إحياء نظام المقايضة بأسلوب عصري مع تصميم متقدم ونظام إدارة شامل.
+### الرؤية والهدف
+بناء منصة تفاعلية سورية للمقايضة (بدون نقد) تغطي جميع المحافظات السورية الـ 14، معززة بالذكاء الاصطناعي لتسهيل اتخاذ القرار.
 
-### Architecture
-- **Frontend**: React 19 + Tailwind CSS + Shadcn/UI + Framer Motion
-- **Backend**: FastAPI (Python) with async MongoDB
-- **Database**: MongoDB
-- **AI Integration**: Gemini 3 Flash via Emergent LLM Key
-- **Authentication**: JWT-based authentication
-- **Image Storage**: Base64 in MongoDB
+### المواصفات التقنية
+- **Frontend:** React 19, Tailwind CSS, Shadcn/UI
+- **Backend:** FastAPI, MongoDB (motor)
+- **Authentication:** JWT
+- **AI Integration:** Google Gemini 3 Flash via Emergent LLM Key
+- **Design:** RTL Arabic, Glassmorphism, Tajawal font
 
-### Design System (January 13, 2026)
-- **Direction**: RTL (Right-to-Left) Arabic support
-- **Font**: Tajawal (Google Fonts) weights 300-900
-- **Colors**: Primary #8b5cf6 (Purple), Secondary Indigo, Background Pearl White
-- **Style**: Glassmorphism effects, Rounded-3xl corners, Soft shadows
-- **Animations**: Framer Motion transitions, Hover effects
+### بيانات الدخول
+- **Admin:** admin@win.sy / admin123
+- **User:** ali@example.com / 123
 
-### User Roles & Navigation
-1. **Guest (Visitor)**
-   - Navigation: Home, Browse, Blog, Login/Register
-   - Can view offers but must login to contact
+---
 
-2. **Registered User**
-   - Navigation: Home, Browse, Add Offer (highlighted), Messages (with badge), Profile dropdown
-   - Features: Favorites, Notifications, Chat, Create/Edit offers
-   - Profile dropdown: Profile, My Offers, Favorites, Logout
+## الميزات المنجزة ✅
 
-3. **Admin**
-   - All User features + Dashboard link in dropdown
-   - Admin Dashboard with tabs: Overview, Users, Offers, Reports, Blog, Pages, Settings
+### 14 يناير 2025
 
-### Core Features Implemented
-- [x] Arabic RTL interface with Tajawal font
-- [x] Glassmorphism UI design (21+ elements)
-- [x] Role-based navigation
-- [x] AI-powered suggestions (Gemini 3 Flash)
-- [x] Trust score indicator (Bronze/Silver/Gold/Platinum)
-- [x] Quick trade tag
-- [x] Favorites system
-- [x] Internal notifications with unread count
-- [x] Messaging system
-- [x] Reporting system
-- [x] Admin dashboard with statistics
-- [x] Blog API endpoints
-- [x] Page Builder API endpoints
-- [x] Site Settings API endpoints
+#### 1. نظام الإشعارات المحسّن
+- عند النقر على جرس الإشعارات، يتم تصفير العدد فوراً
+- API: `/api/notifications/read-all` يعمل بشكل صحيح
+- الإشعارات تتحول للون العادي عند قراءتها
 
-### API Endpoints
-**Auth**: register, login, me, profile update
-**Offers**: CRUD, my-offers, status update
-**Favorites**: add, remove, list, check
-**Messages**: send, conversations, get messages, unread count
-**Notifications**: list, mark read, unread count
-**Reports**: create
-**AI**: suggest (Gemini 3 Flash)
-**Blog**: CRUD posts
-**Pages**: CRUD pages (Page Builder)
-**Settings**: get/update site settings
-**Admin**: stats, users management, offers management, reports management
+#### 2. التمرير التلقائي للرسائل
+- إضافة `messagesEndRef` للتمرير لآخر رسالة
+- عند فتح محادثة يتم التمرير تلقائياً
+- عند إرسال رسالة جديدة يتم التمرير
 
-### Test Results (January 13, 2026)
-- Backend: 93.8% success rate
-- Frontend: 100% success rate
+#### 3. باني الصفحات (Page Builder) الكامل
+- 6 أنواع مكونات: Hero, Text, Slider, Listings, Banner, Contact
+- إمكانية إضافة/حذف/إعادة ترتيب المكونات
+- محرر محتوى لكل نوع مكون
+- حفظ وتحديث الصفحات
 
-### Prioritized Backlog
-#### P0 (Critical) - DONE
-- [x] Authentication & Authorization
-- [x] Offers CRUD with filtering
-- [x] AI suggestions integration
-- [x] Admin dashboard overview
+#### 4. تعديل العروض
+- صفحة `/edit-offer/:id` جديدة
+- تحميل بيانات العرض الحالية
+- نفس نموذج إضافة العرض مع زر "حفظ التعديلات"
+- دعم الذكاء الاصطناعي للاقتراحات
 
-#### P1 (Important) - Partially Done
-- [x] Blog API (backend ready)
-- [x] Page Builder API (backend ready)
-- [x] Site Settings API (backend ready)
-- [ ] Full Blog UI implementation
-- [ ] Full Page Builder UI implementation
-- [ ] Full Settings UI implementation
-- [ ] Voice notes in chat
-- [ ] Image messages in chat
+#### 5. أزرار صفحة العرض
+- **لصاحب العرض:**
+  - تعديل العرض → ينتقل لصفحة التعديل
+  - تغيير الحالة → نافذة اختيار (نشط/مكتمل/ملغي)
+  - مشاركة → نسخ الرابط أو Web Share API
+  
+- **للمستخدم المشاهد:**
+  - تقديم عرض → ينتقل للرسائل
+  - مشاركة
+  - إبلاغ (أيقونة علم)
 
-#### P2 (Nice to have)
-- [ ] Real-time notifications (WebSocket)
-- [ ] Advanced analytics
-- [ ] Export data features
-- [ ] Custom font upload
+#### 6. تغيير شعار الموقع
+- قسم جديد في إعدادات الأدمن
+- معاينة الشعار الحالي
+- زر رفع شعار (Base64)
+- زر حذف الشعار
+- الشعار يظهر في النافبار
 
-### Default Users
-- Admin: admin@win.sy / admin123
-- Test User: ali@example.com / 123
+### الميزات السابقة
+- نظام التسجيل والدخول JWT
+- إضافة/عرض العروض مع الصور
+- اقتراحات الذكاء الاصطناعي (Gemini)
+- نظام المفضلة
+- نظام البلاغات
+- لوحة تحكم الأدمن:
+  - إحصائيات
+  - إدارة المستخدمين
+  - إدارة العروض
+  - إدارة البلاغات
+  - المدونة
+- الفئات والمحافظات السورية
+
+---
+
+## المهام القادمة
+
+### P1 - أولوية عالية
+- [ ] إعادة هيكلة App.js إلى ملفات منفصلة
+- [ ] تسجيل الرسائل الصوتية الحقيقية
+
+### P2 - أولوية متوسطة
+- [ ] نظام مؤشر ثقة المستخدم التلقائي
+- [ ] إشعارات Push
+
+### P3 - أولوية منخفضة
+- [ ] تحسين SEO
+- [ ] تطبيق موبايل
+
+---
+
+## هيكل الملفات
+```
+/app/
+├── backend/
+│   └── server.py (API الكامل)
+├── frontend/
+│   └── src/
+│       └── App.js (الفرونت إند)
+├── tests/
+│   └── test_badal_api.py
+└── memory/
+    └── PRD.md
+```
+
+## API Endpoints الرئيسية
+- `/api/auth/` - تسجيل/دخول
+- `/api/offers/` - CRUD العروض
+- `/api/messages/` - الرسائل
+- `/api/notifications/` - الإشعارات
+- `/api/admin/` - لوحة التحكم
+- `/api/pages/` - باني الصفحات
+- `/api/settings/` - إعدادات الموقع
+- `/api/ai/suggest` - اقتراحات الذكاء الاصطناعي
