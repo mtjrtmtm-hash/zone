@@ -1221,27 +1221,42 @@ async def get_whatsapp_status(user=Depends(get_admin_user)):
     """
     return whatsapp_service.get_status()
 
+@api_router.get("/whatsapp/qr")
+async def get_whatsapp_qr(user=Depends(get_admin_user)):
+    """
+    الحصول على QR Code الحالي (Admin فقط)
+    """
+    return whatsapp_service.get_qr_code()
+
 @api_router.post("/whatsapp/generate-qr")
 async def generate_whatsapp_qr(user=Depends(get_admin_user)):
     """
     توليد QR Code لربط WhatsApp (Admin فقط)
     """
     try:
+        qr_data = whatsapp_service.get_qr_code()
+        
+        if qr_data.get("status") == "authenticated":
+            return {
+                "status": "already_connected",
+                "message": "WhatsApp متصل بالفعل",
+                "connectedNumber": qr_data.get("connectedNumber")
+            }
+        
+        if qr_data.get("qr_code"):
+            return {
+                "status": "success",
+                "qr_code": qr_data.get("qr_code"),
+                "message": "امسح الكود من WhatsApp على جوالك"
+            }
+        
+        # محاولة توليد QR جديد
         qr_code = whatsapp_service.generate_qr_code()
-        return {"qr_code": qr_code, "status": "success"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@api_router.post("/whatsapp/connect")
-async def connect_whatsapp(session_id: str, user=Depends(get_admin_user)):
-    """
-    محاكاة الاتصال بـ WhatsApp (Admin فقط)
-    """
-    try:
-        success = await whatsapp_service.connect_session(session_id)
-        if success:
-            return {"status": "connected", "message": "تم الاتصال بنجاح"}
-        raise HTTPException(status_code=500, detail="فشل الاتصال")
+        if qr_code:
+            return {"qr_code": qr_code, "status": "success"}
+        
+        return {"status": "loading", "message": "جاري توليد QR Code..."}
+        
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1250,8 +1265,10 @@ async def disconnect_whatsapp(user=Depends(get_admin_user)):
     """
     قطع اتصال WhatsApp (Admin فقط)
     """
-    whatsapp_service.disconnect()
-    return {"status": "disconnected", "message": "تم قطع الاتصال"}
+    success = whatsapp_service.disconnect()
+    if success:
+        return {"status": "disconnected", "message": "تم قطع الاتصال"}
+    raise HTTPException(status_code=500, detail="فشل قطع الاتصال")
 
 @api_router.post("/auth/send-otp")
 async def send_otp(phone: str, country_code: str = "+963"):
