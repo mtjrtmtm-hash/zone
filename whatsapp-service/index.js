@@ -133,7 +133,7 @@ app.get('/status', (req, res) => {
     res.json({
         connected: serviceStatus.isReady && serviceStatus.isAuthenticated,
         authenticated: serviceStatus.isAuthenticated,
-        hasQR: serviceStatus.qrCode !== null,
+        hasQR: serviceStatus.qrCodeBase64 !== null,
         connectedNumber: serviceStatus.connectedNumber,
         lastError: serviceStatus.lastError
     });
@@ -149,10 +149,10 @@ app.get('/qr', (req, res) => {
         });
     }
     
-    if (serviceStatus.qrCode) {
+    if (serviceStatus.qrCodeBase64) {
         return res.json({
             status: 'pending',
-            qr_code: serviceStatus.qrCode,
+            qr_code: serviceStatus.qrCodeBase64,
             message: 'امسح الكود من WhatsApp على جوالك'
         });
     }
