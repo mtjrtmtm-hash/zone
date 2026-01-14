@@ -1946,24 +1946,40 @@ const AdminSettings = () => {
   const { settings, refreshSettings } = useSettings();
   const [form, setForm] = useState({
     site_name: "",
+    site_logo: "",
     contact_email: "",
     contact_phone: "",
     footer_text: "",
     primary_color: "#8b5cf6"
   });
   const [loading, setLoading] = useState(false);
+  const [logoPreview, setLogoPreview] = useState("");
 
   useEffect(() => {
     if (settings) {
       setForm({
         site_name: settings.site_name || "",
+        site_logo: settings.site_logo || "",
         contact_email: settings.contact_email || "",
         contact_phone: settings.contact_phone || "",
         footer_text: settings.footer_text || "",
         primary_color: settings.primary_color || "#8b5cf6"
       });
+      setLogoPreview(settings.site_logo || "");
     }
   }, [settings]);
+
+  const handleLogoUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 1 * 1024 * 1024) { toast.error("حجم الشعار يجب أن يكون أقل من 1MB"); return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setForm({ ...form, site_logo: reader.result });
+      setLogoPreview(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const saveSettings = async () => {
     setLoading(true);
@@ -1981,6 +1997,36 @@ const AdminSettings = () => {
           <div><Label>البريد الإلكتروني للتواصل</Label><Input value={form.contact_email} onChange={(e) => setForm({ ...form, contact_email: e.target.value })} className="mt-2 rounded-xl" type="email" /></div>
           <div><Label>رقم الهاتف للتواصل</Label><Input value={form.contact_phone} onChange={(e) => setForm({ ...form, contact_phone: e.target.value })} className="mt-2 rounded-xl" /></div>
           <div><Label>نص الفوتر</Label><Input value={form.footer_text} onChange={(e) => setForm({ ...form, footer_text: e.target.value })} className="mt-2 rounded-xl" /></div>
+        </div>
+      </GlassCard>
+
+      <GlassCard hover={false}>
+        <h3 className="font-bold mb-4 flex items-center gap-2"><ImageIcon className="w-5 h-5" />شعار الموقع</h3>
+        <div className="flex items-center gap-6">
+          <div className="w-24 h-24 bg-purple-50 rounded-2xl flex items-center justify-center overflow-hidden border-2 border-dashed border-purple-200">
+            {logoPreview ? (
+              <img src={logoPreview} alt="Logo" className="w-full h-full object-contain" />
+            ) : (
+              <div className="text-center text-muted-foreground">
+                <Upload className="w-8 h-8 mx-auto mb-1" />
+                <span className="text-xs">لا يوجد شعار</span>
+              </div>
+            )}
+          </div>
+          <div className="flex-1">
+            <p className="text-sm text-muted-foreground mb-3">ارفع شعار الموقع (PNG, JPG - أقل من 1MB)</p>
+            <div className="flex gap-2">
+              <label className="cursor-pointer">
+                <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleLogoUpload} />
+                <Button type="button" variant="outline" className="rounded-xl" asChild><span><Upload className="w-4 h-4 ml-2" />رفع شعار</span></Button>
+              </label>
+              {logoPreview && (
+                <Button type="button" variant="ghost" className="rounded-xl text-destructive" onClick={() => { setForm({ ...form, site_logo: "" }); setLogoPreview(""); }}>
+                  <Trash2 className="w-4 h-4 ml-2" />حذف
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
       </GlassCard>
 
