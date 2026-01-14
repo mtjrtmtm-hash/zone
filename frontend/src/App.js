@@ -1494,11 +1494,11 @@ const MessagesPage = () => {
       </div>
 
       {/* Mobile View - With Drawer */}
-      <div className="md:hidden h-screen flex flex-col relative">
+      <div className="md:hidden fixed inset-0 top-0 bottom-0 flex flex-col">
         {selectedConv ? (
-          <>
+          <div className="flex-1 flex flex-col pb-16">
             {/* Chat Header with Menu Button */}
-            <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg relative z-10">
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg relative z-10 flex-shrink-0">
               <div className="flex items-center gap-2 p-3">
                 <motion.button
                   whileTap={{ scale: 0.9 }}
@@ -1556,7 +1556,7 @@ const MessagesPage = () => {
             {/* Messages Area */}
             <div className="flex-1 overflow-hidden bg-gradient-to-b from-purple-50/30 via-white to-purple-50/20">
               <ScrollArea className="h-full">
-                <div className="p-3 space-y-2 pb-20">
+                <div className="p-3 space-y-2 pb-32">
                   {messages.length === 0 ? (
                     <div className="flex items-center justify-center h-64">
                       <div className="text-center text-muted-foreground">
@@ -1591,8 +1591,8 @@ const MessagesPage = () => {
               </ScrollArea>
             </div>
 
-            {/* Input Area - Fixed at bottom */}
-            <div className="border-t border-purple-100 bg-white/95 backdrop-blur-md shadow-lg p-3 pb-safe">
+            {/* Input Area - Fixed at bottom above mobile nav */}
+            <div className="absolute bottom-16 left-0 right-0 border-t border-purple-100 bg-white shadow-lg p-3 z-30">
               <div className="flex gap-2 items-end">
                 <Input 
                   placeholder="اكتب رسالة..." 
@@ -1604,7 +1604,7 @@ const MessagesPage = () => {
                       sendMessage();
                     }
                   }}
-                  className="rounded-full border-purple-200 focus:border-purple-400 px-4 py-2.5 text-base resize-none"
+                  className="rounded-full border-purple-200 focus:border-purple-400 px-4 py-2.5 text-base"
                   style={{ minHeight: '44px' }}
                 />
                 <motion.div whileTap={{ scale: 0.9 }}>
@@ -1618,10 +1618,10 @@ const MessagesPage = () => {
                 </motion.div>
               </div>
             </div>
-          </>
+          </div>
         ) : (
           /* No conversation selected - Show list */
-          <div className="flex-1 flex flex-col bg-white">
+          <div className="flex-1 flex flex-col bg-white pb-16">
             <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 pb-6 shadow-lg">
               <h1 className="text-2xl font-bold">الرسائل</h1>
               <p className="text-sm text-purple-100 mt-1">{conversations.length} محادثة</p>
