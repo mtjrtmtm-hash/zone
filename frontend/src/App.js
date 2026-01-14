@@ -925,7 +925,17 @@ const OfferDetailPage = () => {
             <div>
               <div className="flex gap-2 mb-3 flex-wrap">
                 {offer.is_quick_trade && <Badge className="bg-yellow-500 text-white"><Zap className="w-3 h-3 ml-1" />مقايضة سريعة</Badge>}
-                <Badge variant="secondary" className="rounded-full">{CATEGORIES.find(c => c.name === offer.category)?.icon} {offer.category}</Badge>
+                <Badge variant="secondary" className="rounded-full">
+                  {(() => {
+                    const CategoryIcon = CATEGORIES.find(c => c.name === offer.category)?.icon;
+                    return CategoryIcon ? (
+                      <div className="flex items-center gap-1">
+                        <CategoryIcon className="w-4 h-4" strokeWidth={1.5} />
+                        <span>{offer.category}</span>
+                      </div>
+                    ) : offer.category;
+                  })()}
+                </Badge>
                 <Badge className={`${offer.status === 'active' ? 'bg-green-500' : offer.status === 'completed' ? 'bg-blue-500' : 'bg-gray-500'} text-white`}>
                   {offer.status === 'active' ? 'نشط' : offer.status === 'completed' ? 'مكتمل' : offer.status === 'cancelled' ? 'ملغي' : 'معلق'}
                 </Badge>
