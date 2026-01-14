@@ -2693,6 +2693,222 @@ const BlogPage = () => {
   );
 };
 
+// Admin WhatsApp Component
+const AdminWhatsApp = () => {
+  const { api } = useAuth();
+  const [status, setStatus] = useState(null);
+  const [qrCode, setQrCode] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [connecting, setConnecting] = useState(false);
+
+  useEffect(() => {
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 5000); // تحديث كل 5 ثواني
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchStatus = async () => {
+    try {
+      const res = await api.get("/whatsapp/status");
+      setStatus(res.data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const generateQR = async () => {
+    setLoading(true);
+    try {
+      const res = await api.post("/whatsapp/generate-qr");
+      setQrCode(res.data.qr_code);
+      toast.success("تم توليد QR Code");
+      
+      // محاكاة الاتصال بعد 5 ثواني
+      setTimeout(async () => {
+        try {
+          await api.post(`/whatsapp/connect?session_id=test-session`);
+          toast.success("تم الاتصال بنجاح! 🎉");
+          fetchStatus();
+        } catch (e) {
+          toast.error("فشل الاتصال");
+        }
+      }, 5000);
+    } catch (e) {
+      toast.error("فشل توليد QR Code");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const disconnect = async () => {
+    try {
+      await api.post("/whatsapp/disconnect");
+      setQrCode(null);
+      toast.success("تم قطع الاتصال");
+      fetchStatus();
+    } catch (e) {
+      toast.error("فشل قطع الاتصال");
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold mb-2">إدارة WhatsApp</h2>
+        <p className="text-muted-foreground">ربط رقم WhatsApp لإرسال رسائل التحقق</p>
+      </div>
+
+      {/* حالة الاتصال */}
+      <GlassCard>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <MessageCircle className="w-5 h-5" />
+            حالة الاتصال
+          </h3>
+          {status?.connected && (
+            <Badge className="bg-green-500 text-white">
+              <CheckCircle className="w-3 h-3 ml-1" />
+              متصل
+            </Badge>
+          )}
+          {!status?.connected && (
+            <Badge variant="secondary">
+              <XCircle className="w-3 h-3 ml-1" />
+              غير متصل
+            </Badge>
+          )}
+        </div>
+
+        {status?.session && (
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
+            <div className="flex items-start gap-3">
+              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-medium text-green-900 mb-1">WhatsApp متصل بنجاح!</p>
+                <div className="text-sm text-green-700 space-y-1">
+                  <p>الرقم: {status.session.phone}</p>
+                  <p>وقت الاتصال: {new Date(status.session.connected_at).toLocaleString("ar-SY")}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!status?.connected && !qrCode && (
+          <div className="text-center py-8">
+            <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <MessageCircle className="w-10 h-10 text-primary" />
+            </div>
+            <h3 className="font-bold text-lg mb-2">ربط WhatsApp</h3>
+            <p className="text-muted-foreground mb-6">قم بربط رقم WhatsApp لإرسال رسائل التحقق للمستخدمين</p>
+            <Button
+              onClick={generateQR}
+              disabled={loading}
+              className="rounded-xl"
+              size="lg"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin ml-2" />
+                  جاري التوليد...
+                </>
+              ) : (
+                <>
+                  <MessageCircle className="w-5 h-5 ml-2" />
+                  توليد QR Code
+                </>
+              )}
+            </Button>
+          </div>
+        )}
+
+        {qrCode && !status?.connected && (
+          <div className="text-center py-6">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-white p-6 rounded-2xl inline-block shadow-lg mb-4"
+            >
+              <img src={qrCode} alt="QR Code" className="w-64 h-64 mx-auto" />
+            </motion.div>
+            <h3 className="font-bold text-lg mb-2">امسح الـ QR Code</h3>
+            <div className="max-w-md mx-auto space-y-2 text-sm text-muted-foreground">
+              <p className="flex items-center gap-2 justify-center">
+                <span className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-xs">1</span>
+                افتح WhatsApp على هاتفك
+              </p>
+              <p className="flex items-center gap-2 justify-center">
+                <span className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-xs">2</span>
+                اضغط على القائمة (⋮) ثم الأجهزة المرتبطة
+              </p>
+              <p className="flex items-center gap-2 justify-center">
+                <span className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-xs">3</span>
+                امسح هذا الكود
+              </p>
+            </div>
+            <div className="mt-4 flex items-center justify-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin text-primary" />
+              <span className="text-sm text-muted-foreground">في انتظار المسح...</span>
+            </div>
+          </div>
+        )}
+
+        {status?.connected && (
+          <div className="flex gap-3">
+            <Button
+              onClick={disconnect}
+              variant="destructive"
+              className="rounded-xl"
+            >
+              <XCircle className="w-4 h-4 ml-2" />
+              قطع الاتصال
+            </Button>
+            <Button
+              onClick={generateQR}
+              variant="outline"
+              className="rounded-xl"
+            >
+              <RefreshCw className="w-4 h-4 ml-2" />
+              إعادة الاتصال
+            </Button>
+          </div>
+        )}
+      </GlassCard>
+
+      {/* معلومات وإرشادات */}
+      <GlassCard>
+        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <AlertTriangle className="w-5 h-5 text-orange-500" />
+          ملاحظات مهمة
+        </h3>
+        <div className="space-y-3 text-sm text-muted-foreground">
+          <div className="flex items-start gap-3">
+            <Shield className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium text-foreground mb-1">الأمان</p>
+              <p>استخدم رقم WhatsApp مخصص للمنصة فقط</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <Phone className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium text-foreground mb-1">الاتصال</p>
+              <p>يجب أن يبقى الهاتف متصلاً بالإنترنت</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <Ban className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium text-foreground mb-1">تحذير</p>
+              <p>WhatsApp قد يحظر الحساب إذا اكتشف الاستخدام الآلي</p>
+            </div>
+          </div>
+        </div>
+      </GlassCard>
+    </div>
+  );
+};
+
 // Admin Dashboard - COMPLETE
 const AdminDashboard = () => {
   const { api } = useAuth();
