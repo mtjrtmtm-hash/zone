@@ -59,8 +59,11 @@ const useStickyState = (key, defaultValue) => {
 
 const SettingsProvider = ({ children }) => {
   const [settings, setSettings] = useState({ site_name: "بدل", primary_color: "#8b5cf6", custom_font_name: "Tajawal" });
-  useEffect(() => { fetchSettings(); }, []);
+  
   const fetchSettings = async () => { try { const res = await axios.get(`${API}/settings`); setSettings(res.data); } catch (e) { console.error(e); } };
+  
+  useEffect(() => { fetchSettings(); }, []);
+  
   return <SettingsContext.Provider value={{ settings, refreshSettings: fetchSettings }}>{children}</SettingsContext.Provider>;
 };
 
@@ -70,6 +73,18 @@ const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+
+  const fetchUnreadCounts = async () => {
+    if (!token) return;
+    try {
+      const [msgRes, notifRes] = await Promise.all([
+        axios.get(`${API}/messages/unread-count`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API}/notifications/unread-count`, { headers: { Authorization: `Bearer ${token}` } })
+      ]);
+      setUnreadMessages(msgRes.data.count);
+      setUnreadNotifications(notifRes.data.count);
+    } catch (e) { console.error(e); }
+  };
 
   useEffect(() => {
     const verifyToken = async () => {
@@ -83,19 +98,7 @@ const AuthProvider = ({ children }) => {
       setLoading(false);
     };
     verifyToken();
-  }, []);
-
-  const fetchUnreadCounts = async () => {
-    if (!token) return;
-    try {
-      const [msgRes, notifRes] = await Promise.all([
-        axios.get(`${API}/messages/unread-count`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${API}/notifications/unread-count`, { headers: { Authorization: `Bearer ${token}` } })
-      ]);
-      setUnreadMessages(msgRes.data.count);
-      setUnreadNotifications(notifRes.data.count);
-    } catch (e) { console.error(e); }
-  };
+  }, [token]);
 
   const login = async (email, password) => {
     const res = await axios.post(`${API}/auth/login`, { email, password });
