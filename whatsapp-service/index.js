@@ -247,10 +247,35 @@ app.post('/send-otp', async (req, res) => {
             });
         }
         
-        // تنظيف رقم الهاتف
+        // تنظيف رقم الهاتف - إزالة كل شيء عدا الأرقام
         let cleanPhone = phone.replace(/[^0-9]/g, '');
-        if (cleanPhone.startsWith('0')) {
+        
+        // إذا بدأ بـ 00 نزيلها
+        if (cleanPhone.startsWith('00')) {
+            cleanPhone = cleanPhone.substring(2);
+        }
+        // إذا بدأ بـ 0 فقط نزيلها
+        else if (cleanPhone.startsWith('0')) {
             cleanPhone = cleanPhone.substring(1);
+        }
+        
+        console.log(`📱 Attempting to send OTP to: ${cleanPhone}`);
+        
+        // التحقق من أن الرقم مسجل في WhatsApp
+        const chatId = `${cleanPhone}@c.us`;
+        
+        try {
+            const isRegistered = await client.isRegisteredUser(chatId);
+            if (!isRegistered) {
+                console.log(`❌ Number ${cleanPhone} is not registered on WhatsApp`);
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'هذا الرقم غير مسجل في WhatsApp'
+                });
+            }
+        } catch (checkErr) {
+            console.log(`⚠️ Could not verify if number is registered: ${checkErr.message}`);
+            // نستمر في المحاولة حتى لو فشل التحقق
         }
         
         // توليد OTP
@@ -276,21 +301,24 @@ app.post('/send-otp', async (req, res) => {
 شكراً لاستخدام بدل 🇸🇾`;
         
         // إرسال الرسالة
-        const chatId = `${cleanPhone}@c.us`;
-        await client.sendMessage(chatId, message);
+        console.log(`📤 Sending message to ${chatId}...`);
+        const sentMsg = await client.sendMessage(chatId, message);
         
-        console.log(`✅ OTP sent to ${cleanPhone}: ${otp}`);
-        
-        res.json({
-            status: 'sent',
-            message: 'تم إرسال كود التحقق بنجاح'
-        });
+        if (sentMsg) {
+            console.log(`✅ OTP sent successfully to ${cleanPhone}: ${otp}`);
+            res.json({
+                status: 'sent',
+                message: 'تم إرسال كود التحقق بنجاح'
+            });
+        } else {
+            throw new Error('Failed to send message');
+        }
         
     } catch (err) {
-        console.error('Error sending OTP:', err);
+        console.error('❌ Error sending OTP:', err.message);
         res.status(500).json({
             status: 'error',
-            message: 'فشل إرسال الرسالة: ' + err.message
+            message: 'فشل إرسال الرسالة. تأكد من أن الرقم صحيح ومسجل في WhatsApp'
         });
     }
 });
