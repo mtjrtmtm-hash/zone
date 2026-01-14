@@ -966,18 +966,6 @@ const HomePage = () => {
           </motion.div>
         </div>
       </section>
-              <motion.div animate={{ rotate: [0, 5, -5, 0] }} transition={{ repeat: Infinity, duration: 2 }} className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-primary rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
-                <Sparkles className="w-10 h-10 text-white" />
-              </motion.div>
-              <h2 className="text-2xl md:text-3xl font-bold mb-4">مستشار المقايضة الذكي</h2>
-              <p className="text-muted-foreground mb-6 max-w-xl mx-auto">استخدم الذكاء الاصطناعي لمعرفة أفضل الأغراض التي يمكنك مقايضتها</p>
-              <Button size="lg" className="rounded-full bg-gradient-to-r from-indigo-600 to-primary hover:opacity-90 shadow-xl" onClick={() => navigate(user ? "/add-offer" : "/login")}>
-                <Sparkles className="w-5 h-5 ml-2" />جرب الآن
-              </Button>
-            </div>
-          </GlassCard>
-        </div>
-      </section>
     </div>
   );
 };
