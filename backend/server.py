@@ -346,15 +346,7 @@ async def register(user_data: UserCreate):
     
     await db.users.insert_one(user_doc)
     
-    # إرسال OTP تلقائياً عبر خدمة WhatsApp
-    otp_sent = False
-    try:
-        if whatsapp_service.is_connected:
-            otp_sent = await whatsapp_service.send_otp(full_phone)
-            if otp_sent:
-                logger.info(f"OTP sent successfully to {full_phone}")
-    except Exception as e:
-        logger.error(f"Failed to send OTP: {e}")
+    # لا يتم إرسال OTP تلقائياً - المستخدم سيطلبه بنفسه
     
     token = create_access_token({"sub": user_id})
     user_response = UserResponse(
