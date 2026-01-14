@@ -23,6 +23,7 @@ let serviceStatus = {
     isReady: false,
     isAuthenticated: false,
     qrCode: null,
+    qrCodeBase64: null,
     connectedNumber: null,
     lastError: null
 };
