@@ -1332,3 +1332,6 @@ async def resend_otp(phone: str, country_code: str = "+963"):
     except Exception as e:
         logger.error(f"Resend OTP error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# Include router at the end after all endpoints are defined
+app.include_router(api_router)
