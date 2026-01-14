@@ -2428,12 +2428,62 @@ const AdminPages = () => {
 const BlockEditor = ({ block, onUpdate }) => {
   const content = block.content || {};
   
+  const handleImageUpload = async (e, fieldName = 'image') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // تحقق من حجم الملف (أقل من 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("حجم الصورة كبير جداً. يجب أن يكون أقل من 5MB");
+      return;
+    }
+    
+    // تحويل الصورة إلى Base64
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result;
+      onUpdate({ [fieldName]: base64String });
+      toast.success("تم رفع الصورة بنجاح");
+    };
+    reader.onerror = () => {
+      toast.error("فشل رفع الصورة");
+    };
+    reader.readAsDataURL(file);
+  };
+  
   switch (block.type) {
     case "hero":
       return (
         <div className="grid gap-3">
           <Input placeholder="العنوان الرئيسي" value={content.title || ""} onChange={(e) => onUpdate({ title: e.target.value })} className="rounded-xl" />
           <Input placeholder="النص الفرعي" value={content.subtitle || ""} onChange={(e) => onUpdate({ subtitle: e.target.value })} className="rounded-xl" />
+          
+          {/* رفع الصورة */}
+          <div className="space-y-2">
+            <Label>صورة الخلفية</Label>
+            <div className="flex gap-2">
+              <Input 
+                type="file" 
+                accept="image/*" 
+                onChange={(e) => handleImageUpload(e, 'image')} 
+                className="rounded-xl"
+              />
+            </div>
+            {content.image && (
+              <div className="relative mt-2 rounded-xl overflow-hidden border border-purple-200">
+                <img src={content.image} alt="Preview" className="w-full h-32 object-cover" />
+                <Button 
+                  size="icon" 
+                  variant="destructive" 
+                  className="absolute top-2 right-2 rounded-full" 
+                  onClick={() => onUpdate({ image: "" })}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+          
           <div className="grid grid-cols-2 gap-2">
             <Input placeholder="نص الزر" value={content.buttonText || ""} onChange={(e) => onUpdate({ buttonText: e.target.value })} className="rounded-xl" />
             <Input placeholder="رابط الزر" value={content.buttonLink || ""} onChange={(e) => onUpdate({ buttonLink: e.target.value })} className="rounded-xl" dir="ltr" />
@@ -2460,7 +2510,32 @@ const BlockEditor = ({ block, onUpdate }) => {
     case "banner":
       return (
         <div className="grid gap-3">
-          <Input placeholder="رابط الصورة" value={content.image || ""} onChange={(e) => onUpdate({ image: e.target.value })} className="rounded-xl" dir="ltr" />
+          {/* رفع صورة البانر */}
+          <div className="space-y-2">
+            <Label>صورة البانر</Label>
+            <div className="flex gap-2">
+              <Input 
+                type="file" 
+                accept="image/*" 
+                onChange={(e) => handleImageUpload(e, 'image')} 
+                className="rounded-xl"
+              />
+            </div>
+            {content.image && (
+              <div className="relative mt-2 rounded-xl overflow-hidden border border-purple-200">
+                <img src={content.image} alt="Preview" className="w-full h-32 object-cover" />
+                <Button 
+                  size="icon" 
+                  variant="destructive" 
+                  className="absolute top-2 right-2 rounded-full" 
+                  onClick={() => onUpdate({ image: "" })}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
+          </div>
+          
           <Input placeholder="رابط البانر" value={content.link || ""} onChange={(e) => onUpdate({ link: e.target.value })} className="rounded-xl" dir="ltr" />
           <Input placeholder="النص البديل" value={content.alt || ""} onChange={(e) => onUpdate({ alt: e.target.value })} className="rounded-xl" />
         </div>
@@ -2471,6 +2546,7 @@ const BlockEditor = ({ block, onUpdate }) => {
           <Input placeholder="عنوان القسم" value={content.title || ""} onChange={(e) => onUpdate({ title: e.target.value })} className="rounded-xl" />
           <Input placeholder="البريد الإلكتروني" value={content.email || ""} onChange={(e) => onUpdate({ email: e.target.value })} className="rounded-xl" dir="ltr" />
           <Input placeholder="رقم الهاتف" value={content.phone || ""} onChange={(e) => onUpdate({ phone: e.target.value })} className="rounded-xl" />
+          <Input placeholder="العنوان" value={content.address || ""} onChange={(e) => onUpdate({ address: e.target.value })} className="rounded-xl" />
         </div>
       );
     case "slider":
