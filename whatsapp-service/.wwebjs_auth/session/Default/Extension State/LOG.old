@@ -1,2 +1,3 @@
-2026/01/14-21:06:44.139 b7d Creating DB /app/whatsapp-service/.wwebjs_auth/session/Default/Extension State since it was missing.
-2026/01/14-21:06:44.144 b7d Reusing MANIFEST /app/whatsapp-service/.wwebjs_auth/session/Default/Extension State/MANIFEST-000001
+2026/01/14-21:09:45.305 c8a Reusing MANIFEST /app/whatsapp-service/.wwebjs_auth/session/Default/Extension State/MANIFEST-000001
+2026/01/14-21:09:45.306 c8a Recovering log #3
+2026/01/14-21:09:45.306 c8a Reusing old log /app/whatsapp-service/.wwebjs_auth/session/Default/Extension State/000003.log 
