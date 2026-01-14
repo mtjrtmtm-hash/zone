@@ -1519,11 +1519,11 @@ const MessagesPage = () => {
       </div>
 
       {/* Mobile View - With Drawer */}
-      <div className="md:hidden fixed inset-0 top-0 bottom-0 flex flex-col">
+      <div className="md:hidden h-screen flex flex-col">
         {selectedConv ? (
-          <div className="flex-1 flex flex-col pb-16">
+          <>
             {/* Chat Header with Menu Button */}
-            <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg relative z-10 flex-shrink-0">
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg flex-shrink-0">
               <div className="flex items-center gap-2 p-3">
                 <motion.button
                   whileTap={{ scale: 0.9 }}
@@ -1578,18 +1578,17 @@ const MessagesPage = () => {
               </div>
             </div>
 
-            {/* Messages Area */}
+            {/* Messages Area - Scrollable */}
             <div 
               ref={messagesContainerRef}
-              className="flex-1 overflow-y-auto overflow-x-hidden bg-gradient-to-b from-purple-50/30 via-white to-purple-50/20"
+              className="flex-1 overflow-y-auto overflow-x-hidden bg-gradient-to-b from-purple-50/30 via-white to-purple-50/20 pb-24"
               style={{ 
-                WebkitOverflowScrolling: 'touch',
-                scrollBehavior: 'smooth'
+                WebkitOverflowScrolling: 'touch'
               }}
             >
-              <div className="p-3 space-y-2 pb-24 min-h-full">
+              <div className="p-3 space-y-2">
                 {messages.length === 0 ? (
-                  <div className="flex items-center justify-center h-64">
+                  <div className="flex items-center justify-center min-h-[300px]">
                     <div className="text-center text-muted-foreground">
                       <MessageCircle className="w-16 h-16 mx-auto mb-3 opacity-30" />
                       <p className="text-sm">ابدأ المحادثة الآن</p>
@@ -1621,8 +1620,8 @@ const MessagesPage = () => {
               </div>
             </div>
 
-            {/* Input Area - Fixed at bottom above mobile nav */}
-            <div className="absolute bottom-16 left-0 right-0 border-t border-purple-100 bg-white shadow-lg p-3 z-30">
+            {/* Input Area - Fixed at bottom */}
+            <div className="bg-white border-t border-purple-100 p-3 flex-shrink-0 pb-20">
               <div className="flex gap-2 items-end">
                 <Input 
                   placeholder="اكتب رسالة..." 
@@ -1648,7 +1647,7 @@ const MessagesPage = () => {
                 </motion.div>
               </div>
             </div>
-          </div>
+          </>
         ) : (
           /* No conversation selected - Show list */
           <div className="flex-1 flex flex-col bg-white pb-16">
