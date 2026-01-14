@@ -2885,6 +2885,9 @@ const DynamicPage = () => {
         ) : (
           <div className="space-y-8">
             {components.map((component, index) => {
+              // استخدام content بدلاً من data
+              const blockData = component.content || component.data || {};
+              
               switch (component.type) {
                 case 'hero':
                   return (
@@ -2895,13 +2898,21 @@ const DynamicPage = () => {
                       transition={{ delay: index * 0.1 }}
                       className="relative h-[400px] rounded-3xl overflow-hidden"
                     >
-                      {component.data.image && (
-                        <img src={component.data.image} alt={component.data.title} className="w-full h-full object-cover" />
+                      {blockData.image && (
+                        <img src={blockData.image} alt={blockData.title || 'Hero'} className="w-full h-full object-cover" />
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end">
                         <div className="p-8 text-white">
-                          <h2 className="text-4xl font-bold mb-3">{component.data.title}</h2>
-                          {component.data.subtitle && <p className="text-lg opacity-90">{component.data.subtitle}</p>}
+                          <h2 className="text-4xl font-bold mb-3">{blockData.title || ''}</h2>
+                          {blockData.subtitle && <p className="text-lg opacity-90">{blockData.subtitle}</p>}
+                          {blockData.buttonText && (
+                            <Button 
+                              className="mt-4 bg-white text-purple-600 hover:bg-white/90"
+                              onClick={() => window.location.href = blockData.buttonLink || '#'}
+                            >
+                              {blockData.buttonText}
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </motion.div>
@@ -2916,8 +2927,8 @@ const DynamicPage = () => {
                       transition={{ delay: index * 0.1 }}
                     >
                       <GlassCard>
-                        <h3 className="text-2xl font-bold mb-4">{component.data.title}</h3>
-                        <p className="text-lg leading-relaxed whitespace-pre-wrap">{component.data.content}</p>
+                        {blockData.title && <h3 className="text-2xl font-bold mb-4">{blockData.title}</h3>}
+                        {blockData.content && <p className="text-lg leading-relaxed whitespace-pre-wrap">{blockData.content}</p>}
                       </GlassCard>
                     </motion.div>
                   );
@@ -2930,18 +2941,27 @@ const DynamicPage = () => {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}
                     >
-                      <GlassCard className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-center py-12">
-                        <h3 className="text-3xl font-bold mb-4">{component.data.title}</h3>
-                        <p className="text-xl mb-6 opacity-90">{component.data.content}</p>
-                        {component.data.button_text && (
-                          <Button 
-                            className="bg-white text-purple-600 hover:bg-white/90"
-                            onClick={() => window.location.href = component.data.button_link || '#'}
-                          >
-                            {component.data.button_text}
-                          </Button>
-                        )}
-                      </GlassCard>
+                      {blockData.image ? (
+                        <div 
+                          className="relative h-[300px] rounded-3xl overflow-hidden cursor-pointer"
+                          onClick={() => blockData.link && (window.location.href = blockData.link)}
+                        >
+                          <img src={blockData.image} alt={blockData.alt || 'Banner'} className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <GlassCard className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-center py-12">
+                          <h3 className="text-3xl font-bold mb-4">{blockData.title || ''}</h3>
+                          <p className="text-xl mb-6 opacity-90">{blockData.content || ''}</p>
+                          {blockData.button_text && (
+                            <Button 
+                              className="bg-white text-purple-600 hover:bg-white/90"
+                              onClick={() => window.location.href = blockData.button_link || '#'}
+                            >
+                              {blockData.button_text}
+                            </Button>
+                          )}
+                        </GlassCard>
+                      )}
                     </motion.div>
                   );
 
@@ -2954,32 +2974,32 @@ const DynamicPage = () => {
                       transition={{ delay: index * 0.1 }}
                     >
                       <GlassCard>
-                        <h3 className="text-2xl font-bold mb-6 text-center">{component.data.title}</h3>
+                        {blockData.title && <h3 className="text-2xl font-bold mb-6 text-center">{blockData.title}</h3>}
                         <div className="grid md:grid-cols-3 gap-6">
-                          {component.data.email && (
+                          {blockData.email && (
                             <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-xl">
                               <Mail className="w-6 h-6 text-primary" />
                               <div>
                                 <p className="text-sm text-muted-foreground">البريد الإلكتروني</p>
-                                <p className="font-medium">{component.data.email}</p>
+                                <p className="font-medium">{blockData.email}</p>
                               </div>
                             </div>
                           )}
-                          {component.data.phone && (
+                          {blockData.phone && (
                             <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-xl">
                               <Phone className="w-6 h-6 text-primary" />
                               <div>
                                 <p className="text-sm text-muted-foreground">الهاتف</p>
-                                <p className="font-medium">{component.data.phone}</p>
+                                <p className="font-medium">{blockData.phone}</p>
                               </div>
                             </div>
                           )}
-                          {component.data.address && (
+                          {blockData.address && (
                             <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-xl">
                               <MapPin className="w-6 h-6 text-primary" />
                               <div>
                                 <p className="text-sm text-muted-foreground">العنوان</p>
-                                <p className="font-medium">{component.data.address}</p>
+                                <p className="font-medium">{blockData.address}</p>
                               </div>
                             </div>
                           )}
