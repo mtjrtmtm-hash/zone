@@ -54,21 +54,28 @@ class UserCreate(BaseModel):
     name: str
     email: str
     password: str
-    phone: Optional[str] = None
+    phone: str  # رقم الهاتف إجباري
+    country_code: str = "+963"  # كود الدولة (افتراضياً سوريا)
     governorate: Optional[str] = "دمشق"
 
 class UserLogin(BaseModel):
     email: str
     password: str
 
+class OTPVerify(BaseModel):
+    phone: str
+    code: str
+
 class UserResponse(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str
     name: str
     email: str
-    phone: Optional[str] = None
+    phone: str
+    country_code: str
     governorate: str
     is_admin: bool = False
+    verified: bool = False  # حالة التحقق
     trust_score: int = 0
     trades_count: int = 0
     avatar: Optional[str] = None
