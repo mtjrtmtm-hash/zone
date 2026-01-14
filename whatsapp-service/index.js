@@ -229,6 +229,7 @@ app.post('/disconnect', async (req, res) => {
         serviceStatus.isAuthenticated = false;
         serviceStatus.connectedNumber = null;
         serviceStatus.qrCode = null;
+        serviceStatus.qrCodeBase64 = null;
         
         res.json({
             status: 'disconnected',
