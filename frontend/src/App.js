@@ -584,6 +584,86 @@ const Navbar = () => {
   );
 };
 
+// Offer Card Component
+const OfferCard = ({ offer, delay = 0 }) => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  const categoryIcon = CATEGORIES.find(c => c.name === offer.category)?.icon;
+  const IconComponent = categoryIcon || Box;
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay }}
+      whileHover={{ y: -5 }}
+      className="h-full"
+    >
+      <GlassCard 
+        className="overflow-hidden cursor-pointer h-full flex flex-col" 
+        onClick={() => navigate(`/offer/${offer.id}`)}
+      >
+        <div className="relative h-48 bg-gradient-to-br from-purple-100 to-pink-100 overflow-hidden">
+          {offer.images && offer.images.length > 0 ? (
+            <img 
+              src={offer.images[0]} 
+              alt={offer.title} 
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <IconComponent className="w-16 h-16 text-primary/30" strokeWidth={1.5} />
+            </div>
+          )}
+          {offer.is_quick_trade && (
+            <Badge className="absolute top-3 right-3 bg-yellow-500 text-white shadow-lg">
+              <Zap className="w-3 h-3 ml-1" />
+              سريع
+            </Badge>
+          )}
+        </div>
+        
+        <div className="p-4 flex-1 flex flex-col">
+          <div className="flex items-start justify-between mb-2">
+            <h3 className="font-bold text-lg line-clamp-2 flex-1">{offer.title}</h3>
+          </div>
+          
+          <div className="flex items-center gap-2 mb-3 flex-wrap">
+            <Badge variant="secondary" className="rounded-full text-xs">
+              <IconComponent className="w-3 h-3 ml-1" strokeWidth={2} />
+              {offer.category}
+            </Badge>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <MapPin className="w-3 h-3" />
+              {offer.governorate}
+            </div>
+          </div>
+          
+          <p className="text-sm text-muted-foreground line-clamp-2 mb-3 flex-1">
+            {offer.description}
+          </p>
+          
+          <div className="flex items-center justify-between pt-3 border-t">
+            <div className="flex items-center gap-2">
+              <Avatar className="w-7 h-7 border-2 border-primary/20">
+                <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-pink-500 text-white">
+                  {offer.owner_name?.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm text-muted-foreground">{offer.owner_name}</span>
+            </div>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Clock className="w-3 h-3" />
+              {new Date(offer.created_at).toLocaleDateString("ar-SY")}
+            </div>
+          </div>
+        </div>
+      </GlassCard>
+    </motion.div>
+  );
+};
+
 // Home Page
 const HomePage = () => {
   const navigate = useNavigate();
