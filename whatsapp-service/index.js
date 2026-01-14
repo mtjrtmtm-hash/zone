@@ -460,6 +460,75 @@ app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// اختبار إرسال رسالة (للأدمن)
+app.post('/test-send', async (req, res) => {
+    try {
+        const { phone, message } = req.body;
+        
+        if (!phone) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'رقم الهاتف مطلوب'
+            });
+        }
+        
+        if (!serviceStatus.isReady || !serviceStatus.isAuthenticated) {
+            return res.status(503).json({
+                status: 'error',
+                message: 'خدمة WhatsApp غير متصلة',
+                details: serviceStatus
+            });
+        }
+        
+        // تنظيف رقم الهاتف
+        let cleanPhone = phone.replace(/[^0-9]/g, '');
+        if (cleanPhone.startsWith('00')) {
+            cleanPhone = cleanPhone.substring(2);
+        } else if (cleanPhone.startsWith('0')) {
+            cleanPhone = cleanPhone.substring(1);
+        }
+        
+        const chatId = `${cleanPhone}@c.us`;
+        const testMessage = message || `🔔 رسالة اختبار من منصة بدل\n\nالوقت: ${new Date().toLocaleString('ar-SY')}`;
+        
+        console.log(`📤 Test sending to ${chatId}...`);
+        
+        // التحقق من تسجيل الرقم
+        try {
+            const isRegistered = await client.isRegisteredUser(chatId);
+            console.log(`📱 Is registered: ${isRegistered}`);
+            if (!isRegistered) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'هذا الرقم غير مسجل في WhatsApp',
+                    phone: cleanPhone
+                });
+            }
+        } catch (checkErr) {
+            console.log(`⚠️ Registration check failed: ${checkErr.message}`);
+        }
+        
+        // إرسال الرسالة
+        const sentMsg = await client.sendMessage(chatId, testMessage);
+        
+        console.log(`✅ Test message sent to ${cleanPhone}`);
+        
+        res.json({
+            status: 'sent',
+            message: 'تم إرسال رسالة الاختبار بنجاح',
+            to: cleanPhone,
+            messageId: sentMsg?.id?._serialized || 'unknown'
+        });
+        
+    } catch (err) {
+        console.error('❌ Test send error:', err.message);
+        res.status(500).json({
+            status: 'error',
+            message: 'فشل إرسال الرسالة: ' + err.message
+        });
+    }
+});
+
 // بدء الخادم
 const PORT = process.env.WHATSAPP_SERVICE_PORT || 8002;
 
