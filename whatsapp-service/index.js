@@ -103,6 +103,7 @@ async function connectWhatsApp() {
                 serviceStatus.isReady = true;
                 serviceStatus.isAuthenticated = true;
                 serviceStatus.qrCode = null;
+                serviceStatus.qrCodeBase64 = null;
                 serviceStatus.lastError = null;
                 
                 // الحصول على رقم الهاتف
