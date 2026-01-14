@@ -1226,7 +1226,19 @@ const OfferForm = ({ form, setForm, handleImageUpload, getAISuggestions, aiLoadi
             <Label>الفئة *</Label>
             <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
               <SelectTrigger className="mt-2 rounded-xl"><SelectValue placeholder="اختر الفئة" /></SelectTrigger>
-              <SelectContent>{CATEGORIES.map((cat) => <SelectItem key={cat.name} value={cat.name}>{cat.icon} {cat.name}</SelectItem>)}</SelectContent>
+              <SelectContent>
+                {CATEGORIES.map((cat) => {
+                  const IconComponent = cat.icon;
+                  return (
+                    <SelectItem key={cat.name} value={cat.name}>
+                      <div className="flex items-center gap-2">
+                        <IconComponent className="w-4 h-4" strokeWidth={1.5} />
+                        <span>{cat.name}</span>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
             </Select>
           </div>
           <div>
