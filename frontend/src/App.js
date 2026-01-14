@@ -1676,6 +1676,226 @@ const RegisterPage = () => {
   );
 };
 
+// Verify Phone Page
+const VerifyPhonePage = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { api } = useAuth();
+  const phone = location.state?.phone || "";
+  const [code, setCode] = useState(["", "", "", "", "", ""]);
+  const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [timer, setTimer] = useState(600); // 10 minutes
+  const inputs = useRef([]);
+
+  useEffect(() => {
+    if (!phone) {
+      navigate("/register");
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setTimer((prev) => {
+        if (prev <= 0) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [phone, navigate]);
+
+  const handleChange = (index, value) => {
+    if (!/^\d*$/.test(value)) return;
+    
+    const newCode = [...code];
+    newCode[index] = value.slice(-1);
+    setCode(newCode);
+
+    // الانتقال للحقل التالي تلقائياً
+    if (value && index < 5) {
+      inputs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleKeyDown = (index, e) => {
+    if (e.key === "Backspace" && !code[index] && index > 0) {
+      inputs.current[index - 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text").slice(0, 6);
+    if (!/^\d+$/.test(pastedData)) return;
+
+    const newCode = pastedData.split("");
+    while (newCode.length < 6) newCode.push("");
+    setCode(newCode);
+    inputs.current[Math.min(pastedData.length, 5)]?.focus();
+  };
+
+  const handleVerify = async () => {
+    const otp = code.join("");
+    if (otp.length !== 6) {
+      toast.error("يرجى إدخال الكود كاملاً");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await api.post("/auth/verify-otp", { phone, code: otp });
+      toast.success("تم التحقق بنجاح! 🎉");
+      navigate("/");
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "كود غير صحيح");
+      setCode(["", "", "", "", "", ""]);
+      inputs.current[0]?.focus();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setResending(true);
+    try {
+      const [country_code, ...rest] = phone.split(/(\d+)/);
+      const phoneNum = rest.join("");
+      await api.post("/auth/resend-otp", null, {
+        params: { phone: phoneNum, country_code: country_code || "+963" }
+      });
+      toast.success("تم إعادة إرسال الكود");
+      setTimer(600);
+      setCode(["", "", "", "", "", ""]);
+      inputs.current[0]?.focus();
+    } catch (e) {
+      toast.error("فشل إعادة الإرسال");
+    } finally {
+      setResending(false);
+    }
+  };
+
+  const minutes = Math.floor(timer / 60);
+  const seconds = timer % 60;
+
+  return (
+    <div className="min-h-screen flex items-center justify-center px-4 py-8 pb-24 md:pb-8">
+      <GlassCard className="w-full max-w-md" hover={false}>
+        <div className="text-center mb-8">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", duration: 0.5 }}
+            className="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl"
+          >
+            <MessageCircle className="w-10 h-10 text-white" />
+          </motion.div>
+          <h1 className="text-2xl font-bold mb-2">تحقق من رقم الهاتف</h1>
+          <p className="text-muted-foreground mb-4">
+            أرسلنا لك كود التحقق عبر WhatsApp
+          </p>
+          <div className="flex items-center justify-center gap-2 text-sm">
+            <Phone className="w-4 h-4 text-primary" />
+            <span className="font-mono font-medium text-primary">{phone}</span>
+          </div>
+        </div>
+
+        {/* OTP Input */}
+        <div className="mb-8">
+          <Label className="block text-center mb-4">أدخل الكود المكون من 6 أرقام</Label>
+          <div className="flex gap-2 justify-center" dir="ltr">
+            {code.map((digit, index) => (
+              <Input
+                key={index}
+                ref={(el) => (inputs.current[index] = el)}
+                type="text"
+                inputMode="numeric"
+                maxLength={1}
+                value={digit}
+                onChange={(e) => handleChange(index, e.target.value)}
+                onKeyDown={(e) => handleKeyDown(index, e)}
+                onPaste={index === 0 ? handlePaste : undefined}
+                className="w-12 h-14 text-center text-2xl font-bold rounded-xl border-2 focus:border-primary"
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Timer */}
+        <div className="text-center mb-6">
+          {timer > 0 ? (
+            <div className="flex items-center justify-center gap-2 text-muted-foreground">
+              <Clock className="w-4 h-4" />
+              <span className="font-mono">
+                {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+              </span>
+            </div>
+          ) : (
+            <p className="text-destructive">انتهت صلاحية الكود</p>
+          )}
+        </div>
+
+        {/* Buttons */}
+        <div className="space-y-3">
+          <Button
+            onClick={handleVerify}
+            disabled={loading || code.some(d => !d) || timer === 0}
+            className="w-full h-12 rounded-xl bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin ml-2" />
+                جاري التحقق...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="w-5 h-5 ml-2" />
+                تحقق من الكود
+              </>
+            )}
+          </Button>
+
+          <Button
+            onClick={handleResend}
+            disabled={resending || timer > 540}
+            variant="outline"
+            className="w-full h-12 rounded-xl"
+          >
+            {resending ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin ml-2" />
+                جاري الإرسال...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="w-5 h-5 ml-2" />
+                إعادة إرسال الكود
+              </>
+            )}
+          </Button>
+        </div>
+
+        {/* Help Text */}
+        <div className="mt-6 p-4 bg-blue-50 rounded-xl">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-blue-900">
+              <p className="font-medium mb-1">لم تستلم الكود؟</p>
+              <ul className="space-y-1 text-blue-700">
+                <li>• تأكد من رقم الهاتف صحيح</li>
+                <li>• تحقق من WhatsApp</li>
+                <li>• انتظر دقيقة وأعد المحاولة</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </GlassCard>
+    </div>
+  );
+};
+
 // Add Offer Page
 const AddOfferPage = () => {
   const navigate = useNavigate();
