@@ -174,17 +174,19 @@ app.post('/generate-qr', async (req, res) => {
     }
     
     // إعادة الاتصال للحصول على QR جديد
-    if (!serviceStatus.qrCode) {
+    if (!serviceStatus.qrCodeBase64) {
         // حذف الجلسة القديمة
         if (fs.existsSync(AUTH_FOLDER)) {
             fs.rmSync(AUTH_FOLDER, { recursive: true });
         }
+        serviceStatus.qrCode = null;
+        serviceStatus.qrCodeBase64 = null;
         connectWhatsApp();
     }
     
     // انتظر حتى يتم توليد QR
     let attempts = 0;
-    while (!serviceStatus.qrCode && attempts < 30) {
+    while (!serviceStatus.qrCodeBase64 && attempts < 30) {
         await new Promise(r => setTimeout(r, 1000));
         attempts++;
         
@@ -197,10 +199,10 @@ app.post('/generate-qr', async (req, res) => {
         }
     }
     
-    if (serviceStatus.qrCode) {
+    if (serviceStatus.qrCodeBase64) {
         return res.json({
             status: 'success',
-            qr_code: serviceStatus.qrCode,
+            qr_code: serviceStatus.qrCodeBase64,
             message: 'امسح الكود من WhatsApp على جوالك'
         });
     }
