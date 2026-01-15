@@ -48,6 +48,10 @@ const useAuth = () => useContext(AuthContext);
 const SettingsContext = createContext(null);
 const useSettings = () => useContext(SettingsContext);
 
+// Context للتحقق من التوثيق
+const VerificationContext = createContext(null);
+const useVerification = () => useContext(VerificationContext);
+
 const useStickyState = (key, defaultValue) => {
   const [value, setValue] = useState(() => {
     const saved = localStorage.getItem(key);
@@ -74,6 +78,21 @@ const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [showVerificationBanner, setShowVerificationBanner] = useState(true);
+  const [verificationMessage, setVerificationMessage] = useState(null);
+
+  // إظهار الإشعار مع رسالة مخصصة
+  const triggerVerificationBanner = (message = null) => {
+    setVerificationMessage(message);
+    setShowVerificationBanner(true);
+  };
+
+  // إخفاء مؤقت ثم إعادة الظهور بعد 5 ثواني
+  const dismissVerificationBanner = () => {
+    setShowVerificationBanner(false);
+    setVerificationMessage(null);
+    setTimeout(() => setShowVerificationBanner(true), 5000);
+  };
 
   const fetchUnreadCounts = async () => {
     if (!token) return;
@@ -114,10 +133,27 @@ const AuthProvider = ({ children }) => {
   };
 
   const logout = () => { setUser(null); setToken(null); setUnreadMessages(0); setUnreadNotifications(0); localStorage.removeItem("badal_user"); localStorage.removeItem("badal_token"); };
+  
+  // API مع معالجة خطأ التوثيق
   const api = axios.create({ baseURL: API, headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  
+  // Interceptor لمعالجة أخطاء التوثيق
+  api.interceptors.response.use(
+    response => response,
+    error => {
+      if (error.response?.status === 403 && error.response?.data?.detail?.includes("التحقق")) {
+        triggerVerificationBanner("يجب تفعيل حسابك أولاً لإتمام هذا الإجراء");
+      }
+      return Promise.reject(error);
+    }
+  );
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, loading, api, unreadMessages, unreadNotifications, fetchUnreadCounts }}>
+    <AuthContext.Provider value={{ 
+      user, token, login, register, logout, loading, api, 
+      unreadMessages, unreadNotifications, fetchUnreadCounts,
+      showVerificationBanner, dismissVerificationBanner, triggerVerificationBanner, verificationMessage
+    }}>
       {children}
     </AuthContext.Provider>
   );
