@@ -3183,6 +3183,7 @@ const AdminUsers = () => {
   const { api } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   useEffect(() => { fetchUsers(); }, []);
 
@@ -3197,6 +3198,24 @@ const AdminUsers = () => {
     catch (e) { toast.error("فشل التحديث"); }
   };
 
+  const toggleUserStatus = async (userId, currentStatus) => {
+    try {
+      const newStatus = currentStatus === false;
+      await api.put(`/admin/users/${userId}/status?is_active=${newStatus}`);
+      setUsers(users.map(u => u.id === userId ? { ...u, is_active: newStatus } : u));
+      toast.success(newStatus ? "تم تفعيل الحساب" : "تم إيقاف الحساب");
+    } catch (e) { toast.error("فشل تحديث حالة الحساب"); }
+  };
+
+  const deleteUser = async (userId) => {
+    try {
+      await api.delete(`/admin/users/${userId}`);
+      setUsers(users.filter(u => u.id !== userId));
+      setDeleteConfirm(null);
+      toast.success("تم حذف الحساب بنجاح");
+    } catch (e) { toast.error("فشل حذف الحساب"); }
+  };
+
   if (loading) return <Skeleton className="h-96 rounded-3xl" />;
 
   return (
@@ -3207,7 +3226,8 @@ const AdminUsers = () => {
             <tr className="border-b border-purple-100">
               <th className="text-right p-4">المستخدم</th>
               <th className="text-right p-4">البريد</th>
-              <th className="text-right p-4">المحافظة</th>
+              <th className="text-right p-4">التوثيق</th>
+              <th className="text-right p-4">الحالة</th>
               <th className="text-right p-4">مؤشر الثقة</th>
               <th className="text-right p-4">المقايضات</th>
               <th className="text-right p-4">الإجراءات</th>
@@ -3215,23 +3235,67 @@ const AdminUsers = () => {
           </thead>
           <tbody>
             {users.map((user) => (
-              <tr key={user.id} className="border-b border-purple-50 hover:bg-purple-50/50">
+              <tr key={user.id} className={`border-b border-purple-50 hover:bg-purple-50/50 ${user.is_active === false ? 'opacity-60 bg-red-50/30' : ''}`}>
                 <td className="p-4">
                   <div className="flex items-center gap-3">
                     <Avatar><AvatarFallback className="bg-primary text-white">{user.name?.charAt(0)}</AvatarFallback></Avatar>
-                    <div><p className="font-medium">{user.name}</p>{user.is_admin && <Badge className="bg-primary text-xs">أدمن</Badge>}</div>
+                    <div>
+                      <p className="font-medium">{user.name}</p>
+                      <div className="flex gap-1 mt-1">
+                        {user.is_admin && <Badge className="bg-primary text-xs">أدمن</Badge>}
+                      </div>
+                    </div>
                   </div>
                 </td>
-                <td className="p-4 text-muted-foreground">{user.email}</td>
-                <td className="p-4">{user.governorate}</td>
+                <td className="p-4 text-muted-foreground text-sm">{user.email}</td>
+                <td className="p-4">
+                  {user.verified ? (
+                    <Badge className="bg-green-500 text-white text-xs flex items-center gap-1 w-fit">
+                      <CheckCircle className="w-3 h-3" />موثق
+                    </Badge>
+                  ) : (
+                    <Badge className="bg-orange-500 text-white text-xs flex items-center gap-1 w-fit">
+                      <AlertCircle className="w-3 h-3" />غير موثق
+                    </Badge>
+                  )}
+                </td>
+                <td className="p-4">
+                  {user.is_active === false ? (
+                    <Badge className="bg-red-500 text-white text-xs flex items-center gap-1 w-fit">
+                      <Ban className="w-3 h-3" />موقوف
+                    </Badge>
+                  ) : (
+                    <Badge className="bg-green-500 text-white text-xs flex items-center gap-1 w-fit">
+                      <CheckCircle className="w-3 h-3" />نشط
+                    </Badge>
+                  )}
+                </td>
                 <td className="p-4"><div className="flex items-center gap-2"><TrustBadge score={user.trust_score} /><span className="text-sm text-muted-foreground">{user.trust_score}</span></div></td>
                 <td className="p-4">{user.trades_count}</td>
                 <td className="p-4">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild><Button variant="ghost" size="sm"><MoreVertical className="w-4 h-4" /></Button></DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      <DropdownMenuItem onClick={() => updateTrust(user.id, Math.min(100, (user.trust_score || 0) + 10))}><Plus className="w-4 h-4 ml-2" />زيادة الثقة +10</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => updateTrust(user.id, Math.max(0, (user.trust_score || 0) - 10))}><X className="w-4 h-4 ml-2" />إنقاص الثقة -10</DropdownMenuItem>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => updateTrust(user.id, Math.min(100, (user.trust_score || 0) + 10))}>
+                        <Plus className="w-4 h-4 ml-2 text-green-500" />زيادة الثقة +10
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => updateTrust(user.id, Math.max(0, (user.trust_score || 0) - 10))}>
+                        <Minus className="w-4 h-4 ml-2 text-orange-500" />إنقاص الثقة -10
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      {user.is_active === false ? (
+                        <DropdownMenuItem onClick={() => toggleUserStatus(user.id, false)} className="text-green-600">
+                          <CheckCircle className="w-4 h-4 ml-2" />تفعيل الحساب
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem onClick={() => toggleUserStatus(user.id, true)} className="text-orange-600" disabled={user.is_admin}>
+                          <Ban className="w-4 h-4 ml-2" />إيقاف الحساب
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setDeleteConfirm(user.id)} className="text-red-600" disabled={user.is_admin}>
+                        <Trash2 className="w-4 h-4 ml-2" />حذف الحساب
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </td>
@@ -3240,6 +3304,29 @@ const AdminUsers = () => {
           </tbody>
         </table>
       </div>
+      
+      {/* مودال تأكيد الحذف */}
+      <Dialog open={deleteConfirm !== null} onOpenChange={() => setDeleteConfirm(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5" />
+              تأكيد حذف الحساب
+            </DialogTitle>
+            <DialogDescription>
+              هل أنت متأكد من حذف هذا الحساب؟ سيتم حذف جميع عروض المستخدم أيضاً.
+              <br />
+              <span className="text-red-500 font-bold">هذا الإجراء لا يمكن التراجع عنه!</span>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-3 justify-end mt-4">
+            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>إلغاء</Button>
+            <Button variant="destructive" onClick={() => deleteUser(deleteConfirm)}>
+              <Trash2 className="w-4 h-4 ml-2" />نعم، احذف الحساب
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </GlassCard>
   );
 };
