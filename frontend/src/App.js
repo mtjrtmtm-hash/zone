@@ -2681,12 +2681,34 @@ const MessagesPage = () => {
             </div>
           </>
         ) : (
-          /* No conversation selected - Show list */
-          <div className="flex-1 flex flex-col bg-white pb-16">
-            <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-4 pb-6 shadow-lg">
-              <h1 className="text-2xl font-bold">الرسائل</h1>
-              <p className="text-sm text-purple-100 mt-1">{conversations.length} محادثة</p>
+          /* No conversation selected - Show list - تصميم احترافي */
+          <div className="flex-1 flex flex-col bg-gray-50 pb-16">
+            {/* Header احترافي */}
+            <div className="bg-gradient-to-br from-purple-600 via-purple-500 to-indigo-600 text-white px-5 py-6 shadow-xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-2xl font-bold">الرسائل</h1>
+                  <p className="text-sm text-purple-200 mt-1 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                    {conversations.length} محادثة نشطة
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                  <MessageCircle className="w-6 h-6" />
+                </div>
+              </div>
             </div>
+            
+            {/* Tabs للفلترة */}
+            <div className="bg-white border-b border-gray-100 px-4 py-3 flex gap-2 overflow-x-auto">
+              <Button size="sm" className="rounded-full bg-purple-100 text-purple-700 hover:bg-purple-200 text-sm px-4 flex-shrink-0">
+                الكل
+              </Button>
+              <Button size="sm" variant="ghost" className="rounded-full text-gray-500 hover:bg-gray-100 text-sm px-4 flex-shrink-0">
+                غير مقروءة
+              </Button>
+            </div>
+            
             <div className="flex-1 overflow-hidden">
               <ConversationsList mobile={true} onSelect={selectConversation} />
             </div>
