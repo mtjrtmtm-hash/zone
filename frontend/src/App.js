@@ -729,81 +729,235 @@ const Navbar = () => {
 };
 
 // Offer Card Component
-const OfferCard = ({ offer, delay = 0 }) => {
+const OfferCard = ({ offer, delay = 0, showActions = false, onStatusChange, onDelete }) => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, api } = useAuth();
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
   
   const categoryIcon = CATEGORIES.find(c => c.name === offer.category)?.icon;
   const IconComponent = categoryIcon || Box;
+
+  // Check if offer is favorited
+  useEffect(() => {
+    if (user && api) {
+      api.get(`/favorites/check/${offer.id}`).then(res => setIsFavorite(res.data.is_favorite)).catch(() => {});
+    }
+  }, [offer.id, user]);
+
+  const toggleFavorite = async (e) => {
+    e.stopPropagation();
+    if (!user) return;
+    try {
+      if (isFavorite) {
+        await api.delete(`/favorites/${offer.id}`);
+        setIsFavorite(false);
+      } else {
+        await api.post(`/favorites/${offer.id}`);
+        setIsFavorite(true);
+      }
+    } catch (err) { console.error(err); }
+  };
+
+  const timeAgo = (date) => {
+    const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+    if (seconds < 60) return 'الآن';
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `منذ ${minutes} د`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `منذ ${hours} س`;
+    const days = Math.floor(hours / 24);
+    if (days < 7) return `منذ ${days} يوم`;
+    return new Date(date).toLocaleDateString("ar-SY");
+  };
   
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay }}
-      whileHover={{ y: -5 }}
-      className="h-full"
+      initial={{ opacity: 0, y: 30, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ delay, duration: 0.4, ease: "easeOut" }}
+      whileHover={{ y: -8, transition: { duration: 0.2 } }}
+      className="h-full group"
     >
-      <GlassCard 
-        className="overflow-hidden cursor-pointer h-full flex flex-col" 
+      <div 
+        className="relative bg-white rounded-3xl overflow-hidden cursor-pointer h-full flex flex-col shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100"
         onClick={() => navigate(`/offer/${offer.id}`)}
       >
-        <div className="relative h-48 bg-gradient-to-br from-purple-100 to-pink-100 overflow-hidden">
+        {/* Image Container */}
+        <div className="relative aspect-[4/3] md:aspect-[3/2] bg-gradient-to-br from-purple-100 via-pink-50 to-indigo-100 overflow-hidden">
           {offer.images && offer.images.length > 0 ? (
-            <img 
-              src={offer.images[0]} 
-              alt={offer.title} 
-              className="w-full h-full object-cover"
-            />
+            <>
+              {/* Skeleton loader */}
+              {!imageLoaded && (
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-100 to-pink-100 animate-pulse" />
+              )}
+              <img 
+                src={offer.images[0]} 
+                alt={offer.title} 
+                className={`w-full h-full object-cover transition-all duration-500 group-hover:scale-110 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                onLoad={() => setImageLoaded(true)}
+              />
+              {/* Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            </>
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <IconComponent className="w-16 h-16 text-primary/30" strokeWidth={1.5} />
+              <div className="w-20 h-20 rounded-full bg-white/50 flex items-center justify-center">
+                <IconComponent className="w-10 h-10 text-purple-400" strokeWidth={1.5} />
+              </div>
             </div>
           )}
-          {offer.is_quick_trade && (
-            <Badge className="absolute top-3 right-3 bg-yellow-500 text-white shadow-lg">
-              <Zap className="w-3 h-3 ml-1" />
-              سريع
-            </Badge>
+          
+          {/* Top Badges */}
+          <div className="absolute top-3 right-3 left-3 flex justify-between items-start">
+            <div className="flex flex-col gap-2">
+              {offer.is_quick_trade && (
+                <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: delay + 0.2 }}>
+                  <Badge className="bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg border-0 px-3 py-1">
+                    <Zap className="w-3.5 h-3.5 ml-1" />
+                    مقايضة سريعة
+                  </Badge>
+                </motion.div>
+              )}
+              {offer.status === "pending" && (
+                <Badge className="bg-yellow-500 text-white shadow-lg">قيد المراجعة</Badge>
+              )}
+            </div>
+            
+            {/* Favorite Button */}
+            {user && (
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={toggleFavorite}
+                className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 ${
+                  isFavorite 
+                    ? 'bg-red-500 text-white' 
+                    : 'bg-white/90 backdrop-blur-sm text-gray-600 hover:bg-white hover:text-red-500'
+                }`}
+              >
+                <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
+              </motion.button>
+            )}
+          </div>
+
+          {/* Image Count Badge */}
+          {offer.images && offer.images.length > 1 && (
+            <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-full flex items-center gap-1">
+              <ImageIcon className="w-3 h-3" />
+              {offer.images.length}
+            </div>
           )}
+
+          {/* Views Badge */}
+          <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-full flex items-center gap-1">
+            <Eye className="w-3 h-3" />
+            {offer.views || 0}
+          </div>
         </div>
         
+        {/* Content */}
         <div className="p-4 flex-1 flex flex-col">
-          <div className="flex items-start justify-between mb-2">
-            <h3 className="font-bold text-lg line-clamp-2 flex-1">{offer.title}</h3>
-          </div>
-          
-          <div className="flex items-center gap-2 mb-3 flex-wrap">
-            <Badge variant="secondary" className="rounded-full text-xs">
-              <IconComponent className="w-3 h-3 ml-1" strokeWidth={2} />
+          {/* Category & Location */}
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-purple-600 bg-purple-50 px-2.5 py-1 rounded-full">
+              <IconComponent className="w-3 h-3" strokeWidth={2} />
               {offer.category}
-            </Badge>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            </span>
+            <span className="inline-flex items-center gap-1 text-xs text-gray-500">
               <MapPin className="w-3 h-3" />
               {offer.governorate}
-            </div>
+            </span>
           </div>
           
-          <p className="text-sm text-muted-foreground line-clamp-2 mb-3 flex-1">
+          {/* Title */}
+          <h3 className="font-bold text-gray-900 text-base md:text-lg line-clamp-2 mb-2 group-hover:text-purple-600 transition-colors">
+            {offer.title}
+          </h3>
+          
+          {/* Description */}
+          <p className="text-sm text-gray-500 line-clamp-2 mb-4 flex-1 leading-relaxed">
             {offer.description}
           </p>
           
-          <div className="flex items-center justify-between pt-3 border-t">
+          {/* Wanted Items */}
+          {offer.wanted_items && (
+            <div className="mb-4 p-2.5 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-100">
+              <p className="text-xs text-green-700 font-medium flex items-center gap-1">
+                <RefreshCw className="w-3 h-3" />
+                مطلوب: <span className="text-green-600 font-normal truncate">{offer.wanted_items}</span>
+              </p>
+            </div>
+          )}
+          
+          {/* Footer */}
+          <div className="flex items-center justify-between pt-3 border-t border-gray-100">
             <div className="flex items-center gap-2">
-              <Avatar className="w-7 h-7 border-2 border-primary/20">
-                <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-pink-500 text-white">
-                  {offer.owner_name?.charAt(0)}
+              <Avatar className="w-8 h-8 border-2 border-purple-100 shadow-sm">
+                <AvatarFallback className="text-xs bg-gradient-to-br from-purple-500 to-pink-500 text-white font-bold">
+                  {(offer.user_name || offer.owner_name)?.charAt(0)}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-sm text-muted-foreground">{offer.owner_name}</span>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-gray-800">{offer.user_name || offer.owner_name}</span>
+                {offer.user_trust_score > 0 && (
+                  <span className="text-[10px] text-amber-600 flex items-center gap-0.5">
+                    <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                    {offer.user_trust_score}
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <span className="text-xs text-gray-400 flex items-center gap-1">
               <Clock className="w-3 h-3" />
-              {new Date(offer.created_at).toLocaleDateString("ar-SY")}
-            </div>
+              {timeAgo(offer.created_at)}
+            </span>
           </div>
+
+          {/* Actions for My Offers */}
+          {showActions && (
+            <div className="flex gap-2 mt-4 pt-3 border-t border-gray-100">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="flex-1 rounded-xl text-xs h-9"
+                onClick={(e) => { e.stopPropagation(); navigate(`/edit-offer/${offer.id}`); }}
+              >
+                <Edit className="w-3.5 h-3.5 ml-1" />
+                تعديل
+              </Button>
+              {offer.status === "active" ? (
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="flex-1 rounded-xl text-xs h-9 text-green-600 border-green-200 hover:bg-green-50"
+                  onClick={(e) => { e.stopPropagation(); onStatusChange?.(offer.id, "completed"); }}
+                >
+                  <Check className="w-3.5 h-3.5 ml-1" />
+                  تم
+                </Button>
+              ) : (
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="flex-1 rounded-xl text-xs h-9"
+                  onClick={(e) => { e.stopPropagation(); onStatusChange?.(offer.id, "active"); }}
+                >
+                  تفعيل
+                </Button>
+              )}
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="rounded-xl text-xs h-9 text-red-500 border-red-200 hover:bg-red-50 px-3"
+                onClick={(e) => { e.stopPropagation(); onDelete?.(offer.id); }}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+          )}
         </div>
-      </GlassCard>
+      </div>
     </motion.div>
   );
 };
