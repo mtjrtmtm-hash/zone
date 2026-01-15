@@ -104,6 +104,31 @@
 
 user_problem_statement: "تحسين صفحة المراسلات لتكون متجاوبة على الجوال وتجربة مستخدم أفضل شبيهة بتطبيقات المراسلة مع إضافة menu button إبداعي وإصلاح خانة الكتابة المختفية وإصلاح مشكلة التمرير في الصفحات الأخرى وإصلاح عرض الرسائل الأخيرة وإصلاح الصفحات الديناميكية"
 
+backend:
+  - task: "Admin User Management APIs"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "تم اختبار جميع APIs إدارة المستخدمين بنجاح! النتائج: 1) تسجيل دخول الأدمن (admin@win.sy/admin123) ✅، 2) جلب قائمة المستخدمين مع حقول verified و is_active ✅، 3) إيقاف مستخدم وتأكيد عدم قدرته على تسجيل الدخول ✅، 4) تفعيل المستخدم مرة أخرى ✅، 5) WhatsApp Status متصل ✅. جميع الوظائف تعمل بشكل صحيح."
+
+  - task: "WhatsApp Integration Status"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "تم اختبار حالة WhatsApp بنجاح. الخدمة متصلة (Connected: True) والـ API يعمل بشكل صحيح."
+
 frontend:
   - task: "تحسين صفحة المراسلات - Mobile Responsive مع Drawer Menu"
     implemented: true
