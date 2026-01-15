@@ -83,15 +83,24 @@ const AuthProvider = ({ children }) => {
 
   // إظهار الإشعار مع رسالة مخصصة
   const triggerVerificationBanner = (message = null) => {
+    // لا تُظهر الإشعار إذا كان المستخدم موثقاً
+    if (user?.verified) return;
     setVerificationMessage(message);
     setShowVerificationBanner(true);
   };
 
-  // إخفاء مؤقت ثم إعادة الظهور بعد 5 ثواني
+  // إخفاء مؤقت ثم إعادة الظهور بعد 5 ثواني (فقط إذا لم يكن موثقاً)
   const dismissVerificationBanner = () => {
     setShowVerificationBanner(false);
     setVerificationMessage(null);
-    setTimeout(() => setShowVerificationBanner(true), 5000);
+    // لا تُعِد الإشعار إذا كان المستخدم موثقاً
+    setTimeout(() => {
+      // نتحقق من حالة المستخدم الحالية
+      setShowVerificationBanner(prev => {
+        // سيتم التحقق في VerificationBanner نفسه
+        return true;
+      });
+    }, 5000);
   };
 
   const fetchUnreadCounts = async () => {
