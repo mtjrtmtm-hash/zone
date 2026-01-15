@@ -134,6 +134,22 @@ const AuthProvider = ({ children }) => {
 
   const logout = () => { setUser(null); setToken(null); setUnreadMessages(0); setUnreadNotifications(0); localStorage.removeItem("badal_user"); localStorage.removeItem("badal_token"); };
   
+  // تحديث بيانات المستخدم من السيرفر
+  const refreshUser = async () => {
+    if (!token) return;
+    try {
+      const res = await axios.get(`${API}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
+      setUser(res.data);
+      // إذا أصبح المستخدم موثقاً، نخفي الإشعار نهائياً
+      if (res.data.verified) {
+        setShowVerificationBanner(false);
+      }
+      return res.data;
+    } catch (e) {
+      console.error("Failed to refresh user:", e);
+    }
+  };
+  
   // API مع معالجة خطأ التوثيق
   const api = axios.create({ baseURL: API, headers: token ? { Authorization: `Bearer ${token}` } : {} });
   
@@ -150,7 +166,7 @@ const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={{ 
-      user, token, login, register, logout, loading, api, 
+      user, token, login, register, logout, loading, api, refreshUser,
       unreadMessages, unreadNotifications, fetchUnreadCounts,
       showVerificationBanner, dismissVerificationBanner, triggerVerificationBanner, verificationMessage
     }}>
