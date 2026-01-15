@@ -1561,7 +1561,7 @@ const BrowsePage = () => {
         ) : offers.length === 0 ? (
           <div className="text-center py-16"><Package className="w-20 h-20 text-muted-foreground mx-auto mb-4 opacity-50" /><h3 className="text-xl font-semibold mb-2">لا توجد عروض</h3><p className="text-muted-foreground">جرب تغيير معايير البحث</p></div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">{offers.map((offer, idx) => <OfferCard key={offer.id} offer={offer} delay={idx * 0.05} />)}</div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">{offers.map((offer, idx) => <OfferCard key={offer.id} offer={offer} delay={idx * 0.05} />)}</div>
         )}
       </div>
     </div>
