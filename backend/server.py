@@ -265,6 +265,11 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     user = await db.users.find_one({"id": user_id}, {"_id": 0})
     if user is None:
         raise HTTPException(status_code=401, detail="المستخدم غير موجود")
+    
+    # التحقق من أن الحساب غير موقوف
+    if user.get("is_active") == False:
+        raise HTTPException(status_code=403, detail="حسابك موقوف. يرجى التواصل مع الإدارة")
+    
     return user
 
 async def get_admin_user(current_user: dict = Depends(get_current_user)):
