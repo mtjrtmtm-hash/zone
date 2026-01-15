@@ -2355,68 +2355,86 @@ const MessagesPage = () => {
     finally { setSending(false); }
   };
 
-  // Conversations List Component
+  // Conversations List Component - تصميم احترافي
   const ConversationsList = ({ mobile = false, onSelect }) => (
     <div className={mobile ? "h-full flex flex-col" : ""}>
       {mobile && (
-        <div className="p-4 border-b border-purple-200 bg-gradient-to-r from-purple-500 to-purple-600">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-xl font-bold text-white">المحادثات</h2>
+        <div className="p-5 border-b border-purple-100/50 bg-gradient-to-br from-purple-600 via-purple-500 to-indigo-600">
+          <div className="flex items-center justify-between mb-2">
+            <div>
+              <h2 className="text-xl font-bold text-white">المحادثات</h2>
+              <p className="text-sm text-purple-200 mt-1">{conversations.length} محادثة نشطة</p>
+            </div>
             <Button 
               variant="ghost" 
               size="icon"
               onClick={() => setDrawerOpen(false)}
-              className="text-white hover:bg-white/20 rounded-full"
+              className="text-white hover:bg-white/20 rounded-full w-10 h-10"
             >
               <X className="w-5 h-5" />
             </Button>
           </div>
-          <p className="text-sm text-purple-100">{conversations.length} محادثة نشطة</p>
         </div>
       )}
-      <ScrollArea className={mobile ? "flex-1" : "h-[520px]"}>
+      <div className={`${mobile ? "flex-1 overflow-y-auto" : "h-[520px] overflow-y-auto"} bg-gray-50/50`}>
         {conversations.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground">
-            <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
-            <p>لا توجد محادثات</p>
+          <div className="p-8 text-center text-muted-foreground h-full flex flex-col items-center justify-center">
+            <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mb-4">
+              <MessageCircle className="w-10 h-10 text-purple-400" />
+            </div>
+            <p className="font-medium text-gray-600">لا توجد محادثات</p>
+            <p className="text-sm text-gray-400 mt-1">ابدأ محادثة من صفحة العرض</p>
           </div>
         ) : (
-          <div className={mobile ? "" : ""}>
-            {conversations.map((conv) => (
+          <div className="divide-y divide-gray-100">
+            {conversations.map((conv, index) => (
               <motion.div 
                 key={conv.id} 
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.05 }}
                 onClick={() => onSelect ? onSelect(conv) : selectConversation(conv)} 
-                className={`p-4 cursor-pointer border-b border-purple-100 hover:bg-purple-50 active:bg-purple-100 transition-all duration-200 ${
-                  !mobile && selectedConv?.id === conv.id ? "bg-purple-100" : "bg-white"
+                className={`p-4 cursor-pointer transition-all duration-200 active:scale-[0.98] ${
+                  !mobile && selectedConv?.id === conv.id 
+                    ? "bg-purple-50 border-r-4 border-purple-500" 
+                    : "bg-white hover:bg-gray-50"
                 }`}
-                whileHover={{ scale: mobile ? 1 : 1.02 }}
-                whileTap={{ scale: 0.98 }}
               >
                 <div className="flex items-center gap-3">
-                  <Avatar className="w-12 h-12 border-2 border-purple-200 shadow-sm flex-shrink-0">
-                    <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white font-bold">
-                      {conv.other_user_name?.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start mb-1">
-                      <p className="font-bold truncate text-gray-900 text-[15px]">{conv.other_user_name}</p>
-                      {conv.unread_count > 0 && (
-                        <Badge className="bg-primary text-white text-xs px-2 py-0.5 rounded-full ml-2 flex-shrink-0">
-                          {conv.unread_count}
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-xs font-medium text-purple-600 truncate mb-1">{conv.offer_title}</p>
-                    <p className="text-xs text-gray-500 truncate leading-tight">{conv.last_message}</p>
+                  <div className="relative flex-shrink-0">
+                    <Avatar className="w-14 h-14 border-2 border-white shadow-md">
+                      <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white font-bold text-lg">
+                        {conv.other_user_name?.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    {conv.unread_count > 0 && (
+                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg">
+                        {conv.unread_count > 9 ? '9+' : conv.unread_count}
+                      </span>
+                    )}
                   </div>
-                  {mobile && <ChevronLeft className="w-4 h-4 text-gray-400 flex-shrink-0" />}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-center mb-1">
+                      <p className="font-bold text-gray-900 text-[15px] truncate">{conv.other_user_name}</p>
+                      <span className="text-[11px] text-gray-400 flex-shrink-0 mr-2">
+                        {new Date(conv.updated_at).toLocaleDateString('ar-SY', { month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <Package className="w-3 h-3 text-purple-500 flex-shrink-0" />
+                      <p className="text-xs font-medium text-purple-600 truncate">{conv.offer_title}</p>
+                    </div>
+                    <p className={`text-sm truncate leading-tight ${conv.unread_count > 0 ? 'text-gray-800 font-medium' : 'text-gray-500'}`}>
+                      {conv.last_message}
+                    </p>
+                  </div>
+                  <ChevronLeft className="w-5 h-5 text-gray-300 flex-shrink-0" />
                 </div>
               </motion.div>
             ))}
           </div>
         )}
-      </ScrollArea>
+      </div>
     </div>
   );
 
