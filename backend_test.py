@@ -528,6 +528,8 @@ class SyrianBarterAPITester:
         self.test_ai_suggestions()
         self.test_reports()
         self.test_admin_endpoints()
+        self.test_admin_user_management()  # New admin user management tests
+        self.test_whatsapp_status()        # New WhatsApp status test
         self.cleanup_test_data()
         
         # Print summary
