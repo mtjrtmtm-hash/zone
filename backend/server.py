@@ -372,6 +372,10 @@ async def login(login_data: UserLogin):
     if not user or not verify_password(login_data.password, user["password"]):
         raise HTTPException(status_code=401, detail="بيانات الدخول غير صحيحة")
     
+    # التحقق من أن الحساب غير موقوف
+    if user.get("is_active") == False:
+        raise HTTPException(status_code=403, detail="حسابك موقوف. يرجى التواصل مع الإدارة")
+    
     token = create_access_token({"sub": user["id"]})
     user_response = UserResponse(
         id=user["id"],
