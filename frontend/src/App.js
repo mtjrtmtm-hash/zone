@@ -2975,7 +2975,7 @@ const MyOffersPage = () => {
           <Button onClick={() => navigate("/add-offer")} className="rounded-xl"><Plus className="w-5 h-5 ml-2" />إضافة عرض</Button>
         </div>
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-72 rounded-3xl" />)}</div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-52 md:h-72 rounded-2xl md:rounded-3xl" />)}</div>
         ) : offers.length === 0 ? (
           <GlassCard className="text-center py-12" hover={false}>
             <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
@@ -3012,7 +3012,7 @@ const FavoritesPage = () => {
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold mb-8">المفضلة</h1>
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{[...Array(3)].map((_, i) => <Skeleton key={i} className="h-72 rounded-3xl" />)}</div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-52 md:h-72 rounded-2xl md:rounded-3xl" />)}</div>
         ) : favorites.length === 0 ? (
           <GlassCard className="text-center py-12" hover={false}>
             <Heart className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
