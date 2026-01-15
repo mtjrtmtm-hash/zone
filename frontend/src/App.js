@@ -169,12 +169,14 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
 
 // شريط تنبيه للمستخدمين غير المحققين - تصميم عائم إبداعي
 const VerificationBanner = () => {
-  const { user } = useAuth();
+  const { user, showVerificationBanner, dismissVerificationBanner, verificationMessage } = useAuth();
   const navigate = useNavigate();
-  const [dismissed, setDismissed] = useState(false);
   
   // لا تظهر للأدمن أو المستخدمين المحققين أو غير المسجلين أو إذا تم إخفاؤه
-  if (!user || user.is_admin || user.verified || dismissed) return null;
+  if (!user || user.is_admin || user.verified || !showVerificationBanner) return null;
+  
+  // تحديد إذا كانت رسالة خطأ (من محاولة إجراء)
+  const isError = verificationMessage !== null;
   
   return (
     <motion.div 
@@ -182,9 +184,10 @@ const VerificationBanner = () => {
       animate={{ y: 0, opacity: 1, scale: 1 }}
       exit={{ y: 100, opacity: 0, scale: 0.9 }}
       transition={{ type: "spring", damping: 20, stiffness: 300 }}
+      key={verificationMessage || "default"}
       className="fixed bottom-20 md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:max-w-md z-50"
     >
-      <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 rounded-2xl shadow-2xl overflow-hidden">
+      <div className={`rounded-2xl shadow-2xl overflow-hidden ${isError ? 'bg-gradient-to-r from-red-500 via-red-600 to-rose-600' : 'bg-gradient-to-r from-amber-500 via-orange-500 to-red-500'}`}>
         {/* شريط متحرك علوي */}
         <div className="h-1 bg-white/30 overflow-hidden">
           <motion.div 
@@ -198,35 +201,35 @@ const VerificationBanner = () => {
           <div className="flex items-start gap-3">
             {/* أيقونة متحركة */}
             <motion.div 
-              animate={{ rotate: [0, 10, -10, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="flex-shrink-0 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"
+              animate={isError ? { scale: [1, 1.2, 1] } : { rotate: [0, 10, -10, 0] }}
+              transition={{ duration: isError ? 0.5 : 2, repeat: isError ? 3 : Infinity }}
+              className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${isError ? 'bg-white/30' : 'bg-white/20'}`}
             >
-              <Shield className="w-5 h-5 text-white" />
+              {isError ? <AlertCircle className="w-5 h-5 text-white" /> : <Shield className="w-5 h-5 text-white" />}
             </motion.div>
             
             <div className="flex-1 min-w-0">
               <h4 className="text-white font-bold text-sm md:text-base">
-                فعّل حسابك الآن! 🔐
+                {isError ? "⚠️ تنبيه!" : "فعّل حسابك الآن! 🔐"}
               </h4>
               <p className="text-white/90 text-xs md:text-sm mt-1">
-                تحقق من WhatsApp لاستخدام جميع ميزات المنصة
+                {verificationMessage || "تحقق من WhatsApp لاستخدام جميع ميزات المنصة"}
               </p>
               
               <div className="flex items-center gap-2 mt-3">
                 <Button 
                   size="sm" 
-                  className="bg-white text-orange-600 hover:bg-orange-50 shadow-lg text-xs md:text-sm h-8 px-3"
+                  className={`shadow-lg text-xs md:text-sm h-8 px-3 ${isError ? 'bg-white text-red-600 hover:bg-red-50' : 'bg-white text-orange-600 hover:bg-orange-50'}`}
                   onClick={() => navigate("/verify-phone", { state: { phone: user.phone } })}
                 >
                   <CheckCircle className="w-3 h-3 md:w-4 md:h-4 ml-1" />
-                  تفعيل
+                  تفعيل الآن
                 </Button>
                 <Button 
                   size="sm" 
                   variant="ghost"
                   className="text-white/80 hover:text-white hover:bg-white/10 text-xs h-8 px-2"
-                  onClick={() => setDismissed(true)}
+                  onClick={dismissVerificationBanner}
                 >
                   لاحقاً
                 </Button>
@@ -235,7 +238,7 @@ const VerificationBanner = () => {
             
             {/* زر الإغلاق */}
             <button 
-              onClick={() => setDismissed(true)}
+              onClick={dismissVerificationBanner}
               className="flex-shrink-0 w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
             >
               <X className="w-3 h-3 text-white" />
