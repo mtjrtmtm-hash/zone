@@ -784,7 +784,7 @@ const OfferCard = ({ offer, delay = 0, showActions = false, onStatusChange, onDe
         onClick={() => navigate(`/offer/${offer.id}`)}
       >
         {/* Image Container */}
-        <div className="relative aspect-[4/3] md:aspect-[3/2] bg-gradient-to-br from-purple-100 via-pink-50 to-indigo-100 overflow-hidden">
+        <div className="relative aspect-square bg-gradient-to-br from-purple-100 via-pink-50 to-indigo-100 overflow-hidden">
           {offer.images && offer.images.length > 0 ? (
             <>
               {/* Skeleton loader */}
