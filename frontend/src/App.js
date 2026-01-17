@@ -1171,18 +1171,18 @@ const HomePage = () => {
       </section>
 
       {/* Categories Section - New Circular Design */}
-      <section className="py-6 md:py-16 bg-white">
+      <section className="pt-8 pb-6 md:py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="mb-6 md:mb-10 text-center">
-            <h2 className="text-xl md:text-3xl font-bold mb-2">
+          <div className="mb-5 md:mb-10 text-center">
+            <h2 className="text-lg md:text-3xl font-bold mb-1">
               استكشف حسب <span className="text-purple-600">الفئة</span>
             </h2>
-            <p className="text-sm md:text-base text-gray-500">اختر الفئة التي تهمك</p>
+            <p className="text-xs md:text-base text-gray-500">اختر الفئة التي تهمك</p>
           </div>
 
           {/* Mobile: Circular Icons Scroll */}
           <div className="md:hidden -mx-4">
-            <div className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scrollbar px-4">
+            <div className="flex gap-3 overflow-x-auto pb-3 snap-x hide-scrollbar px-4">
               {CATEGORIES.map((cat, idx) => {
                 const IconComponent = cat.icon;
                 const colors = [
@@ -1204,12 +1204,12 @@ const HomePage = () => {
                   >
                     <Link 
                       to={`/browse?category=${cat.name}`}
-                      className="flex flex-col items-center gap-2 active:scale-95 transition-transform"
+                      className="flex flex-col items-center gap-1.5 active:scale-95 transition-transform"
                     >
-                      <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${colors[idx % colors.length]} flex items-center justify-center shadow-lg`}>
-                        <IconComponent className="w-7 h-7 text-white" strokeWidth={2} />
+                      <div className={`w-14 h-14 rounded-full bg-gradient-to-br ${colors[idx % colors.length]} flex items-center justify-center shadow-md`}>
+                        <IconComponent className="w-6 h-6 text-white" strokeWidth={2} />
                       </div>
-                      <span className="text-xs font-medium text-gray-700 text-center w-16 truncate">{cat.name}</span>
+                      <span className="text-[11px] font-medium text-gray-700 text-center w-14 truncate">{cat.name}</span>
                     </Link>
                   </motion.div>
                 );
