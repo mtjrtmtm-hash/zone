@@ -982,19 +982,28 @@ const OfferCard = ({ offer, delay = 0, showActions = false, onStatusChange, onDe
 // Home Page
 const HomePage = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout, unreadNotifications } = useAuth();
   const { settings } = useSettings();
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGov, setSelectedGov] = useState("");
+  const [notifications, setNotifications] = useState([]);
 
-  useEffect(() => { fetchOffers(); }, []);
+  useEffect(() => { fetchOffers(); if (user) fetchNotifications(); }, [user]);
 
   const fetchOffers = async () => {
     try { const res = await axios.get(`${API}/offers?limit=8`); setOffers(res.data); }
     catch (e) { console.error(e); }
     finally { setLoading(false); }
+  };
+
+  const fetchNotifications = async () => {
+    try {
+      const token = localStorage.getItem("badal_token");
+      const res = await axios.get(`${API}/notifications`, { headers: { Authorization: `Bearer ${token}` } });
+      setNotifications(res.data.slice(0, 10));
+    } catch (e) { console.error(e); }
   };
 
   const handleSearch = (e) => { e.preventDefault(); navigate(`/browse?search=${searchQuery}&governorate=${selectedGov}`); };
