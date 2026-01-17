@@ -307,6 +307,26 @@ textarea::placeholder {
   h2 {
     font-size: 1.5rem;
   }
+
+  /* Fix tables on mobile */
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Fix any fixed width elements */
+  .w-48, .w-64, .w-72, .w-96 {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Ensure containers don't overflow */
+  .container, .max-w-7xl, .max-w-6xl, .max-w-5xl, .max-w-4xl, .max-w-3xl {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    max-width: 100%;
+  }
 }
 
 /* Print Styles */
