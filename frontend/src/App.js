@@ -982,7 +982,7 @@ const OfferCard = ({ offer, delay = 0, showActions = false, onStatusChange, onDe
 // Home Page
 const HomePage = () => {
   const navigate = useNavigate();
-  const { user, logout, unreadNotifications, api } = useAuth();
+  const { user, logout, unreadNotifications, api, fetchUnreadCounts } = useAuth();
   const { settings } = useSettings();
   const [offers, setOffers] = useState([]);
   const [trendingOffers, setTrendingOffers] = useState([]);
@@ -990,6 +990,7 @@ const HomePage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGov, setSelectedGov] = useState("");
   const [notifications, setNotifications] = useState([]);
+  const [notificationsSheetOpen, setNotificationsSheetOpen] = useState(false);
 
   useEffect(() => { fetchOffers(); fetchTrendingOffers(); }, []);
   
