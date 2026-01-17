@@ -3799,7 +3799,7 @@ const TestMessageSection = ({ api }) => {
           <Input
             value={testMessage}
             onChange={(e) => setTestMessage(e.target.value)}
-            placeholder="رسالة اختبار من منصة بدل"
+            placeholder="رسالة اختبار من منصة زون"
           />
         </div>
         
