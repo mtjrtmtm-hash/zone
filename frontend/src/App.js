@@ -1532,11 +1532,11 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Features Section - Desktop - تصميم مشابه للجوال "لماذا يدل؟" */}
+      {/* Features Section - Desktop - تصميم مشابه للجوال "لماذا زون؟" */}
       <section className="py-12 bg-gradient-to-b from-gray-50 to-white hidden md:block">
         <div className="max-w-7xl mx-auto px-4">
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900">لماذا يدل؟</h2>
+            <h2 className="text-2xl font-bold text-gray-900">لماذا زون؟</h2>
             <p className="text-gray-500 mt-1">المقايضة أصبحت أسهل من أي وقت - نوفر لك كل ما تحتاجه</p>
           </div>
 
