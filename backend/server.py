@@ -991,7 +991,7 @@ async def get_site_settings():
     if not settings:
         # Return defaults
         return {
-            "site_name": "بدل",
+            "site_name": "زون | zone",
             "site_logo": None,
             "custom_font": None,
             "custom_font_name": "Tajawal",
@@ -1207,7 +1207,7 @@ async def create_default_users():
     if not settings:
         settings_doc = {
             "type": "site",
-            "site_name": "بدل",
+            "site_name": "زون | zone",
             "site_logo": None,
             "custom_font": None,
             "custom_font_name": "Tajawal",
