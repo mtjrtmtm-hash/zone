@@ -551,33 +551,49 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* Mobile Bottom Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-purple-100 z-50 pb-safe">
-        <div className="flex items-center justify-around h-16">
+      {/* Mobile Bottom Navigation - تصميم إبداعي جديد */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+        <div className="flex items-center justify-around h-16 px-2">
           {(user ? [
             { path: "/", icon: HomeIcon, label: "الرئيسية" },
             { path: "/browse", icon: Search, label: "تصفح" },
             { path: "/add-offer", icon: Plus, label: "أضف", highlight: true },
             { path: "/messages", icon: MessageCircle, label: "الرسائل", badge: unreadMessages },
-            { action: () => setMobileMenuOpen(true), icon: Menu, label: "القائمة", isMenu: true },
+            { action: () => setMobileMenuOpen(true), icon: User, label: "المزيد", isMenu: true },
           ] : [
             { path: "/", icon: HomeIcon, label: "الرئيسية" },
             { path: "/browse", icon: Search, label: "تصفح" },
+            { path: "/add-offer", icon: Plus, label: "أضف", highlight: true },
             { action: () => setMobileMenuOpen(true), icon: Menu, label: "القائمة", isMenu: true },
             { path: "/login", icon: User, label: "دخول" },
-          ]).map((item) => (
+          ]).map((item, idx) => (
             item.isMenu ? (
               <button key="menu" onClick={item.action}
-                className="relative flex flex-col items-center gap-1 p-2 rounded-xl transition-all text-muted-foreground hover:text-primary">
-                <item.icon className="w-5 h-5" />
-                <span className="text-xs">{item.label}</span>
+                className="relative flex flex-col items-center justify-center gap-0.5 py-1.5 px-3 rounded-2xl transition-all text-gray-400 hover:text-purple-600 active:scale-95">
+                <div className="w-6 h-6 flex items-center justify-center">
+                  <item.icon className="w-5 h-5" strokeWidth={1.8} />
+                </div>
+                <span className="text-[10px] font-medium">{item.label}</span>
               </button>
+            ) : item.highlight ? (
+              <Link key={item.path} to={item.path}
+                className="relative flex items-center justify-center -mt-6">
+                <div className="w-14 h-14 bg-gradient-to-br from-purple-500 via-purple-600 to-pink-500 rounded-full flex items-center justify-center shadow-lg shadow-purple-500/40 active:scale-95 transition-transform">
+                  <item.icon className="w-7 h-7 text-white" strokeWidth={2} />
+                </div>
+              </Link>
             ) : (
               <Link key={item.path} to={item.path}
-                className={`relative flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${item.highlight ? "bg-primary text-white -mt-4 shadow-lg shadow-primary/25 rounded-full w-14 h-14 justify-center" : location.pathname === item.path ? "text-primary" : "text-muted-foreground"}`}>
-                <item.icon className={item.highlight ? "w-6 h-6" : "w-5 h-5"} />
-                {!item.highlight && <span className="text-xs">{item.label}</span>}
-                {item.badge > 0 && <span className="absolute -top-1 right-0 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">{item.badge}</span>}
+                className={`relative flex flex-col items-center justify-center gap-0.5 py-1.5 px-3 rounded-2xl transition-all active:scale-95 ${location.pathname === item.path ? "text-purple-600" : "text-gray-400 hover:text-purple-600"}`}>
+                <div className="w-6 h-6 flex items-center justify-center">
+                  <item.icon className="w-5 h-5" strokeWidth={location.pathname === item.path ? 2 : 1.8} />
+                </div>
+                <span className="text-[10px] font-medium">{item.label}</span>
+                {item.badge > 0 && (
+                  <span className="absolute top-0 right-1 min-w-[18px] h-[18px] bg-gradient-to-r from-pink-500 to-purple-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 shadow-sm">
+                    {item.badge > 99 ? '99+' : item.badge}
+                  </span>
+                )}
               </Link>
             )
           ))}
