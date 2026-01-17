@@ -388,7 +388,7 @@ const Navbar = () => {
             <Link to="/" className="flex items-center gap-3 group">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="w-10 h-10 bg-primary rounded-full flex items-center justify-center shadow-lg shadow-primary/25 overflow-hidden">
                 {settings?.site_logo ? (
-                  <img src={settings.site_logo} alt={settings.site_name || "بدل"} className="w-full h-full object-cover" />
+                  <img src={settings.site_logo} alt={settings.site_name || "زون | zone"} className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-white font-bold text-xl">ب</span>
                 )}
@@ -637,7 +637,7 @@ const Navbar = () => {
             >
               <div className="w-12 h-12 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center overflow-hidden">
                 {settings?.site_logo ? (
-                  <img src={settings.site_logo} alt={settings.site_name || "بدل"} className="w-full h-full object-cover" />
+                  <img src={settings.site_logo} alt={settings.site_name || "زون | zone"} className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-white font-bold text-2xl">ب</span>
                 )}
