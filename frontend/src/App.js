@@ -1170,84 +1170,105 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Categories Section - Mobile First */}
-      <section className="py-8 md:py-20 px-4 bg-white">
+      {/* Categories Section - New Circular Design */}
+      <section className="py-6 md:py-16 px-4 bg-white">
         <div className="max-w-7xl mx-auto">
-          <div className="mb-6 md:mb-12">
-            <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-2 md:mb-4 text-center">
-              استكشف حسب <span className="text-primary">الفئة</span>
+          <div className="mb-6 md:mb-10 text-center">
+            <h2 className="text-xl md:text-3xl font-bold mb-2">
+              استكشف حسب <span className="text-purple-600">الفئة</span>
             </h2>
-            <p className="text-base md:text-xl text-gray-600 text-center">اختر الفئة التي تهمك</p>
+            <p className="text-sm md:text-base text-gray-500">اختر الفئة التي تهمك</p>
           </div>
 
-          {/* Mobile: Horizontal Scroll */}
-          <div className="md:hidden relative">
-            <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory hide-scrollbar -mx-4 px-4">
+          {/* Mobile: Circular Icons Scroll */}
+          <div className="md:hidden">
+            <div className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scrollbar -mx-4 px-4">
               {CATEGORIES.map((cat, idx) => {
                 const IconComponent = cat.icon;
+                const colors = [
+                  "from-pink-400 to-rose-500",
+                  "from-blue-400 to-indigo-500",
+                  "from-green-400 to-emerald-500",
+                  "from-purple-400 to-violet-500",
+                  "from-orange-400 to-amber-500",
+                  "from-cyan-400 to-teal-500",
+                  "from-red-400 to-pink-500"
+                ];
                 return (
                   <motion.div
                     key={cat.name}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: idx * 0.05 }}
-                    className="snap-center"
+                    className="snap-center flex-shrink-0"
                   >
                     <Link 
                       to={`/browse?category=${cat.name}`}
-                      className="glass-card flex flex-col items-center justify-center gap-3 min-w-[120px] h-[120px] active:scale-95 transition-transform"
+                      className="flex flex-col items-center gap-2 active:scale-95 transition-transform"
                     >
-                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
-                        <IconComponent className="w-7 h-7 text-primary" strokeWidth={2} />
+                      <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${colors[idx % colors.length]} flex items-center justify-center shadow-lg`}>
+                        <IconComponent className="w-7 h-7 text-white" strokeWidth={2} />
                       </div>
-                      <span className="text-sm font-semibold text-gray-900 text-center px-2">{cat.name}</span>
+                      <span className="text-xs font-medium text-gray-700 text-center w-16 truncate">{cat.name}</span>
                     </Link>
                   </motion.div>
                 );
               })}
             </div>
             
-            {/* مؤشر السحب - أسفل الفئات */}
-            <div className="flex items-center justify-center gap-2 mt-2">
-              <motion.div
-                animate={{ x: [0, -5, 0] }}
-                transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-              >
+            {/* مؤشر السحب */}
+            <div className="flex items-center justify-center gap-2 mt-3">
+              <motion.div animate={{ x: [0, -5, 0] }} transition={{ duration: 1.2, repeat: Infinity }}>
                 <ChevronLeft className="w-4 h-4 text-purple-400" />
               </motion.div>
-              <div className="flex gap-1.5">
-                <span className="w-6 h-1.5 bg-purple-500 rounded-full"></span>
-                <span className="w-1.5 h-1.5 bg-purple-200 rounded-full"></span>
-                <span className="w-1.5 h-1.5 bg-purple-200 rounded-full"></span>
+              <div className="flex gap-1">
+                <span className="w-5 h-1 bg-purple-500 rounded-full"></span>
+                <span className="w-1 h-1 bg-purple-200 rounded-full"></span>
+                <span className="w-1 h-1 bg-purple-200 rounded-full"></span>
               </div>
-              <motion.div
-                animate={{ x: [0, 5, 0] }}
-                transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-              >
+              <motion.div animate={{ x: [0, 5, 0] }} transition={{ duration: 1.2, repeat: Infinity }}>
                 <ChevronRight className="w-4 h-4 text-purple-400" />
               </motion.div>
             </div>
           </div>
 
-          {/* Desktop: Grid */}
-          <div className="hidden md:grid grid-cols-4 lg:grid-cols-7 gap-4">
+          {/* Desktop: Grid with Circular Icons */}
+          <div className="hidden md:grid grid-cols-4 lg:grid-cols-7 gap-6">
             {CATEGORIES.map((cat, idx) => {
               const IconComponent = cat.icon;
+              const colors = [
+                "from-pink-400 to-rose-500",
+                "from-blue-400 to-indigo-500",
+                "from-green-400 to-emerald-500",
+                "from-purple-400 to-violet-500",
+                "from-orange-400 to-amber-500",
+                "from-cyan-400 to-teal-500",
+                "from-red-400 to-pink-500"
+              ];
               return (
                 <motion.div
                   key={cat.name}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: idx * 0.05 }}
-                  whileHover={{ scale: 1.05, y: -5 }}
+                  whileHover={{ y: -5 }}
                 >
                   <Link 
                     to={`/browse?category=${cat.name}`}
-                    className="glass-card p-6 flex flex-col items-center justify-center text-center gap-3 h-full hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-purple-300"
+                    className="flex flex-col items-center gap-3 p-4 rounded-2xl hover:bg-gray-50 transition-all group"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
-                      <IconComponent className="w-6 h-6 text-primary" strokeWidth={2} />
+                    <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${colors[idx % colors.length]} flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow`}>
+                      <IconComponent className="w-7 h-7 text-white" strokeWidth={2} />
+                    </div>
+                    <span className="text-sm font-medium text-gray-700 group-hover:text-purple-600 transition-colors">{cat.name}</span>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
                     </div>
                     <span className="text-sm font-semibold text-gray-900">{cat.name}</span>
                   </Link>
