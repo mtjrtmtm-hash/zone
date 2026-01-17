@@ -4895,7 +4895,7 @@ function App() {
             <Toaster position="top-center" richColors closeButton dir="rtl" />
             <Navbar />
             <VerificationBanner />
-            <main className="pt-4 md:pt-8">
+            <main className="pt-0 md:pt-8">
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/browse" element={<BrowsePage />} />
