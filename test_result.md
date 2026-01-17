@@ -204,6 +204,9 @@ frontend:
         - working: true
           agent: "main"
           comment: "صفحة تفاصيل العرض تعمل بشكل جيد مع صور carousel، badges، معلومات العرض، مطلوب مقابله، وزر التواصل"
+        - working: true
+          agent: "testing"
+          comment: "تم اختبار صفحة تفاصيل العرض بنجاح! ✅ التنقل من صفحة التصفح يعمل بالنقر على البطاقات ✅ الصور الكبيرة تظهر بوضوح ✅ معلومات العرض مفصلة ومنظمة ✅ carousel الصور يعمل ✅ التصميم متجاوب ومناسب للجوال"
 
 metadata:
   created_by: "main_agent"
