@@ -1026,6 +1026,32 @@ const HomePage = () => {
     }
   };
 
+  // تحديث جميع الإشعارات كمقروءة
+  const markAllNotificationsAsRead = async () => {
+    try {
+      await api.put("/notifications/read-all");
+      // تحديث الإشعارات محلياً
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      // تحديث العداد
+      if (fetchUnreadCounts) {
+        fetchUnreadCounts();
+      }
+    } catch (e) {
+      console.error("Error marking notifications as read:", e);
+    }
+  };
+
+  // عند فتح sheet الإشعارات
+  const handleNotificationsSheetOpen = (open) => {
+    setNotificationsSheetOpen(open);
+    if (open && notifications.some(n => !n.is_read)) {
+      // تحديث الإشعارات كمقروءة بعد فتح الـ sheet
+      setTimeout(() => {
+        markAllNotificationsAsRead();
+      }, 1000);
+    }
+  };
+
   const handleSearch = (e) => { e.preventDefault(); navigate(`/browse?search=${searchQuery}&governorate=${selectedGov}`); };
 
   return (
