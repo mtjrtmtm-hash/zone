@@ -1170,102 +1170,101 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Categories Section - New Circular Design */}
-      <section className="pt-8 pb-6 md:py-16 bg-white">
+      {/* Categories Section - Modern Design */}
+      <section className="pt-6 pb-4 md:py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="mb-5 md:mb-10 text-center">
-            <h2 className="text-lg md:text-3xl font-bold mb-1">
-              استكشف حسب <span className="text-purple-600">الفئة</span>
-            </h2>
-            <p className="text-xs md:text-base text-gray-500">اختر الفئة التي تهمك</p>
+          {/* Mobile View - Modern Cards */}
+          <div className="md:hidden">
+            <div className="grid grid-cols-4 gap-2">
+              {CATEGORIES.slice(0, 8).map((cat, idx) => {
+                const IconComponent = cat.icon;
+                const bgColors = [
+                  "bg-gradient-to-br from-rose-100 to-pink-200",
+                  "bg-gradient-to-br from-blue-100 to-indigo-200",
+                  "bg-gradient-to-br from-emerald-100 to-green-200",
+                  "bg-gradient-to-br from-violet-100 to-purple-200",
+                  "bg-gradient-to-br from-amber-100 to-orange-200",
+                  "bg-gradient-to-br from-cyan-100 to-teal-200",
+                  "bg-gradient-to-br from-pink-100 to-rose-200",
+                  "bg-gradient-to-br from-indigo-100 to-blue-200"
+                ];
+                const iconColors = [
+                  "text-rose-600",
+                  "text-blue-600",
+                  "text-emerald-600",
+                  "text-violet-600",
+                  "text-amber-600",
+                  "text-cyan-600",
+                  "text-pink-600",
+                  "text-indigo-600"
+                ];
+                return (
+                  <Link
+                    key={cat.name}
+                    to={`/browse?category=${cat.name}`}
+                    className={`${bgColors[idx]} rounded-2xl p-3 flex flex-col items-center justify-center aspect-square active:scale-95 transition-transform`}
+                  >
+                    <IconComponent className={`w-7 h-7 ${iconColors[idx]} mb-1.5`} strokeWidth={1.5} />
+                    <span className="text-[10px] font-semibold text-gray-700 text-center leading-tight">{cat.name}</span>
+                  </Link>
+                );
+              })}
+            </div>
+            {/* View All Link */}
+            <Link 
+              to="/browse"
+              className="flex items-center justify-center gap-1 mt-4 text-sm text-purple-600 font-medium"
+            >
+              عرض جميع الفئات
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
           </div>
 
-          {/* Mobile: Circular Icons Scroll */}
-          <div className="md:hidden -mx-4">
-            <div className="flex gap-3 overflow-x-auto pb-3 snap-x hide-scrollbar px-4">
+          {/* Desktop View - Modern Grid */}
+          <div className="hidden md:block">
+            <div className="text-center mb-10">
+              <h2 className="text-3xl font-bold mb-2">
+                استكشف حسب <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">الفئة</span>
+              </h2>
+              <p className="text-gray-500">اختر الفئة التي تهمك من بين {CATEGORIES.length} فئة متنوعة</p>
+            </div>
+            
+            <div className="grid grid-cols-4 lg:grid-cols-7 gap-4">
               {CATEGORIES.map((cat, idx) => {
                 const IconComponent = cat.icon;
-                const colors = [
-                  "from-pink-400 to-rose-500",
-                  "from-blue-400 to-indigo-500",
-                  "from-green-400 to-emerald-500",
-                  "from-purple-400 to-violet-500",
-                  "from-orange-400 to-amber-500",
-                  "from-cyan-400 to-teal-500",
-                  "from-red-400 to-pink-500"
+                const bgColors = [
+                  "from-rose-500 to-pink-600",
+                  "from-blue-500 to-indigo-600",
+                  "from-emerald-500 to-green-600",
+                  "from-violet-500 to-purple-600",
+                  "from-amber-500 to-orange-600",
+                  "from-cyan-500 to-teal-600",
+                  "from-pink-500 to-rose-600"
                 ];
                 return (
                   <motion.div
                     key={cat.name}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
                     transition={{ delay: idx * 0.05 }}
-                    className="snap-center flex-shrink-0"
                   >
                     <Link 
                       to={`/browse?category=${cat.name}`}
-                      className="flex flex-col items-center gap-1.5 active:scale-95 transition-transform"
+                      className="group relative block overflow-hidden rounded-2xl bg-white border border-gray-100 hover:border-purple-200 hover:shadow-xl transition-all duration-300"
                     >
-                      <div className={`w-14 h-14 rounded-full bg-gradient-to-br ${colors[idx % colors.length]} flex items-center justify-center shadow-md`}>
-                        <IconComponent className="w-6 h-6 text-white" strokeWidth={2} />
+                      <div className={`absolute inset-0 bg-gradient-to-br ${bgColors[idx % bgColors.length]} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+                      <div className="relative p-5 flex flex-col items-center text-center">
+                        <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${bgColors[idx % bgColors.length]} flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300`}>
+                          <IconComponent className="w-7 h-7 text-white" strokeWidth={1.5} />
+                        </div>
+                        <span className="font-semibold text-gray-800 group-hover:text-white transition-colors duration-300">{cat.name}</span>
                       </div>
-                      <span className="text-[11px] font-medium text-gray-700 text-center w-14 truncate">{cat.name}</span>
                     </Link>
                   </motion.div>
                 );
               })}
             </div>
-            
-            {/* مؤشر السحب */}
-            <div className="flex items-center justify-center gap-2 mt-3">
-              <motion.div animate={{ x: [0, -5, 0] }} transition={{ duration: 1.2, repeat: Infinity }}>
-                <ChevronLeft className="w-4 h-4 text-purple-400" />
-              </motion.div>
-              <div className="flex gap-1">
-                <span className="w-5 h-1 bg-purple-500 rounded-full"></span>
-                <span className="w-1 h-1 bg-purple-200 rounded-full"></span>
-                <span className="w-1 h-1 bg-purple-200 rounded-full"></span>
-              </div>
-              <motion.div animate={{ x: [0, 5, 0] }} transition={{ duration: 1.2, repeat: Infinity }}>
-                <ChevronRight className="w-4 h-4 text-purple-400" />
-              </motion.div>
-            </div>
-          </div>
-
-          {/* Desktop: Grid with Circular Icons */}
-          <div className="hidden md:grid grid-cols-4 lg:grid-cols-7 gap-6">
-            {CATEGORIES.map((cat, idx) => {
-              const IconComponent = cat.icon;
-              const colors = [
-                "from-pink-400 to-rose-500",
-                "from-blue-400 to-indigo-500",
-                "from-green-400 to-emerald-500",
-                "from-purple-400 to-violet-500",
-                "from-orange-400 to-amber-500",
-                "from-cyan-400 to-teal-500",
-                "from-red-400 to-pink-500"
-              ];
-              return (
-                <motion.div
-                  key={cat.name}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.05 }}
-                  whileHover={{ y: -5 }}
-                >
-                  <Link 
-                    to={`/browse?category=${cat.name}`}
-                    className="flex flex-col items-center gap-3 p-4 rounded-2xl hover:bg-gray-50 transition-all group"
-                  >
-                    <div className={`w-16 h-16 rounded-full bg-gradient-to-br ${colors[idx % colors.length]} flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow`}>
-                      <IconComponent className="w-7 h-7 text-white" strokeWidth={2} />
-                    </div>
-                    <span className="text-sm font-medium text-gray-700 group-hover:text-purple-600 transition-colors">{cat.name}</span>
-                  </Link>
-                </motion.div>
-              );
-            })}
           </div>
         </div>
       </section>
