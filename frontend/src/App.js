@@ -64,7 +64,7 @@ const useStickyState = (key, defaultValue) => {
 };
 
 const SettingsProvider = ({ children }) => {
-  const [settings, setSettings] = useState({ site_name: "بدل", primary_color: "#8b5cf6", custom_font_name: "Tajawal" });
+  const [settings, setSettings] = useState({ site_name: "زون | zone", primary_color: "#8b5cf6", custom_font_name: "Tajawal" });
   
   const fetchSettings = async () => { try { const res = await axios.get(`${API}/settings`); setSettings(res.data); } catch (e) { console.error(e); } };
   
