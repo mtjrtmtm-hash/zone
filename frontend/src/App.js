@@ -1580,93 +1580,262 @@ const OfferDetailPage = () => {
   if (!offer) return null;
 
   const isOwner = user?.id === offer.user_id;
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   return (
-    <div className="min-h-screen pb-24 md:pb-8 px-4 py-8">
-      <div className="max-w-5xl mx-auto">
-        <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6"><ChevronRight className="w-5 h-5 ml-1" />رجوع</Button>
-        <div className="grid md:grid-cols-2 gap-8">
-          <GlassCard className="p-0 overflow-hidden" hover={false}>
-            <div className="aspect-square bg-gradient-to-br from-purple-50 to-indigo-50">
-              {offer.images?.[0] ? <img src={offer.images[0]} alt={offer.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Package className="w-24 h-24 text-purple-200" /></div>}
-            </div>
-            {offer.images?.length > 1 && (
-              <div className="p-3 flex gap-2 overflow-x-auto">
-                {offer.images.map((img, idx) => (
-                  <img key={idx} src={img} alt="" className="w-16 h-16 object-cover rounded-xl border-2 border-transparent hover:border-primary cursor-pointer" />
-                ))}
+    <>
+      {/* Mobile View */}
+      <div className="md:hidden min-h-screen bg-gray-50 pb-32">
+        {/* Image Section */}
+        <div className="relative">
+          <div className="aspect-[4/3] bg-gradient-to-br from-purple-100 to-pink-100">
+            {offer.images?.[currentImageIndex] ? (
+              <img 
+                src={offer.images[currentImageIndex]} 
+                alt={offer.title} 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <Package className="w-20 h-20 text-purple-300" />
               </div>
             )}
-          </GlassCard>
-          <div className="space-y-6">
-            <div>
-              <div className="flex gap-2 mb-3 flex-wrap">
-                {offer.is_quick_trade && <Badge className="bg-yellow-500 text-white"><Zap className="w-3 h-3 ml-1" />مقايضة سريعة</Badge>}
-                <Badge variant="secondary" className="rounded-full">
-                  {(() => {
-                    const CategoryIcon = CATEGORIES.find(c => c.name === offer.category)?.icon;
-                    return CategoryIcon ? (
-                      <div className="flex items-center gap-1">
-                        <CategoryIcon className="w-4 h-4" strokeWidth={1.5} />
-                        <span>{offer.category}</span>
-                      </div>
-                    ) : offer.category;
-                  })()}
-                </Badge>
-                <Badge className={`${offer.status === 'active' ? 'bg-green-500' : offer.status === 'completed' ? 'bg-blue-500' : 'bg-gray-500'} text-white`}>
-                  {offer.status === 'active' ? 'نشط' : offer.status === 'completed' ? 'مكتمل' : offer.status === 'cancelled' ? 'ملغي' : 'معلق'}
-                </Badge>
+          </div>
+          
+          {/* Back Button */}
+          <button 
+            onClick={() => navigate(-1)}
+            className="absolute top-4 right-4 w-10 h-10 bg-black/30 backdrop-blur-sm rounded-full flex items-center justify-center text-white"
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
+          
+          {/* Share Button */}
+          <button 
+            onClick={shareOffer}
+            className="absolute top-4 left-4 w-10 h-10 bg-black/30 backdrop-blur-sm rounded-full flex items-center justify-center text-white"
+          >
+            <ExternalLink className="w-5 h-5" />
+          </button>
+          
+          {/* Image Counter */}
+          {offer.images?.length > 0 && (
+            <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5">
+              <ImageIcon className="w-3.5 h-3.5" />
+              {offer.images.length}
+            </div>
+          )}
+          
+          {/* Views Counter */}
+          <div className="absolute bottom-4 left-4 bg-black/50 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5">
+            <Eye className="w-3.5 h-3.5" />
+            {offer.views}
+          </div>
+        </div>
+        
+        {/* Image Thumbnails */}
+        {offer.images?.length > 1 && (
+          <div className="flex gap-2 p-3 overflow-x-auto bg-white">
+            {offer.images.map((img, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentImageIndex(idx)}
+                className={`w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden border-2 transition-all ${currentImageIndex === idx ? 'border-purple-500 shadow-lg' : 'border-transparent opacity-70'}`}
+              >
+                <img src={img} alt="" className="w-full h-full object-cover" />
+              </button>
+            ))}
+          </div>
+        )}
+        
+        {/* Content */}
+        <div className="px-4 pt-4 space-y-4">
+          {/* Badges */}
+          <div className="flex gap-2 flex-wrap">
+            <span className={`px-3 py-1 rounded-full text-xs font-medium ${offer.status === 'active' ? 'bg-green-100 text-green-700' : offer.status === 'completed' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'}`}>
+              {offer.status === 'active' ? '🟢 فعال' : offer.status === 'completed' ? '✅ مكتمل' : '⏸️ معلق'}
+            </span>
+            {offer.is_quick_trade && (
+              <span className="px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                ⚡ مقايضة سريعة
+              </span>
+            )}
+            <span className="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
+              {offer.category}
+            </span>
+          </div>
+          
+          {/* Title */}
+          <h1 className="text-xl font-bold text-gray-900 leading-tight">{offer.title}</h1>
+          
+          {/* Description */}
+          <p className="text-gray-600 text-sm leading-relaxed">{offer.description}</p>
+          
+          {/* Wanted Items */}
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-2xl border border-purple-100">
+            <p className="text-xs font-semibold text-purple-700 mb-1 flex items-center gap-1">
+              <RefreshCw className="w-3.5 h-3.5" />
+              مطلوب مقابله:
+            </p>
+            <p className="text-gray-700 text-sm">{offer.wanted_items}</p>
+          </div>
+          
+          {/* Location & Date */}
+          <div className="flex gap-4 text-sm text-gray-500">
+            <span className="flex items-center gap-1">
+              <MapPin className="w-4 h-4" />
+              {offer.governorate}
+            </span>
+            <span className="flex items-center gap-1">
+              <Clock className="w-4 h-4" />
+              {new Date(offer.created_at).toLocaleDateString("ar-SY")}
+            </span>
+          </div>
+          
+          {/* Owner Card */}
+          <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+            <div className="flex items-center gap-3">
+              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xl shadow-md">
+                {offer.user_name?.charAt(0)}
               </div>
-              <h1 className="text-2xl md:text-3xl font-bold mb-4">{offer.title}</h1>
-              <p className="text-muted-foreground leading-relaxed">{offer.description}</p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <Badge variant="outline" className="rounded-full px-3 py-1"><MapPin className="w-4 h-4 ml-1" />{offer.governorate}</Badge>
-              <Badge variant="outline" className="rounded-full px-3 py-1"><Eye className="w-4 h-4 ml-1" />{offer.views} مشاهدة</Badge>
-              <Badge variant="outline" className="rounded-full px-3 py-1"><Clock className="w-4 h-4 ml-1" />{new Date(offer.created_at).toLocaleDateString("ar-SY")}</Badge>
-            </div>
-            <Separator />
-            <div>
-              <h3 className="font-bold mb-2 flex items-center gap-2"><ArrowLeft className="w-5 h-5 text-primary" />يريد مقايضته بـ:</h3>
-              <div className="bg-purple-50 p-4 rounded-2xl"><p className="text-muted-foreground">{offer.wanted_items}</p></div>
-            </div>
-            <Separator />
-            <div className="flex items-center gap-4">
-              <Avatar className="w-14 h-14 border-2 border-primary/20"><AvatarFallback className="bg-primary text-white text-xl">{offer.user_name?.charAt(0)}</AvatarFallback></Avatar>
-              <div className="flex-1"><p className="font-bold text-lg">{offer.user_name}</p><TrustBadge score={offer.user_trust_score} /></div>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-wrap gap-3">
-              {isOwner ? (
-                <>
-                  <Button onClick={() => navigate(`/edit-offer/${offer.id}`)} className="flex-1 rounded-xl"><Edit className="w-4 h-4 ml-2" />تعديل العرض</Button>
-                  <Button variant="outline" onClick={() => setShowStatusDialog(true)} className="flex-1 rounded-xl"><RefreshCw className="w-4 h-4 ml-2" />تغيير الحالة</Button>
-                  <Button variant="outline" onClick={shareOffer} className="rounded-xl"><ExternalLink className="w-4 h-4" /></Button>
-                </>
-              ) : (
-                <>
-                  {user && (
-                    <Button onClick={() => navigate(`/messages?offer=${offer.id}&user=${offer.user_id}`)} className="flex-1 rounded-xl"><MessageCircle className="w-4 h-4 ml-2" />تقديم عرض</Button>
-                  )}
-                  <Button variant="outline" onClick={shareOffer} className="rounded-xl"><ExternalLink className="w-4 h-4 ml-2" />مشاركة</Button>
-                  {user && (
-                    <Button variant="ghost" onClick={() => setShowReportDialog(true)} className="rounded-xl text-destructive hover:text-destructive"><Flag className="w-4 h-4" /></Button>
-                  )}
-                </>
+              <div className="flex-1">
+                <p className="font-bold text-gray-900">{offer.user_name}</p>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <TrustBadge score={offer.user_trust_score} />
+                </div>
+              </div>
+              {!isOwner && user && (
+                <button 
+                  onClick={() => setShowReportDialog(true)}
+                  className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-red-50 hover:text-red-500 transition-colors"
+                >
+                  <Flag className="w-4 h-4" />
+                </button>
               )}
             </div>
+          </div>
+        </div>
+        
+        {/* Fixed Bottom Action */}
+        <div className="fixed bottom-16 left-0 right-0 p-4 bg-white border-t border-gray-100 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
+          {isOwner ? (
+            <div className="flex gap-3">
+              <Button 
+                onClick={() => navigate(`/edit-offer/${offer.id}`)} 
+                className="flex-1 h-12 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500"
+              >
+                <Edit className="w-4 h-4 ml-2" />
+                تعديل العرض
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowStatusDialog(true)} 
+                className="h-12 px-4 rounded-xl"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </Button>
+            </div>
+          ) : (
+            <Button 
+              onClick={() => user ? navigate(`/messages?offer=${offer.id}&user=${offer.user_id}`) : navigate("/login")}
+              className="w-full h-12 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-base font-semibold shadow-lg"
+            >
+              <MessageCircle className="w-5 h-5 ml-2" />
+              {user ? 'قايض معي' : 'سجل دخول للتواصل'}
+            </Button>
+          )}
+        </div>
+      </div>
 
-            {!isOwner && user && (
-              <GlassCard className="p-4" hover={false}>
-                <Label className="mb-2 block font-medium">تواصل مع صاحب العرض</Label>
-                <Textarea placeholder="مرحباً، أنا مهتم بالمقايضة..." value={message} onChange={(e) => setMessage(e.target.value)} className="rounded-xl min-h-[100px] mb-3" />
-                <Button className="w-full rounded-xl" onClick={sendMessage} disabled={sending || !message.trim()}>
-                  {sending ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : <Send className="w-4 h-4 ml-2" />}إرسال رسالة
+      {/* Desktop View */}
+      <div className="hidden md:block min-h-screen pb-8 px-4 py-8 bg-gray-50">
+        <div className="max-w-5xl mx-auto">
+          <Button variant="ghost" onClick={() => navigate(-1)} className="mb-6"><ChevronRight className="w-5 h-5 ml-1" />رجوع</Button>
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="bg-white rounded-3xl overflow-hidden shadow-lg">
+              <div className="aspect-square bg-gradient-to-br from-purple-50 to-pink-50">
+                {offer.images?.[currentImageIndex] ? (
+                  <img src={offer.images[currentImageIndex]} alt={offer.title} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Package className="w-24 h-24 text-purple-200" />
+                  </div>
+                )}
+              </div>
+              {offer.images?.length > 1 && (
+                <div className="p-3 flex gap-2 overflow-x-auto">
+                  {offer.images.map((img, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentImageIndex(idx)}
+                      className={`w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden border-2 transition-all ${currentImageIndex === idx ? 'border-purple-500' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                    >
+                      <img src={img} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            
+            <div className="space-y-5">
+              <div className="flex gap-2 flex-wrap">
+                {offer.is_quick_trade && <Badge className="bg-yellow-500 text-white"><Zap className="w-3 h-3 ml-1" />مقايضة سريعة</Badge>}
+                <Badge variant="secondary" className="rounded-full">{offer.category}</Badge>
+                <Badge className={`${offer.status === 'active' ? 'bg-green-500' : offer.status === 'completed' ? 'bg-blue-500' : 'bg-gray-500'} text-white`}>
+                  {offer.status === 'active' ? 'نشط' : offer.status === 'completed' ? 'مكتمل' : 'معلق'}
+                </Badge>
+              </div>
+              
+              <h1 className="text-2xl font-bold">{offer.title}</h1>
+              <p className="text-gray-600 leading-relaxed">{offer.description}</p>
+              
+              <div className="flex flex-wrap gap-3">
+                <Badge variant="outline" className="rounded-full px-3 py-1"><MapPin className="w-4 h-4 ml-1" />{offer.governorate}</Badge>
+                <Badge variant="outline" className="rounded-full px-3 py-1"><Eye className="w-4 h-4 ml-1" />{offer.views} مشاهدة</Badge>
+                <Badge variant="outline" className="rounded-full px-3 py-1"><Clock className="w-4 h-4 ml-1" />{new Date(offer.created_at).toLocaleDateString("ar-SY")}</Badge>
+              </div>
+              
+              <div className="bg-purple-50 p-4 rounded-2xl">
+                <h3 className="font-bold mb-2 flex items-center gap-2 text-purple-700"><RefreshCw className="w-4 h-4" />مطلوب مقابله:</h3>
+                <p className="text-gray-700">{offer.wanted_items}</p>
+              </div>
+              
+              <div className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100">
+                <Avatar className="w-14 h-14 border-2 border-purple-200">
+                  <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-xl">{offer.user_name?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <p className="font-bold text-lg">{offer.user_name}</p>
+                  <TrustBadge score={offer.user_trust_score} />
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                {isOwner ? (
+                  <>
+                    <Button onClick={() => navigate(`/edit-offer/${offer.id}`)} className="flex-1 rounded-xl h-12 bg-gradient-to-r from-purple-500 to-pink-500"><Edit className="w-4 h-4 ml-2" />تعديل</Button>
+                    <Button variant="outline" onClick={() => setShowStatusDialog(true)} className="flex-1 rounded-xl h-12"><RefreshCw className="w-4 h-4 ml-2" />تغيير الحالة</Button>
+                    <Button variant="outline" onClick={shareOffer} className="rounded-xl h-12"><ExternalLink className="w-4 h-4" /></Button>
+                  </>
+                ) : (
+                  <>
+                    {user && (
+                      <Button onClick={() => navigate(`/messages?offer=${offer.id}&user=${offer.user_id}`)} className="flex-1 rounded-xl h-12 bg-gradient-to-r from-purple-500 to-pink-500"><MessageCircle className="w-4 h-4 ml-2" />قايض معي</Button>
+                    )}
+                    <Button variant="outline" onClick={shareOffer} className="rounded-xl h-12"><ExternalLink className="w-4 h-4 ml-2" />مشاركة</Button>
+                    {user && (
+                      <Button variant="ghost" onClick={() => setShowReportDialog(true)} className="rounded-xl h-12 text-red-500 hover:text-red-600 hover:bg-red-50"><Flag className="w-4 h-4" /></Button>
+                    )}
+                  </>
+                )}
+              </div>
+              
+              {!user && (
+                <Button className="w-full rounded-xl h-12 bg-gradient-to-r from-purple-500 to-pink-500" onClick={() => navigate("/login")}>
+                  سجل دخول للتواصل
                 </Button>
-              </GlassCard>
-            )}
-            {!user && <Button className="w-full rounded-xl h-12" onClick={() => navigate("/login")}>سجل دخول للتواصل</Button>}
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -1690,11 +1859,11 @@ const OfferDetailPage = () => {
           <Textarea placeholder="سبب البلاغ..." value={reportReason} onChange={(e) => setReportReason(e.target.value)} className="rounded-xl" />
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowReportDialog(false)} className="rounded-xl">إلغاء</Button>
-            <Button onClick={submitReport} className="rounded-xl bg-destructive hover:bg-destructive/90">إرسال البلاغ</Button>
+            <Button onClick={submitReport} className="rounded-xl bg-red-500 hover:bg-red-600">إرسال البلاغ</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 };
 
