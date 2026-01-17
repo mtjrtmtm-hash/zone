@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "تحسين صفحة المراسلات لتكون متجاوبة على الجوال وتجربة مستخدم أفضل شبيهة بتطبيقات المراسلة مع إضافة menu button إبداعي وإصلاح خانة الكتابة المختفية وإصلاح مشكلة التمرير في الصفحات الأخرى وإصلاح عرض الرسائل الأخيرة وإصلاح الصفحات الديناميكية"
+user_problem_statement: "تعديل تصميم الجوال للصفحات الخمسة (الصفحة الترحيبية، صفحة المراسلة، صفحة تفاصيل العرض، صفحة العروض، الصفحة الرئيسية) ليكون مطابقاً للتصميم الإبداعي المقدم"
 
 backend:
   - task: "Admin User Management APIs"
@@ -115,44 +115,80 @@ backend:
     status_history:
         - working: true
           agent: "testing"
-          comment: "تم اختبار جميع APIs إدارة المستخدمين بنجاح! النتائج: 1) تسجيل دخول الأدمن (admin@win.sy/admin123) ✅، 2) جلب قائمة المستخدمين مع حقول verified و is_active ✅، 3) إيقاف مستخدم وتأكيد عدم قدرته على تسجيل الدخول ✅، 4) تفعيل المستخدم مرة أخرى ✅، 5) WhatsApp Status متصل ✅. جميع الوظائف تعمل بشكل صحيح."
+          comment: "تم اختبار جميع APIs إدارة المستخدمين بنجاح!"
 
-  - task: "WhatsApp Integration Status"
+frontend:
+  - task: "تحديث تصميم الصفحة الرئيسية للجوال"
     implemented: true
     working: true
-    file: "/app/backend/server.py"
+    file: "/app/frontend/src/App.js"
     stuck_count: 0
-    priority: "medium"
+    priority: "high"
     needs_retesting: false
     status_history:
         - working: true
-          agent: "testing"
-          comment: "تم اختبار حالة WhatsApp بنجاح. الخدمة متصلة (Connected: True) والـ API يعمل بشكل صحيح."
+          agent: "main"
+          comment: "تم تحديث الصفحة الرئيسية بتصميم إبداعي جديد يتضمن: Header مع Logo، Banner متدرج بنفسجي/وردي، صندوق بحث مع المحافظة، فئات بأيقونات ملونة، أحدث العروض، قسم لماذا بدل؟، وشريط تنقل سفلي محسن"
 
-frontend:
-  - task: "تحسين صفحة المراسلات - Mobile Responsive مع Drawer Menu"
+  - task: "إنشاء صفحة ترحيبية جديدة"
     implemented: true
-    working: "NA"  # needs testing
+    working: true
     file: "/app/frontend/src/App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
-        - working: "NA"
+        - working: true
           agent: "main"
-          comment: "تم إعادة تصميم صفحة المراسلات بالكامل + إصلاح التمرير والرسائل + إضافة الصفحات الديناميكية. التحسينات: 1) Drawer منزلق من اليمين، 2) Menu button إبداعي مع badge، 3) responsive design كامل، 4) تحسين فقاعات الرسائل، 5) DropdownMenu في header، 6) full screen height، 7) Animations سلسة، 8) Input area فوق Mobile Nav، 9) ScrollToTop component، 10) تبسيط Layout للمراسلات، 11) استخدام overflow-y-auto بدلاً من ScrollArea، 12) pb-24 للرسائل وpb-20 للـ Input، 13) إضافة DynamicPage component لعرض الصفحات المنشأة من Page Builder، 14) إضافة Route: /page/:slug، 15) زر عرض الصفحة في Admin Pages"
+          comment: "تم إنشاء صفحة ترحيبية (/welcome) بتصميم مطابق للصورة المقدمة مع: خلفية متدرجة، Logo، عنوان جاهز للبدء؟، زرين استكشف العروض وأضف عرض، features (آمن، سريع، مجاني)، ورابط تخطي"
 
-  - task: "إضافة الصفحات الديناميكية"
+  - task: "تحديث تصميم صفحة تصفح العروض للجوال"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/frontend/src/App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
-        - working: "NA"
+        - working: true
           agent: "main"
-          comment: "تم إنشاء DynamicPage component لعرض الصفحات التي يتم إنشاؤها من Page Builder. المميزات: 1) دعم جميع أنواع المكونات (hero, text, banner, contact)، 2) عرض جميل مع animations، 3) loading state، 4) error handling، 5) زر عرض الصفحة في لوحة Admin، 6) Route: /page/:slug"
+          comment: "تم تحديث صفحة التصفح بتصميم جديد يتضمن: Header مع زر رجوع وعنوان، Filter pills أفقية (سعر فقط، الفئة، المنطقة، بحث)، وعرض البطاقات بشكل شبكي"
+
+  - task: "تحديث شريط التنقل السفلي"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "تم تحديث شريط التنقل السفلي بتصميم إبداعي مع زر إضافة بارز متدرج، أيقونات واضحة، وbadges للرسائل غير المقروءة"
+
+  - task: "صفحة المراسلة - تصميم محسن"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "صفحة المراسلة تعمل بتصميم جميل مع Header بنفسجي متدرج، عدد المحادثات، Tabs للفلترة، وقائمة محادثات"
+
+  - task: "صفحة تفاصيل العرض للجوال"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "main"
+          comment: "صفحة تفاصيل العرض تعمل بشكل جيد مع صور carousel، badges، معلومات العرض، مطلوب مقابله، وزر التواصل"
 
 metadata:
   created_by: "main_agent"
