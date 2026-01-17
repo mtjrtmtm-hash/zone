@@ -1269,15 +1269,6 @@ const HomePage = () => {
           </div>
         </div>
       </section>
-                    </div>
-                    <span className="text-sm font-semibold text-gray-900">{cat.name}</span>
-                  </Link>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
 
       {/* Features Section - Mobile Optimized */}
       <section className="py-8 md:py-20 px-4 bg-gradient-to-b from-white to-purple-50">
