@@ -1,5 +1,32 @@
 /* Badal Syrian Barter Platform Styles */
 
+/* Prevent horizontal overflow on mobile */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+#root {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+/* Ensure all images are responsive */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Fix any element that might overflow */
+* {
+  max-width: 100%;
+}
+
+/* Exceptions for flex items */
+.flex > *, .grid > * {
+  max-width: none;
+}
+
 /* Remove default dark header */
 .App-header {
   display: none;
