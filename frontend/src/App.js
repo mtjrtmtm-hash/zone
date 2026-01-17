@@ -1284,7 +1284,18 @@ const HomePage = () => {
           </div>
 
           {/* Mobile: Horizontal Scroll */}
-          <div className="md:hidden">
+          <div className="md:hidden relative">
+            {/* مؤشر السحب - سهم متحرك */}
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 z-10 pointer-events-none">
+              <motion.div
+                animate={{ x: [0, -8, 0] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+                className="w-8 h-16 bg-gradient-to-r from-white via-white/90 to-transparent flex items-center justify-start pl-1"
+              >
+                <ChevronLeft className="w-5 h-5 text-purple-500" />
+              </motion.div>
+            </div>
+            
             <div className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory hide-scrollbar -mx-4 px-4">
               {CATEGORIES.map((cat, idx) => {
                 const IconComponent = cat.icon;
@@ -1308,6 +1319,13 @@ const HomePage = () => {
                   </motion.div>
                 );
               })}
+            </div>
+            
+            {/* نقاط المؤشر */}
+            <div className="flex justify-center gap-1.5 mt-2">
+              <span className="w-6 h-1.5 bg-purple-500 rounded-full"></span>
+              <span className="w-1.5 h-1.5 bg-purple-200 rounded-full"></span>
+              <span className="w-1.5 h-1.5 bg-purple-200 rounded-full"></span>
             </div>
           </div>
 
