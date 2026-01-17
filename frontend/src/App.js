@@ -2248,7 +2248,7 @@ const LoginPage = () => {
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl shadow-primary/25"><span className="text-white font-bold text-2xl">ب</span></div>
           <h1 className="text-2xl font-bold">تسجيل الدخول</h1>
-          <p className="text-muted-foreground">مرحباً بعودتك إلى بدل</p>
+          <p className="text-muted-foreground">مرحباً بعودتك إلى زون</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div><Label>البريد الإلكتروني</Label><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-2 rounded-xl" placeholder="example@email.com" required /></div>
