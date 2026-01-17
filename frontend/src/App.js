@@ -1005,12 +1005,102 @@ const HomePage = () => {
         {/* Header with Logo */}
         <div className="flex items-center justify-between px-4 py-3 bg-white sticky top-0 z-40 border-b border-gray-50">
           <div className="flex items-center gap-2">
-            <button className="w-9 h-9 flex items-center justify-center text-gray-600">
-              <Menu className="w-5 h-5" />
-            </button>
-            <button className="w-9 h-9 flex items-center justify-center text-gray-600 relative">
-              <Bell className="w-5 h-5" />
-            </button>
+            {user ? (
+              <>
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <button className="w-9 h-9 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+                      <Menu className="w-5 h-5" />
+                    </button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-[280px] p-0">
+                    <div className="bg-gradient-to-br from-purple-600 to-pink-500 p-6 text-white">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="w-14 h-14 border-2 border-white/30">
+                          <AvatarImage src={user.avatar} />
+                          <AvatarFallback className="bg-white/20 text-white text-xl font-bold">{user.name?.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-bold text-lg">{user.name}</p>
+                          <p className="text-purple-200 text-sm">{user.email}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-4 space-y-1">
+                      <Link to="/profile" className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 transition-colors">
+                        <User className="w-5 h-5 text-gray-600" />
+                        <span className="font-medium">الملف الشخصي</span>
+                      </Link>
+                      <Link to="/my-offers" className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 transition-colors">
+                        <Package className="w-5 h-5 text-gray-600" />
+                        <span className="font-medium">عروضي</span>
+                      </Link>
+                      <Link to="/messages" className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 transition-colors">
+                        <MessageCircle className="w-5 h-5 text-gray-600" />
+                        <span className="font-medium">الرسائل</span>
+                      </Link>
+                      <Link to="/favorites" className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 transition-colors">
+                        <Heart className="w-5 h-5 text-gray-600" />
+                        <span className="font-medium">المفضلة</span>
+                      </Link>
+                      {user.is_admin && (
+                        <Link to="/admin" className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-100 transition-colors">
+                          <Settings className="w-5 h-5 text-gray-600" />
+                          <span className="font-medium">لوحة التحكم</span>
+                        </Link>
+                      )}
+                      <hr className="my-2" />
+                      <button onClick={logout} className="flex items-center gap-3 p-3 rounded-xl hover:bg-red-50 text-red-600 w-full transition-colors">
+                        <LogOut className="w-5 h-5" />
+                        <span className="font-medium">تسجيل الخروج</span>
+                      </button>
+                    </div>
+                  </SheetContent>
+                </Sheet>
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <button className="w-9 h-9 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded-full transition-colors relative">
+                      <Bell className="w-5 h-5" />
+                      {unreadNotifications > 0 && (
+                        <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                          {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                        </span>
+                      )}
+                    </button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-[320px] p-0">
+                    <div className="bg-gradient-to-br from-purple-600 to-pink-500 p-4 text-white">
+                      <h3 className="font-bold text-lg flex items-center gap-2">
+                        <Bell className="w-5 h-5" />
+                        الإشعارات
+                      </h3>
+                    </div>
+                    <div className="p-4">
+                      {notifications.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500">
+                          <Bell className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                          <p>لا توجد إشعارات</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {notifications.map((notif) => (
+                            <div key={notif.id} className={`p-3 rounded-xl ${notif.is_read ? 'bg-gray-50' : 'bg-purple-50 border border-purple-100'}`}>
+                              <p className="text-sm font-medium text-gray-800">{notif.title}</p>
+                              <p className="text-xs text-gray-500 mt-1">{notif.message}</p>
+                              <p className="text-xs text-gray-400 mt-2">{new Date(notif.created_at).toLocaleDateString('ar-SY')}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              </>
+            ) : (
+              <Link to="/login" className="text-sm font-medium text-purple-600 hover:text-purple-700">
+                تسجيل الدخول
+              </Link>
+            )}
           </div>
           <Link to="/" className="flex items-center gap-2">
             <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
