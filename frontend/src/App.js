@@ -5186,6 +5186,7 @@ function App() {
             <main className="pt-0 md:pt-8">
               <Routes>
                 <Route path="/" element={<HomePage />} />
+                <Route path="/welcome" element={<WelcomePage />} />
                 <Route path="/browse" element={<BrowsePage />} />
                 <Route path="/offer/:id" element={<OfferDetailPage />} />
                 <Route path="/login" element={<LoginPage />} />
