@@ -1021,7 +1021,7 @@ const HomePage = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="mx-4 -mt-8 relative z-10"
+            className="px-4 -mt-8 relative z-10"
           >
             <div className="bg-white rounded-2xl p-4 shadow-xl border border-gray-100">
               <p className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
@@ -1032,14 +1032,14 @@ const HomePage = () => {
                 <div className="relative flex-1">
                   <Input 
                     placeholder="ابحث هنا..." 
-                    className="h-11 rounded-xl border-gray-200 text-sm bg-gray-50 pr-4"
+                    className="h-10 rounded-xl border-gray-200 text-sm bg-gray-50 pr-4"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
                 <Button 
                   type="submit" 
-                  className="h-11 px-5 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500"
+                  className="h-10 px-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500"
                 >
                   <Search className="w-4 h-4" />
                 </Button>
