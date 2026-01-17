@@ -1001,9 +1001,17 @@ const HomePage = () => {
   const fetchNotifications = async () => {
     try {
       const token = localStorage.getItem("badal_token");
+      if (!token) {
+        console.log("No token found for notifications");
+        return;
+      }
+      console.log("Fetching notifications with token:", token.substring(0, 20) + "...");
       const res = await axios.get(`${API}/notifications`, { headers: { Authorization: `Bearer ${token}` } });
+      console.log("Notifications received:", res.data.length);
       setNotifications(res.data.slice(0, 10));
-    } catch (e) { console.error(e); }
+    } catch (e) { 
+      console.error("Error fetching notifications:", e);
+    }
   };
 
   const handleSearch = (e) => { e.preventDefault(); navigate(`/browse?search=${searchQuery}&governorate=${selectedGov}`); };
