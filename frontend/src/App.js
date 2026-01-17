@@ -1469,14 +1469,25 @@ const HomePage = () => {
               انضم لآلاف المستخدمين واستمتع بتجربة مقايضة فريدة
             </p>
             <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center px-4">
-              <Button 
-                size="lg"
-                className="h-14 px-6 md:px-8 rounded-2xl md:rounded-full text-base md:text-lg bg-white text-purple-600 hover:bg-gray-100 shadow-xl w-full sm:w-auto"
-                onClick={() => navigate('/register')}
-              >
-                <UserCheck className="w-5 h-5 ml-2" />
-                سجل مجاناً
-              </Button>
+              {user ? (
+                <Button 
+                  size="lg"
+                  className="h-14 px-6 md:px-8 rounded-2xl md:rounded-full text-base md:text-lg bg-white text-purple-600 hover:bg-gray-100 shadow-xl w-full sm:w-auto"
+                  onClick={() => navigate('/create-offer')}
+                >
+                  <Plus className="w-5 h-5 ml-2" />
+                  أضف عرض
+                </Button>
+              ) : (
+                <Button 
+                  size="lg"
+                  className="h-14 px-6 md:px-8 rounded-2xl md:rounded-full text-base md:text-lg bg-white text-purple-600 hover:bg-gray-100 shadow-xl w-full sm:w-auto"
+                  onClick={() => navigate('/register')}
+                >
+                  <UserCheck className="w-5 h-5 ml-2" />
+                  سجل مجاناً
+                </Button>
+              )}
               <Button 
                 size="lg"
                 variant="outline"
