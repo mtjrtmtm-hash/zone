@@ -153,7 +153,8 @@ class NotificationResponse(BaseModel):
     user_id: str
     title: str
     message: str
-    notification_type: str
+    type: Optional[str] = "message"
+    notification_type: Optional[str] = None
     link: Optional[str] = None
     is_read: bool = False
     created_at: str
