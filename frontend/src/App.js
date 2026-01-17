@@ -393,7 +393,7 @@ const Navbar = () => {
                   <span className="text-white font-bold text-xl">ب</span>
                 )}
               </motion.div>
-              <span className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">{settings?.site_name || "بدل"}</span>
+              <span className="text-xl font-bold text-foreground group-hover:text-primary transition-colors">{settings?.site_name || "زون | zone"}</span>
             </Link>
 
             {/* Desktop Menu Button */}
