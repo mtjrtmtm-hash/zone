@@ -2747,31 +2747,22 @@ const MessagesPage = () => {
       </div>
 
       {/* Mobile View - With Drawer */}
-      <div className="md:hidden h-screen flex flex-col">
+      <div className="md:hidden fixed inset-0 flex flex-col bg-gray-50">
         {selectedConv ? (
           <>
-            {/* Chat Header with Menu Button */}
-            <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg flex-shrink-0">
+            {/* Chat Header - Fixed at top */}
+            <div className="bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg flex-shrink-0 safe-area-top">
               <div className="flex items-center gap-2 p-3">
                 <motion.button
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setDrawerOpen(true)}
                   className="relative flex items-center justify-center w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-sm transition-all"
                 >
-                  <motion.div
-                    animate={{ rotate: drawerOpen ? 180 : 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <Menu className="w-5 h-5" />
-                  </motion.div>
+                  <Menu className="w-5 h-5" />
                   {conversations.filter(c => c.unread_count > 0).length > 0 && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="absolute -top-1 -right-1 w-4 h-4 bg-pink-500 rounded-full flex items-center justify-center text-[10px] font-bold border-2 border-purple-600"
-                    >
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-pink-500 rounded-full flex items-center justify-center text-[10px] font-bold border-2 border-purple-600">
                       {conversations.filter(c => c.unread_count > 0).length}
-                    </motion.div>
+                    </span>
                   )}
                 </motion.button>
 
@@ -2806,51 +2797,51 @@ const MessagesPage = () => {
               </div>
             </div>
 
-            {/* Messages Area - Scrollable */}
+            {/* Messages Area - Scrollable with flex-1 */}
             <div 
               ref={messagesContainerRef}
-              className="flex-1 overflow-y-auto overflow-x-hidden bg-gradient-to-b from-purple-50/30 via-white to-purple-50/20 pb-24"
+              className="flex-1 overflow-y-auto bg-gradient-to-b from-purple-50/50 to-white"
               style={{ 
-                WebkitOverflowScrolling: 'touch'
+                WebkitOverflowScrolling: 'touch',
+                overscrollBehavior: 'contain'
               }}
             >
-              <div className="p-3 space-y-2">
+              <div className="p-3 space-y-2 min-h-full flex flex-col justify-end">
                 {messages.length === 0 ? (
-                  <div className="flex items-center justify-center min-h-[300px]">
+                  <div className="flex items-center justify-center flex-1">
                     <div className="text-center text-muted-foreground">
-                      <MessageCircle className="w-16 h-16 mx-auto mb-3 opacity-30" />
+                      <MessageCircle className="w-14 h-14 mx-auto mb-3 opacity-30" />
                       <p className="text-sm">ابدأ المحادثة الآن</p>
                     </div>
                   </div>
                 ) : (
-                  messages.map((msg, index) => (
-                    <motion.div 
-                      key={msg.id}
-                      initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className={`flex ${msg.sender_id === user.id ? "justify-end" : "justify-start"}`}
-                    >
-                      <div className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl shadow-sm ${
-                        msg.sender_id === user.id 
-                          ? "bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-br-md" 
-                          : "bg-white border border-purple-100 text-gray-800 rounded-bl-md"
-                      }`}>
-                        <p className="leading-relaxed text-[15px] break-words">{msg.content}</p>
-                        <p className={`text-[10px] mt-1.5 ${msg.sender_id === user.id ? "text-purple-100" : "text-gray-400"}`}>
-                          {new Date(msg.created_at).toLocaleTimeString("ar-SY", { hour: "2-digit", minute: "2-digit" })}
-                        </p>
+                  <div className="space-y-2">
+                    {messages.map((msg) => (
+                      <div 
+                        key={msg.id}
+                        className={`flex ${msg.sender_id === user.id ? "justify-end" : "justify-start"}`}
+                      >
+                        <div className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl shadow-sm ${
+                          msg.sender_id === user.id 
+                            ? "bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-br-md" 
+                            : "bg-white border border-purple-100 text-gray-800 rounded-bl-md"
+                        }`}>
+                          <p className="leading-relaxed text-[15px] break-words whitespace-pre-wrap">{msg.content}</p>
+                          <p className={`text-[10px] mt-1 ${msg.sender_id === user.id ? "text-purple-200" : "text-gray-400"}`}>
+                            {new Date(msg.created_at).toLocaleTimeString("ar-SY", { hour: "2-digit", minute: "2-digit" })}
+                          </p>
+                        </div>
                       </div>
-                    </motion.div>
-                  ))
+                    ))}
+                  </div>
                 )}
-                <div ref={messagesEndRef} />
+                <div ref={messagesEndRef} className="h-1" />
               </div>
             </div>
 
-            {/* Input Area - Fixed at bottom */}
-            <div className="bg-white border-t border-purple-100 p-3 flex-shrink-0 pb-20">
-              <div className="flex gap-2 items-end">
+            {/* Input Area - Fixed at bottom above nav */}
+            <div className="bg-white border-t border-gray-200 p-3 flex-shrink-0 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 70px)' }}>
+              <div className="flex gap-2 items-center">
                 <Input 
                   placeholder="اكتب رسالة..." 
                   value={newMessage} 
@@ -2861,18 +2852,15 @@ const MessagesPage = () => {
                       sendMessage();
                     }
                   }}
-                  className="rounded-full border-purple-200 focus:border-purple-400 px-4 py-2.5 text-base"
-                  style={{ minHeight: '44px' }}
+                  className="flex-1 rounded-full border-purple-200 focus:border-purple-400 px-4 h-11 text-base"
                 />
-                <motion.div whileTap={{ scale: 0.9 }}>
-                  <Button 
-                    onClick={sendMessage} 
-                    disabled={sending || !newMessage.trim()} 
-                    className="rounded-full w-11 h-11 p-0 bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 flex-shrink-0 shadow-lg"
-                  >
-                    {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-                  </Button>
-                </motion.div>
+                <Button 
+                  onClick={sendMessage} 
+                  disabled={sending || !newMessage.trim()} 
+                  className="rounded-full w-11 h-11 p-0 bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 flex-shrink-0 shadow-lg"
+                >
+                  {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                </Button>
               </div>
             </div>
           </>
