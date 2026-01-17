@@ -982,7 +982,7 @@ const OfferCard = ({ offer, delay = 0, showActions = false, onStatusChange, onDe
 // Home Page
 const HomePage = () => {
   const navigate = useNavigate();
-  const { user, logout, unreadNotifications } = useAuth();
+  const { user, logout, unreadNotifications, api } = useAuth();
   const { settings } = useSettings();
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -990,7 +990,13 @@ const HomePage = () => {
   const [selectedGov, setSelectedGov] = useState("");
   const [notifications, setNotifications] = useState([]);
 
-  useEffect(() => { fetchOffers(); if (user) fetchNotifications(); }, [user]);
+  useEffect(() => { fetchOffers(); }, []);
+  
+  useEffect(() => { 
+    if (user && api) {
+      fetchNotifications(); 
+    }
+  }, [user, api]);
 
   const fetchOffers = async () => {
     try { const res = await axios.get(`${API}/offers?limit=8`); setOffers(res.data); }
@@ -1000,13 +1006,7 @@ const HomePage = () => {
 
   const fetchNotifications = async () => {
     try {
-      const token = localStorage.getItem("badal_token");
-      if (!token) {
-        console.log("No token found for notifications");
-        return;
-      }
-      console.log("Fetching notifications with token:", token.substring(0, 20) + "...");
-      const res = await axios.get(`${API}/notifications`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await api.get("/notifications");
       console.log("Notifications received:", res.data.length);
       setNotifications(res.data.slice(0, 10));
     } catch (e) { 
