@@ -2922,11 +2922,15 @@ const MessagesPage = () => {
             </div>
           </>
         ) : (
-          /* No conversation selected - Show list - تصميم احترافي */
-          <div className="flex-1 flex flex-col bg-gray-50 pb-16">
-            {/* Header احترافي */}
-            <div className="bg-gradient-to-br from-purple-600 via-purple-500 to-indigo-600 text-white px-5 py-6 shadow-xl">
-              <div className="flex items-center justify-between">
+          /* No conversation selected - Show list - تصميم إبداعي جديد */
+          <div className="flex-1 flex flex-col bg-gradient-to-b from-gray-50 to-white">
+            {/* Header إبداعي */}
+            <div className="bg-gradient-to-br from-purple-600 via-purple-500 to-indigo-600 text-white px-5 pt-6 pb-8 shadow-xl relative overflow-hidden">
+              {/* خلفية ديكورية */}
+              <div className="absolute top-0 left-0 w-32 h-32 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+              <div className="absolute bottom-0 right-0 w-24 h-24 bg-white/5 rounded-full translate-x-1/2 translate-y-1/2"></div>
+              
+              <div className="flex items-center justify-between relative z-10">
                 <div>
                   <h1 className="text-2xl font-bold">الرسائل</h1>
                   <p className="text-sm text-purple-200 mt-1 flex items-center gap-2">
@@ -2934,24 +2938,90 @@ const MessagesPage = () => {
                     {conversations.length} محادثة نشطة
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                  <MessageCircle className="w-6 h-6" />
+                <div className="flex items-center gap-2">
+                  <button className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
+                    <Search className="w-5 h-5" />
+                  </button>
+                  <button className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
+                    <MessageCircle className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
             </div>
             
-            {/* Tabs للفلترة */}
-            <div className="bg-white border-b border-gray-100 px-4 py-3 flex gap-2 overflow-x-auto">
-              <Button size="sm" className="rounded-full bg-purple-100 text-purple-700 hover:bg-purple-200 text-sm px-4 flex-shrink-0">
-                الكل
-              </Button>
-              <Button size="sm" variant="ghost" className="rounded-full text-gray-500 hover:bg-gray-100 text-sm px-4 flex-shrink-0">
-                غير مقروءة
-              </Button>
+            {/* Tabs للفلترة - تصميم pills إبداعي */}
+            <div className="bg-white/80 backdrop-blur-sm px-4 py-4 -mt-4 mx-4 rounded-2xl shadow-lg border border-purple-100/50 relative z-10">
+              <div className="flex gap-2">
+                <button className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-sm font-semibold shadow-md">
+                  الكل
+                </button>
+                <button className="flex-1 py-2.5 px-4 rounded-xl bg-purple-50 text-purple-600 text-sm font-medium hover:bg-purple-100 transition-colors">
+                  غير مقروءة
+                </button>
+                <button className="flex-1 py-2.5 px-4 rounded-xl bg-purple-50 text-purple-600 text-sm font-medium hover:bg-purple-100 transition-colors">
+                  مجموعات
+                </button>
+              </div>
             </div>
             
-            <div className="flex-1 overflow-hidden">
-              <ConversationsList mobile={true} onSelect={selectConversation} />
+            {/* قائمة المحادثات */}
+            <div className="flex-1 overflow-y-auto px-4 pt-4 pb-20">
+              {conversations.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-64 text-center">
+                  <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mb-4">
+                    <MessageCircle className="w-10 h-10 text-purple-400" />
+                  </div>
+                  <p className="font-medium text-gray-600">لا توجد محادثات</p>
+                  <p className="text-sm text-gray-400 mt-1">ابدأ محادثة من صفحة العرض</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {conversations.map((conv, index) => (
+                    <motion.div
+                      key={conv.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      onClick={() => selectConversation(conv)}
+                      className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 active:scale-[0.98] transition-all cursor-pointer hover:shadow-md"
+                    >
+                      <div className="flex items-center gap-3">
+                        {/* صورة المستخدم */}
+                        <div className="relative flex-shrink-0">
+                          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-pink-400 to-purple-500 flex items-center justify-center text-white font-bold text-xl shadow-md">
+                            {conv.other_user_name?.charAt(0)}
+                          </div>
+                          {conv.unread_count > 0 && (
+                            <span className="absolute -top-1 -right-1 w-6 h-6 bg-purple-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg border-2 border-white">
+                              {conv.unread_count > 9 ? '9+' : conv.unread_count}
+                            </span>
+                          )}
+                        </div>
+                        
+                        {/* معلومات المحادثة */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <h3 className="font-bold text-gray-900 text-[15px]">{conv.other_user_name}</h3>
+                            <span className="text-xs text-gray-400">
+                              {new Date(conv.updated_at).toLocaleDateString('ar-SY', { day: 'numeric', month: 'short' })}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <Package className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" />
+                            <p className="text-xs font-medium text-purple-600 truncate">{conv.offer_title}</p>
+                          </div>
+                          <p className={`text-sm truncate ${conv.unread_count > 0 ? 'text-gray-800 font-medium' : 'text-gray-500'}`}>
+                            {conv.last_message || "ابدأ المحادثة..."}
+                          </p>
+                        </div>
+                        
+                        {/* سهم */}
+                        <ChevronLeft className="w-5 h-5 text-gray-300 flex-shrink-0" />
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
