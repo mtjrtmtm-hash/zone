@@ -1581,7 +1581,6 @@ const OfferDetailPage = () => {
   if (!offer) return null;
 
   const isOwner = user?.id === offer.user_id;
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   return (
     <>
