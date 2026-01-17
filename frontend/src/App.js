@@ -1439,9 +1439,9 @@ const HomePage = () => {
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
               {[...Array(4)].map((_, i) => (
-                <Skeleton key={i} className="h-72 md:h-80 rounded-3xl" />
+                <Skeleton key={i} className="h-52 md:h-72 rounded-2xl md:rounded-3xl" />
               ))}
             </div>
           ) : (
