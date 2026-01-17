@@ -1171,8 +1171,8 @@ const HomePage = () => {
       </section>
 
       {/* Categories Section - New Circular Design */}
-      <section className="py-6 md:py-16 px-4 bg-white">
-        <div className="max-w-7xl mx-auto">
+      <section className="py-6 md:py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4">
           <div className="mb-6 md:mb-10 text-center">
             <h2 className="text-xl md:text-3xl font-bold mb-2">
               استكشف حسب <span className="text-purple-600">الفئة</span>
@@ -1181,8 +1181,8 @@ const HomePage = () => {
           </div>
 
           {/* Mobile: Circular Icons Scroll */}
-          <div className="md:hidden">
-            <div className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scrollbar -mx-4 px-4">
+          <div className="md:hidden -mx-4">
+            <div className="flex gap-4 overflow-x-auto pb-4 snap-x hide-scrollbar px-4">
               {CATEGORIES.map((cat, idx) => {
                 const IconComponent = cat.icon;
                 const colors = [
