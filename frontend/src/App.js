@@ -1014,12 +1014,61 @@ const HomePage = () => {
       <div className="md:hidden">
         {/* Header with Logo */}
         <div className="flex items-center justify-between px-4 py-3 bg-white sticky top-0 z-40 border-b border-gray-50">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             {user ? (
               <>
+                {/* زر الإشعارات */}
                 <Sheet>
                   <SheetTrigger asChild>
-                    <button className="w-9 h-9 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+                    <button className="w-10 h-10 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded-full transition-colors relative">
+                      <Bell className="w-5 h-5" />
+                      {unreadNotifications > 0 && (
+                        <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                          {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                        </span>
+                      )}
+                    </button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-[320px] p-0">
+                    <div className="bg-gradient-to-br from-purple-600 to-pink-500 p-4 text-white">
+                      <h3 className="font-bold text-lg flex items-center gap-2">
+                        <Bell className="w-5 h-5" />
+                        الإشعارات
+                        {notifications.length > 0 && (
+                          <Badge className="bg-white/20 text-white text-xs">{notifications.length}</Badge>
+                        )}
+                      </h3>
+                    </div>
+                    <div className="p-4 max-h-[80vh] overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <div className="text-center py-12 text-gray-500">
+                          <Bell className="w-16 h-16 mx-auto mb-4 opacity-20" />
+                          <p className="font-medium">لا توجد إشعارات</p>
+                          <p className="text-sm mt-1">ستظهر إشعاراتك هنا</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {notifications.map((notif) => (
+                            <Link 
+                              key={notif.id} 
+                              to={notif.link || '#'}
+                              className={`block p-4 rounded-xl transition-all ${notif.is_read ? 'bg-gray-50 hover:bg-gray-100' : 'bg-purple-50 border border-purple-100 hover:bg-purple-100'}`}
+                            >
+                              <p className="text-sm font-semibold text-gray-800">{notif.title}</p>
+                              <p className="text-xs text-gray-600 mt-1 line-clamp-2">{notif.message}</p>
+                              <p className="text-xs text-gray-400 mt-2">{new Date(notif.created_at).toLocaleDateString('ar-SY')}</p>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </SheetContent>
+                </Sheet>
+                
+                {/* زر القائمة */}
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <button className="w-10 h-10 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
                       <Menu className="w-5 h-5" />
                     </button>
                   </SheetTrigger>
@@ -1064,44 +1113,6 @@ const HomePage = () => {
                         <LogOut className="w-5 h-5" />
                         <span className="font-medium">تسجيل الخروج</span>
                       </button>
-                    </div>
-                  </SheetContent>
-                </Sheet>
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <button className="w-9 h-9 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded-full transition-colors relative">
-                      <Bell className="w-5 h-5" />
-                      {unreadNotifications > 0 && (
-                        <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                          {unreadNotifications > 9 ? '9+' : unreadNotifications}
-                        </span>
-                      )}
-                    </button>
-                  </SheetTrigger>
-                  <SheetContent side="right" className="w-[320px] p-0">
-                    <div className="bg-gradient-to-br from-purple-600 to-pink-500 p-4 text-white">
-                      <h3 className="font-bold text-lg flex items-center gap-2">
-                        <Bell className="w-5 h-5" />
-                        الإشعارات
-                      </h3>
-                    </div>
-                    <div className="p-4">
-                      {notifications.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500">
-                          <Bell className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                          <p>لا توجد إشعارات</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {notifications.map((notif) => (
-                            <div key={notif.id} className={`p-3 rounded-xl ${notif.is_read ? 'bg-gray-50' : 'bg-purple-50 border border-purple-100'}`}>
-                              <p className="text-sm font-medium text-gray-800">{notif.title}</p>
-                              <p className="text-xs text-gray-500 mt-1">{notif.message}</p>
-                              <p className="text-xs text-gray-400 mt-2">{new Date(notif.created_at).toLocaleDateString('ar-SY')}</p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   </SheetContent>
                 </Sheet>
