@@ -982,6 +982,7 @@ const OfferCard = ({ offer, delay = 0, showActions = false, onStatusChange, onDe
 const HomePage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { settings } = useSettings();
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -998,71 +999,198 @@ const HomePage = () => {
   const handleSearch = (e) => { e.preventDefault(); navigate(`/browse?search=${searchQuery}&governorate=${selectedGov}`); };
 
   return (
-    <div className="min-h-screen pb-24 md:pb-8 bg-gray-50">
-      {/* Hero Section - New Design */}
-      <section className="relative overflow-hidden">
-        {/* Mobile Hero */}
-        <div className="md:hidden">
-          {/* Gradient Header */}
-          <div className="bg-gradient-to-br from-purple-600 via-purple-500 to-pink-500 text-white px-4 pt-4 pb-16 relative overflow-hidden">
-            {/* Decorative circles */}
-            <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
-            <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+    <div className="min-h-screen pb-24 md:pb-8 bg-white">
+      {/* Mobile View - تصميم إبداعي جديد مطابق للصورة */}
+      <div className="md:hidden">
+        {/* Header with Logo */}
+        <div className="flex items-center justify-between px-4 py-3 bg-white sticky top-0 z-40 border-b border-gray-50">
+          <div className="flex items-center gap-2">
+            <button className="w-9 h-9 flex items-center justify-center text-gray-600">
+              <Menu className="w-5 h-5" />
+            </button>
+            <button className="w-9 h-9 flex items-center justify-center text-gray-600 relative">
+              <Bell className="w-5 h-5" />
+            </button>
+          </div>
+          <Link to="/" className="flex items-center gap-2">
+            <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
+              {settings?.site_name || "Zone"}
+            </span>
+            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-md overflow-hidden">
+              {settings?.site_logo ? (
+                <img src={settings.site_logo} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <Sparkles className="w-4 h-4 text-white" />
+              )}
+            </div>
+          </Link>
+        </div>
+
+        {/* Hero Banner - Purple Gradient Card */}
+        <div className="px-4 pt-3">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-br from-purple-600 via-purple-500 to-pink-500 rounded-3xl p-5 text-white relative overflow-hidden"
+          >
+            {/* Decorative elements */}
+            <div className="absolute top-0 left-0 w-24 h-24 bg-white/10 rounded-full -translate-x-1/2 -translate-y-1/2" />
+            <div className="absolute bottom-0 right-0 w-32 h-32 bg-white/5 rounded-full translate-x-1/3 translate-y-1/3" />
             
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center relative z-10"
-            >
-              <h1 className="text-3xl font-bold mb-2 leading-tight">
+            <div className="relative z-10">
+              <h2 className="text-2xl font-bold mb-1 leading-tight">
                 قايض بذكاء
-                <br />
-                <span className="text-white/90">اربح بدون نقود</span>
-              </h1>
-              <p className="text-sm text-purple-100 mb-6">
-                أول منصة سورية ذكية للمقايضة
-              </p>
+              </h2>
+              <h3 className="text-lg text-white/90 mb-3">
+                اربح بدون نقود
+              </h3>
               <Button 
-                size="lg" 
-                className="h-12 px-8 rounded-full text-base bg-white text-purple-600 hover:bg-purple-50 shadow-xl"
+                size="sm"
+                className="bg-white text-purple-600 hover:bg-purple-50 rounded-full px-5 h-9 text-sm font-semibold shadow-lg"
                 onClick={() => navigate('/browse')}
               >
                 ابدأ المقايضة الآن
               </Button>
-            </motion.div>
-          </div>
-
-          {/* Search Card - Floating */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="px-4 -mt-8 relative z-10"
-          >
-            <div className="bg-white rounded-2xl p-4 shadow-xl border border-gray-100">
-              <p className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                <Search className="w-4 h-4 text-purple-500" />
-                ابحث عن ما تريد
-              </p>
-              <form onSubmit={handleSearch} className="flex gap-2">
-                <div className="relative flex-1">
-                  <Input 
-                    placeholder="ابحث هنا..." 
-                    className="h-10 rounded-xl border-gray-200 text-sm bg-gray-50 pr-4"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-                <Button 
-                  type="submit" 
-                  className="h-10 px-4 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500"
-                >
-                  <Search className="w-4 h-4" />
-                </Button>
-              </form>
             </div>
           </motion.div>
         </div>
+
+        {/* Search Section */}
+        <div className="px-4 pt-5">
+          <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
+            <p className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+              <Search className="w-4 h-4 text-purple-500" />
+              ابحث عن ما تريد
+            </p>
+            <form onSubmit={handleSearch} className="space-y-2.5">
+              <div className="relative">
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input 
+                  placeholder="ابحث عن أي شيء..." 
+                  className="h-11 rounded-xl border-gray-200 text-sm bg-white pr-10"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+              <Select value={selectedGov} onValueChange={setSelectedGov}>
+                <SelectTrigger className="h-11 rounded-xl border-gray-200 bg-white text-sm">
+                  <div className="flex items-center gap-2 text-gray-500">
+                    <MapPin className="w-4 h-4" />
+                    <SelectValue placeholder="اختر المحافظة" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">جميع المحافظات</SelectItem>
+                  {GOVERNORATES.map((gov) => (
+                    <SelectItem key={gov} value={gov}>{gov}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button 
+                type="submit" 
+                className="w-full h-11 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-sm font-semibold"
+              >
+                <Search className="w-4 h-4 ml-2" />
+                ابحث الآن
+              </Button>
+            </form>
+          </div>
+        </div>
+
+        {/* Categories Section - استكشف حسب الفئة */}
+        <div className="pt-6 px-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-bold text-gray-900">استكشف حسب الفئة</h3>
+            <Link to="/browse" className="text-xs text-purple-600 font-medium flex items-center gap-1">
+              المزيد
+              <ArrowLeft className="w-3 h-3" />
+            </Link>
+          </div>
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+            {CATEGORIES.slice(0, 8).map((cat, idx) => {
+              const IconComponent = cat.icon;
+              const colors = [
+                { bg: "bg-purple-100", icon: "text-purple-600" },
+                { bg: "bg-pink-100", icon: "text-pink-600" },
+                { bg: "bg-blue-100", icon: "text-blue-600" },
+                { bg: "bg-green-100", icon: "text-green-600" },
+                { bg: "bg-amber-100", icon: "text-amber-600" },
+                { bg: "bg-rose-100", icon: "text-rose-600" },
+                { bg: "bg-indigo-100", icon: "text-indigo-600" },
+                { bg: "bg-teal-100", icon: "text-teal-600" },
+              ];
+              const color = colors[idx % colors.length];
+              return (
+                <Link
+                  key={cat.name}
+                  to={`/browse?category=${cat.name}`}
+                  className="flex flex-col items-center gap-1.5 min-w-[60px]"
+                >
+                  <div className={`w-14 h-14 ${color.bg} rounded-2xl flex items-center justify-center active:scale-95 transition-transform`}>
+                    <IconComponent className={`w-6 h-6 ${color.icon}`} strokeWidth={1.5} />
+                  </div>
+                  <span className="text-[10px] font-medium text-gray-600 text-center leading-tight">{cat.name}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Latest Offers - أحدث العروض */}
+        <div className="pt-6 px-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-bold text-gray-900">أحدث العروض</h3>
+            <Link to="/browse" className="text-xs text-purple-600 font-medium flex items-center gap-1">
+              عرض الكل
+              <ArrowLeft className="w-3 h-3" />
+            </Link>
+          </div>
+          {loading ? (
+            <div className="grid grid-cols-2 gap-3">
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="h-56 rounded-2xl" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {offers.slice(0, 4).map((offer, idx) => (
+                <OfferCard key={offer.id} offer={offer} delay={idx * 0.05} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Why Badal Section - لماذا بدل؟ */}
+        <div className="pt-8 px-4 pb-6">
+          <h3 className="text-base font-bold text-gray-900 mb-4">لماذا يدل؟</h3>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { icon: Sparkles, title: "ادخل مسابقة المقايضة", color: "from-purple-500 to-pink-500", bg: "bg-purple-50" },
+              { icon: RefreshCw, title: "تخلص من الأشياء الغير مرغوبة", color: "from-blue-500 to-cyan-500", bg: "bg-blue-50" },
+              { icon: Users, title: "انضم لآلاف المستخدمين", color: "from-green-500 to-emerald-500", bg: "bg-green-50" },
+              { icon: Star, title: "مقايضة موثوقة", color: "from-amber-500 to-orange-500", bg: "bg-amber-50" },
+            ].map((item, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.1 }}
+                className={`${item.bg} rounded-2xl p-4 flex flex-col items-center text-center`}
+              >
+                <div className={`w-12 h-12 bg-gradient-to-br ${item.color} rounded-xl flex items-center justify-center mb-3 shadow-md`}>
+                  <item.icon className="w-6 h-6 text-white" />
+                </div>
+                <p className="text-xs font-semibold text-gray-700 leading-tight">{item.title}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Hero Section */}
+      <section className="relative overflow-hidden hidden md:block">
+        {/* Desktop Hero */}
 
         {/* Desktop Hero */}
         <div className="hidden md:block bg-gradient-to-br from-purple-50 via-white to-pink-50">
