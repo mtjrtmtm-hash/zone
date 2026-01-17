@@ -1309,47 +1309,55 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Desktop Categories Section */}
-      <section className="py-16 bg-white hidden md:block">
+      {/* Desktop Categories Section - تصميم مشابه للجوال */}
+      <section className="py-12 bg-white hidden md:block">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-2">
-              استكشف حسب <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">الفئة</span>
-            </h2>
-            <p className="text-gray-500">اختر الفئة التي تهمك من بين {CATEGORIES.length} فئة متنوعة</p>
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">استكشف حسب الفئة</h2>
+              <p className="text-gray-500 mt-1">اختر الفئة التي تهمك من بين {CATEGORIES.length} فئة متنوعة</p>
+            </div>
+            <Link to="/browse" className="text-purple-600 font-medium flex items-center gap-2 hover:gap-3 transition-all">
+              عرض الكل
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
           </div>
           
-          <div className="grid grid-cols-4 lg:grid-cols-7 gap-4">
+          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
             {CATEGORIES.map((cat, idx) => {
               const IconComponent = cat.icon;
-              const bgColors = [
-                "from-rose-500 to-pink-600",
-                "from-blue-500 to-indigo-600",
-                "from-emerald-500 to-green-600",
-                "from-violet-500 to-purple-600",
-                "from-amber-500 to-orange-600",
-                "from-cyan-500 to-teal-600",
-                "from-pink-500 to-rose-600"
+              const colors = [
+                { bg: "bg-purple-100", icon: "text-purple-600", hover: "hover:bg-purple-200" },
+                { bg: "bg-pink-100", icon: "text-pink-600", hover: "hover:bg-pink-200" },
+                { bg: "bg-blue-100", icon: "text-blue-600", hover: "hover:bg-blue-200" },
+                { bg: "bg-green-100", icon: "text-green-600", hover: "hover:bg-green-200" },
+                { bg: "bg-amber-100", icon: "text-amber-600", hover: "hover:bg-amber-200" },
+                { bg: "bg-rose-100", icon: "text-rose-600", hover: "hover:bg-rose-200" },
+                { bg: "bg-indigo-100", icon: "text-indigo-600", hover: "hover:bg-indigo-200" },
+                { bg: "bg-teal-100", icon: "text-teal-600", hover: "hover:bg-teal-200" },
+                { bg: "bg-orange-100", icon: "text-orange-600", hover: "hover:bg-orange-200" },
+                { bg: "bg-cyan-100", icon: "text-cyan-600", hover: "hover:bg-cyan-200" },
+                { bg: "bg-violet-100", icon: "text-violet-600", hover: "hover:bg-violet-200" },
+                { bg: "bg-emerald-100", icon: "text-emerald-600", hover: "hover:bg-emerald-200" },
+                { bg: "bg-fuchsia-100", icon: "text-fuchsia-600", hover: "hover:bg-fuchsia-200" },
               ];
+              const color = colors[idx % colors.length];
               return (
                 <motion.div
                   key={cat.name}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: idx * 0.05 }}
+                  transition={{ delay: idx * 0.03 }}
                 >
-                  <Link 
+                  <Link
                     to={`/browse?category=${cat.name}`}
-                    className="group relative block overflow-hidden rounded-2xl bg-white border border-gray-100 hover:border-purple-200 hover:shadow-xl transition-all duration-300"
+                    className="flex flex-col items-center gap-3 min-w-[100px] group"
                   >
-                    <div className={`absolute inset-0 bg-gradient-to-br ${bgColors[idx % bgColors.length]} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
-                    <div className="relative p-5 flex flex-col items-center text-center">
-                      <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${bgColors[idx % bgColors.length]} flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300`}>
-                        <IconComponent className="w-7 h-7 text-white" strokeWidth={1.5} />
-                      </div>
-                      <span className="font-semibold text-gray-800 group-hover:text-white transition-colors duration-300">{cat.name}</span>
+                    <div className={`w-20 h-20 ${color.bg} ${color.hover} rounded-3xl flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg`}>
+                      <IconComponent className={`w-9 h-9 ${color.icon}`} strokeWidth={1.5} />
                     </div>
+                    <span className="text-sm font-semibold text-gray-700 text-center group-hover:text-purple-600 transition-colors">{cat.name}</span>
                   </Link>
                 </motion.div>
               );
@@ -1358,80 +1366,38 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Features Section - Desktop Only */}
-      <section className="py-20 bg-gradient-to-b from-white to-purple-50 hidden md:block">
+      {/* Features Section - Desktop - تصميم مشابه للجوال "لماذا يدل؟" */}
+      <section className="py-12 bg-gradient-to-b from-gray-50 to-white hidden md:block">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-16">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
-              <Badge className="mb-4 bg-purple-100 text-purple-700 px-4 py-2 rounded-full text-sm">
-                لماذا بدل؟
-              </Badge>
-              <h2 className="text-4xl lg:text-5xl font-bold mb-4">
-                المقايضة أصبحت <span className="text-primary">أسهل من أي وقت</span>
-              </h2>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                نوفر لك كل ما تحتاجه
-              </p>
-            </motion.div>
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900">لماذا يدل؟</h2>
+            <p className="text-gray-500 mt-1">المقايضة أصبحت أسهل من أي وقت - نوفر لك كل ما تحتاجه</p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              {
-                icon: Sparkles,
-                title: "ذكاء اصطناعي",
-                description: "اقتراحات ذكية لأفضل المقايضات",
-                color: "from-purple-500 to-pink-500"
-              },
-              {
-                icon: Shield,
-                title: "آمن وموثوق",
-                description: "نظام تقييم وحماية",
-                color: "from-blue-500 to-cyan-500"
-              },
-              {
-                icon: Zap,
-                title: "سريع وسهل",
-                description: "نتائج في دقائق",
-                color: "from-orange-500 to-red-500"
-              },
-              {
-                icon: Users,
-                title: "مجتمع نشط",
-                description: "آلاف المستخدمين",
-                color: "from-green-500 to-emerald-500"
-              },
-              {
-                icon: MessageCircle,
-                title: "تواصل مباشر",
-                description: "راسل وتفاوض بسهولة",
-                color: "from-indigo-500 to-purple-500"
-              },
-              {
-                icon: Star,
-                title: "مجاني 100%",
-                description: "لا رسوم ولا عمولات",
-                color: "from-yellow-500 to-orange-500"
-              }
-            ].map((feature, idx) => (
+              { icon: Sparkles, title: "ادخل مسابقة المقايضة", description: "فرصتك للفوز بجوائز قيمة", color: "from-purple-500 to-pink-500", bg: "bg-purple-50" },
+              { icon: RefreshCw, title: "تخلص من الأشياء الغير مرغوبة", description: "حوّل ما لا تحتاجه لشيء مفيد", color: "from-blue-500 to-cyan-500", bg: "bg-blue-50" },
+              { icon: Users, title: "انضم لآلاف المستخدمين", description: "مجتمع نشط ومتفاعل", color: "from-green-500 to-emerald-500", bg: "bg-green-50" },
+              { icon: Star, title: "مقايضة موثوقة", description: "نظام تقييم وحماية متكامل", color: "from-amber-500 to-orange-500", bg: "bg-amber-50" },
+              { icon: Zap, title: "سريع وسهل", description: "نتائج في دقائق معدودة", color: "from-orange-500 to-red-500", bg: "bg-orange-50" },
+              { icon: MessageCircle, title: "تواصل مباشر", description: "راسل وتفاوض بسهولة", color: "from-indigo-500 to-purple-500", bg: "bg-indigo-50" },
+              { icon: Shield, title: "آمن 100%", description: "حماية كاملة لبياناتك", color: "from-teal-500 to-cyan-500", bg: "bg-teal-50" },
+              { icon: Gift, title: "مجاني بالكامل", description: "لا رسوم ولا عمولات", color: "from-pink-500 to-rose-500", bg: "bg-pink-50" },
+            ].map((item, idx) => (
               <motion.div
                 key={idx}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
+                transition={{ delay: idx * 0.05 }}
+                className={`${item.bg} rounded-3xl p-6 flex flex-col items-center text-center hover:shadow-lg transition-all duration-300 group cursor-pointer`}
               >
-                <GlassCard className="p-6 h-full hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-purple-200">
-                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 shadow-lg`}>
-                    <feature.icon className="w-7 h-7 text-white" strokeWidth={2} />
-                  </div>
-                  <h3 className="text-sm md:text-xl font-bold mb-1 md:mb-2">{feature.title}</h3>
-                  <p className="text-xs md:text-base text-gray-600 leading-relaxed">{feature.description}</p>
-                </GlassCard>
+                <div className={`w-16 h-16 bg-gradient-to-br ${item.color} rounded-2xl flex items-center justify-center mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
+                  <item.icon className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="font-bold text-gray-800 mb-2">{item.title}</h3>
+                <p className="text-sm text-gray-600 leading-relaxed">{item.description}</p>
               </motion.div>
             ))}
           </div>
