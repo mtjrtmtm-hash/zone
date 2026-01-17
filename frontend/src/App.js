@@ -1462,7 +1462,7 @@ const BrowsePage = () => {
   };
 
   return (
-    <div className="min-h-screen pb-24 md:pb-8 px-4 py-8">
+    <div className="min-h-screen pb-24 md:pb-8 px-4 pt-2 md:py-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-8">تصفح العروض</h1>
         <GlassCard className="mb-8 p-4" hover={false}>
@@ -2393,7 +2393,7 @@ const AddOfferPage = () => {
   };
 
   return (
-    <div className="min-h-screen pb-24 md:pb-8 px-4 py-8">
+    <div className="min-h-screen pb-24 md:pb-8 px-4 pt-2 md:py-8">
       <div className="max-w-3xl mx-auto">
         <h1 className="text-3xl font-bold mb-8">إضافة عرض جديد</h1>
         <OfferForm form={form} setForm={setForm} handleImageUpload={handleImageUpload} getAISuggestions={getAISuggestions} aiLoading={aiLoading} suggestions={suggestions} handleSubmit={handleSubmit} loading={loading} buttonText="نشر العرض" />
@@ -2462,7 +2462,7 @@ const EditOfferPage = () => {
   if (fetchLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
   return (
-    <div className="min-h-screen pb-24 md:pb-8 px-4 py-8">
+    <div className="min-h-screen pb-24 md:pb-8 px-4 pt-2 md:py-8">
       <div className="max-w-3xl mx-auto">
         <div className="flex items-center gap-4 mb-8">
           <Button variant="ghost" onClick={() => navigate(-1)}><ChevronRight className="w-5 h-5" /></Button>
@@ -3142,7 +3142,7 @@ const ProfilePage = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen pb-24 md:pb-8 px-4 py-8">
+    <div className="min-h-screen pb-24 md:pb-8 px-4 pt-2 md:py-8">
       <div className="max-w-3xl mx-auto">
         <h1 className="text-3xl font-bold mb-8">الملف الشخصي</h1>
         <GlassCard className="mb-6" hover={false}>
@@ -3203,7 +3203,7 @@ const MyOffersPage = () => {
   };
 
   return (
-    <div className="min-h-screen pb-24 md:pb-8 px-4 py-8">
+    <div className="min-h-screen pb-24 md:pb-8 px-4 pt-2 md:py-8">
       <div className="max-w-5xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">عروضي</h1>
@@ -3243,7 +3243,7 @@ const FavoritesPage = () => {
   };
 
   return (
-    <div className="min-h-screen pb-24 md:pb-8 px-4 py-8">
+    <div className="min-h-screen pb-24 md:pb-8 px-4 pt-2 md:py-8">
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold mb-8">المفضلة</h1>
         {loading ? (
@@ -3276,7 +3276,7 @@ const BlogPage = () => {
   };
 
   return (
-    <div className="min-h-screen pb-24 md:pb-8 px-4 py-8">
+    <div className="min-h-screen pb-24 md:pb-8 px-4 pt-2 md:py-8">
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold mb-8">المدونة</h1>
         {loading ? (
@@ -3643,7 +3643,7 @@ const AdminDashboard = () => {
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
   return (
-    <div className="min-h-screen pb-24 md:pb-8 px-4 py-8">
+    <div className="min-h-screen pb-24 md:pb-8 px-4 pt-2 md:py-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-8">لوحة التحكم</h1>
 
@@ -4709,7 +4709,7 @@ const DynamicPage = () => {
 
   if (error || !page) {
     return (
-      <div className="min-h-screen pb-24 md:pb-8 px-4 py-8">
+      <div className="min-h-screen pb-24 md:pb-8 px-4 pt-2 md:py-8">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-3xl font-bold mb-4">الصفحة غير موجودة</h1>
           <p className="text-muted-foreground mb-8">{error}</p>
