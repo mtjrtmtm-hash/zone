@@ -642,7 +642,7 @@ const Navbar = () => {
                   <span className="text-white font-bold text-2xl">ب</span>
                 )}
               </div>
-              <span className="text-2xl font-bold text-white">{settings?.site_name || "بدل"}</span>
+              <span className="text-2xl font-bold text-white">{settings?.site_name || "زون | zone"}</span>
             </motion.div>
 
             {/* Menu Items */}
