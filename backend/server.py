@@ -1136,7 +1136,7 @@ async def get_categories():
 
 @api_router.get("/")
 async def root():
-    return {"message": "مرحباً بك في منصة بدل للمقايضة السورية"}
+    return {"message": "مرحباً بك في منصة زون للمقايضة السورية"}
 
 @api_router.get("/health")
 async def health_check():
