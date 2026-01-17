@@ -1428,12 +1428,12 @@ const HomePage = () => {
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
               >
-                <GlassCard className="p-5 md:p-6 h-full hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-purple-200">
-                  <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-3 md:mb-4 shadow-lg`}>
-                    <feature.icon className="w-6 h-6 md:w-7 md:h-7 text-white" strokeWidth={2} />
+                <GlassCard className="p-4 md:p-6 h-full hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-purple-200">
+                  <div className={`w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 md:mb-4 shadow-lg`}>
+                    <feature.icon className="w-5 h-5 md:w-7 md:h-7 text-white" strokeWidth={2} />
                   </div>
-                  <h3 className="text-lg md:text-xl font-bold mb-2">{feature.title}</h3>
-                  <p className="text-sm md:text-base text-gray-600">{feature.description}</p>
+                  <h3 className="text-sm md:text-xl font-bold mb-1 md:mb-2">{feature.title}</h3>
+                  <p className="text-xs md:text-base text-gray-600 leading-relaxed">{feature.description}</p>
                 </GlassCard>
               </motion.div>
             ))}
