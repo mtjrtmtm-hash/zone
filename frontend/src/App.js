@@ -1312,93 +1312,74 @@ const HomePage = () => {
       {/* Desktop Categories Section */}
       <section className="py-16 bg-white hidden md:block">
         <div className="max-w-7xl mx-auto px-4">
-                    <IconComponent className={`w-7 h-7 ${iconColors[idx]} mb-1.5`} strokeWidth={1.5} />
-                    <span className="text-[10px] font-semibold text-gray-700 text-center leading-tight">{cat.name}</span>
-                  </Link>
-                );
-              })}
-            </div>
-            {/* View All Link */}
-            <Link 
-              to="/browse"
-              className="flex items-center justify-center gap-1 mt-4 text-sm text-purple-600 font-medium"
-            >
-              عرض جميع الفئات
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold mb-2">
+              استكشف حسب <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">الفئة</span>
+            </h2>
+            <p className="text-gray-500">اختر الفئة التي تهمك من بين {CATEGORIES.length} فئة متنوعة</p>
           </div>
-
-          {/* Desktop View - Modern Grid */}
-          <div className="hidden md:block">
-            <div className="text-center mb-10">
-              <h2 className="text-3xl font-bold mb-2">
-                استكشف حسب <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">الفئة</span>
-              </h2>
-              <p className="text-gray-500">اختر الفئة التي تهمك من بين {CATEGORIES.length} فئة متنوعة</p>
-            </div>
-            
-            <div className="grid grid-cols-4 lg:grid-cols-7 gap-4">
-              {CATEGORIES.map((cat, idx) => {
-                const IconComponent = cat.icon;
-                const bgColors = [
-                  "from-rose-500 to-pink-600",
-                  "from-blue-500 to-indigo-600",
-                  "from-emerald-500 to-green-600",
-                  "from-violet-500 to-purple-600",
-                  "from-amber-500 to-orange-600",
-                  "from-cyan-500 to-teal-600",
-                  "from-pink-500 to-rose-600"
-                ];
-                return (
-                  <motion.div
-                    key={cat.name}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: idx * 0.05 }}
+          
+          <div className="grid grid-cols-4 lg:grid-cols-7 gap-4">
+            {CATEGORIES.map((cat, idx) => {
+              const IconComponent = cat.icon;
+              const bgColors = [
+                "from-rose-500 to-pink-600",
+                "from-blue-500 to-indigo-600",
+                "from-emerald-500 to-green-600",
+                "from-violet-500 to-purple-600",
+                "from-amber-500 to-orange-600",
+                "from-cyan-500 to-teal-600",
+                "from-pink-500 to-rose-600"
+              ];
+              return (
+                <motion.div
+                  key={cat.name}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.05 }}
+                >
+                  <Link 
+                    to={`/browse?category=${cat.name}`}
+                    className="group relative block overflow-hidden rounded-2xl bg-white border border-gray-100 hover:border-purple-200 hover:shadow-xl transition-all duration-300"
                   >
-                    <Link 
-                      to={`/browse?category=${cat.name}`}
-                      className="group relative block overflow-hidden rounded-2xl bg-white border border-gray-100 hover:border-purple-200 hover:shadow-xl transition-all duration-300"
-                    >
-                      <div className={`absolute inset-0 bg-gradient-to-br ${bgColors[idx % bgColors.length]} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
-                      <div className="relative p-5 flex flex-col items-center text-center">
-                        <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${bgColors[idx % bgColors.length]} flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300`}>
-                          <IconComponent className="w-7 h-7 text-white" strokeWidth={1.5} />
-                        </div>
-                        <span className="font-semibold text-gray-800 group-hover:text-white transition-colors duration-300">{cat.name}</span>
+                    <div className={`absolute inset-0 bg-gradient-to-br ${bgColors[idx % bgColors.length]} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+                    <div className="relative p-5 flex flex-col items-center text-center">
+                      <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${bgColors[idx % bgColors.length]} flex items-center justify-center mb-3 shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300`}>
+                        <IconComponent className="w-7 h-7 text-white" strokeWidth={1.5} />
                       </div>
-                    </Link>
-                  </motion.div>
-                );
-              })}
-            </div>
+                      <span className="font-semibold text-gray-800 group-hover:text-white transition-colors duration-300">{cat.name}</span>
+                    </div>
+                  </Link>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* Features Section - Mobile Optimized */}
-      <section className="py-8 md:py-20 bg-gradient-to-b from-white to-purple-50">
+      {/* Features Section - Desktop Only */}
+      <section className="py-20 bg-gradient-to-b from-white to-purple-50 hidden md:block">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-8 md:mb-16">
+          <div className="text-center mb-16">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <Badge className="mb-3 md:mb-4 bg-purple-100 text-purple-700 px-4 py-2 rounded-full text-sm">
+              <Badge className="mb-4 bg-purple-100 text-purple-700 px-4 py-2 rounded-full text-sm">
                 لماذا بدل؟
               </Badge>
-              <h2 className="text-xl md:text-4xl lg:text-5xl font-bold mb-3 md:mb-4">
-                المقايضة أصبحت <span className="text-primary block md:inline">أسهل من أي وقت</span>
+              <h2 className="text-4xl lg:text-5xl font-bold mb-4">
+                المقايضة أصبحت <span className="text-primary">أسهل من أي وقت</span>
               </h2>
-              <p className="text-sm md:text-xl text-gray-600 max-w-2xl mx-auto">
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
                 نوفر لك كل ما تحتاجه
               </p>
             </motion.div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 md:gap-8 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {[
               {
                 icon: Sparkles,
@@ -1444,9 +1425,9 @@ const HomePage = () => {
                 viewport={{ once: true }}
                 transition={{ delay: idx * 0.1 }}
               >
-                <GlassCard className="p-4 md:p-6 h-full hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-purple-200">
-                  <div className={`w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-2 md:mb-4 shadow-lg`}>
-                    <feature.icon className="w-5 h-5 md:w-7 md:h-7 text-white" strokeWidth={2} />
+                <GlassCard className="p-6 h-full hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-purple-200">
+                  <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 shadow-lg`}>
+                    <feature.icon className="w-7 h-7 text-white" strokeWidth={2} />
                   </div>
                   <h3 className="text-sm md:text-xl font-bold mb-1 md:mb-2">{feature.title}</h3>
                   <p className="text-xs md:text-base text-gray-600 leading-relaxed">{feature.description}</p>
