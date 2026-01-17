@@ -1064,12 +1064,12 @@ const HomePage = () => {
             {user ? (
               <>
                 {/* زر الإشعارات */}
-                <Sheet>
+                <Sheet open={notificationsSheetOpen} onOpenChange={handleNotificationsSheetOpen}>
                   <SheetTrigger asChild>
                     <button className="w-10 h-10 flex items-center justify-center text-gray-600 hover:bg-gray-100 rounded-full transition-colors relative">
                       <Bell className="w-5 h-5" />
                       {unreadNotifications > 0 && (
-                        <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                        <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-pulse">
                           {unreadNotifications > 9 ? '9+' : unreadNotifications}
                         </span>
                       )}
@@ -1080,8 +1080,8 @@ const HomePage = () => {
                       <h3 className="font-bold text-lg flex items-center gap-2">
                         <Bell className="w-5 h-5" />
                         الإشعارات
-                        {notifications.length > 0 && (
-                          <Badge className="bg-white/20 text-white text-xs">{notifications.length}</Badge>
+                        {notifications.filter(n => !n.is_read).length > 0 && (
+                          <Badge className="bg-white/20 text-white text-xs">{notifications.filter(n => !n.is_read).length} جديد</Badge>
                         )}
                       </h3>
                     </div>
@@ -1098,6 +1098,7 @@ const HomePage = () => {
                             <Link 
                               key={notif.id} 
                               to={notif.link || '#'}
+                              onClick={() => setNotificationsSheetOpen(false)}
                               className={`block p-4 rounded-xl transition-all ${notif.is_read ? 'bg-gray-50 hover:bg-gray-100' : 'bg-purple-50 border border-purple-100 hover:bg-purple-100'}`}
                             >
                               <p className="text-sm font-semibold text-gray-800">{notif.title}</p>
