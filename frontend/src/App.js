@@ -3761,33 +3761,10 @@ const AdminWhatsApp = () => {
               <RefreshCw className={`w-4 h-4 ml-2 ${loading ? 'animate-spin' : ''}`} />
               إعادة توليد QR
             </Button>
-          </div>
-        )}
             <div className="mt-4 flex items-center justify-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin text-primary" />
               <span className="text-sm text-muted-foreground">في انتظار المسح...</span>
             </div>
-          </div>
-        )}
-
-        {status?.connected && (
-          <div className="flex gap-3">
-            <Button
-              onClick={disconnect}
-              variant="destructive"
-              className="rounded-xl"
-            >
-              <XCircle className="w-4 h-4 ml-2" />
-              قطع الاتصال
-            </Button>
-            <Button
-              onClick={generateQR}
-              variant="outline"
-              className="rounded-xl"
-            >
-              <RefreshCw className="w-4 h-4 ml-2" />
-              إعادة الاتصال
-            </Button>
           </div>
         )}
       </GlassCard>
