@@ -985,12 +985,13 @@ const HomePage = () => {
   const { user, logout, unreadNotifications, api } = useAuth();
   const { settings } = useSettings();
   const [offers, setOffers] = useState([]);
+  const [trendingOffers, setTrendingOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGov, setSelectedGov] = useState("");
   const [notifications, setNotifications] = useState([]);
 
-  useEffect(() => { fetchOffers(); }, []);
+  useEffect(() => { fetchOffers(); fetchTrendingOffers(); }, []);
   
   useEffect(() => { 
     if (user && api) {
@@ -1002,6 +1003,16 @@ const HomePage = () => {
     try { const res = await axios.get(`${API}/offers?limit=8`); setOffers(res.data); }
     catch (e) { console.error(e); }
     finally { setLoading(false); }
+  };
+
+  const fetchTrendingOffers = async () => {
+    try { 
+      const res = await axios.get(`${API}/offers?limit=8&sort=views`); 
+      // ترتيب حسب المشاهدات (الأعلى أولاً)
+      const sorted = res.data.sort((a, b) => (b.views || 0) - (a.views || 0));
+      setTrendingOffers(sorted.slice(0, 4)); 
+    }
+    catch (e) { console.error(e); }
   };
 
   const fetchNotifications = async () => {
