@@ -988,7 +988,7 @@ const HomePage = () => {
         {/* Mobile Hero */}
         <div className="md:hidden">
           {/* Gradient Header */}
-          <div className="bg-gradient-to-br from-purple-600 via-purple-500 to-pink-500 text-white px-5 pt-4 pb-16 relative overflow-hidden">
+          <div className="bg-gradient-to-br from-purple-600 via-purple-500 to-pink-500 text-white px-4 pt-4 pb-16 relative overflow-hidden">
             {/* Decorative circles */}
             <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
             <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2"></div>
