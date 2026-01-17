@@ -1000,7 +1000,7 @@ async def get_site_settings():
             "contact_email": "info@badal.sy",
             "contact_phone": "+963999999999",
             "social_links": {},
-            "footer_text": "منصة بدل للمقايضة السورية © 2024"
+            "footer_text": "منصة زون للمقايضة السورية © 2024"
         }
     return settings
 
@@ -1216,7 +1216,7 @@ async def create_default_users():
             "contact_email": "info@badal.sy",
             "contact_phone": "+963999999999",
             "social_links": {},
-            "footer_text": "منصة بدل للمقايضة السورية © 2024",
+            "footer_text": "منصة زون للمقايضة السورية © 2024",
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         await db.settings.insert_one(settings_doc)
