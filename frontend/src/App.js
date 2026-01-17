@@ -5061,6 +5061,117 @@ const ScrollToTop = () => {
   return null;
 };
 
+// Welcome Page - صفحة ترحيبية للمستخدمين الجدد
+const WelcomePage = () => {
+  const navigate = useNavigate();
+  const { settings } = useSettings();
+  
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-purple-500 to-pink-500 relative overflow-hidden">
+      {/* Decorative Background Elements */}
+      <div className="absolute inset-0">
+        <div className="absolute top-20 right-10 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-40 left-10 w-48 h-48 bg-pink-300/20 rounded-full blur-2xl" />
+        <div className="absolute top-1/3 left-1/4 w-32 h-32 bg-purple-300/15 rounded-full blur-xl" />
+        <div className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-white/5 rounded-full blur-2xl" />
+      </div>
+      
+      {/* Main Content */}
+      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 py-12">
+        {/* Logo */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
+        >
+          <div className="w-20 h-20 bg-white/20 backdrop-blur-xl rounded-3xl flex items-center justify-center shadow-2xl overflow-hidden">
+            {settings?.site_logo ? (
+              <img src={settings.site_logo} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <Sparkles className="w-10 h-10 text-white" />
+            )}
+          </div>
+        </motion.div>
+        
+        {/* Title */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="text-center mb-12"
+        >
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            جاهز للبدء؟
+          </h1>
+          <p className="text-lg text-white/80 max-w-sm mx-auto leading-relaxed">
+            انضم لآلاف المستخدمين واستمتع بتجربة مقايضة فريدة
+          </p>
+        </motion.div>
+        
+        {/* Action Buttons */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="w-full max-w-sm space-y-4"
+        >
+          <Button 
+            size="lg"
+            className="w-full h-14 rounded-2xl text-lg font-bold bg-white text-purple-600 hover:bg-white/90 shadow-xl"
+            onClick={() => navigate('/browse')}
+          >
+            <Search className="w-5 h-5 ml-2" />
+            استكشف العروض
+          </Button>
+          
+          <Button 
+            size="lg"
+            variant="outline"
+            className="w-full h-14 rounded-2xl text-lg font-bold border-2 border-white/30 text-white hover:bg-white/10 backdrop-blur-sm"
+            onClick={() => navigate('/add-offer')}
+          >
+            <Plus className="w-5 h-5 ml-2" />
+            أضف عرض
+          </Button>
+        </motion.div>
+        
+        {/* Features List */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.6 }}
+          className="mt-12 flex items-center gap-6 text-white/70 text-sm"
+        >
+          <div className="flex items-center gap-2">
+            <Shield className="w-4 h-4" />
+            <span>آمن</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Zap className="w-4 h-4" />
+            <span>سريع</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Star className="w-4 h-4" />
+            <span>مجاني</span>
+          </div>
+        </motion.div>
+        
+        {/* Skip Link */}
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.8 }}
+          onClick={() => navigate('/')}
+          className="mt-8 text-white/60 text-sm hover:text-white transition-colors"
+        >
+          تخطي والذهاب للرئيسية ←
+        </motion.button>
+      </div>
+    </div>
+  );
+};
+
 // Main App
 function App() {
   return (
