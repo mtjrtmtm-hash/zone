@@ -1527,6 +1527,7 @@ const BrowsePage = () => {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ category: "", governorate: "", search: "", quickTrade: false });
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -1550,50 +1551,138 @@ const BrowsePage = () => {
   };
 
   return (
-    <div className="min-h-screen pb-24 md:pb-8 px-4 pt-2 md:py-8">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8">تصفح العروض</h1>
-        <GlassCard className="mb-8 p-4" hover={false}>
-          <div className="flex flex-col md:flex-row flex-wrap gap-3 md:gap-4 items-stretch md:items-center">
-            <div className="flex-1 w-full md:w-auto md:min-w-[200px]">
-              <Input placeholder="بحث..." value={filters.search} onChange={(e) => setFilters({ ...filters, search: e.target.value })} className="rounded-xl bg-white/50 w-full" />
+    <div className="min-h-screen pb-24 md:pb-8 bg-white">
+      {/* Mobile View - تصميم إبداعي جديد */}
+      <div className="md:hidden">
+        {/* Header with back button */}
+        <div className="sticky top-0 z-40 bg-white border-b border-gray-100">
+          <div className="flex items-center justify-between px-4 py-3">
+            <button onClick={() => navigate(-1)} className="w-9 h-9 flex items-center justify-center text-gray-600">
+              <ChevronRight className="w-5 h-5" />
+            </button>
+            <h1 className="text-lg font-bold text-gray-900">تصفح العروض</h1>
+            <button className="w-9 h-9 flex items-center justify-center text-gray-600">
+              <Filter className="w-5 h-5" />
+            </button>
+          </div>
+          
+          {/* Filter Pills */}
+          <div className="px-4 pb-3 flex gap-2 overflow-x-auto scrollbar-hide">
+            <div className="flex items-center gap-2 flex-shrink-0 bg-gray-50 rounded-full px-3 py-1.5 border border-gray-200">
+              <Switch 
+                checked={filters.quickTrade} 
+                onCheckedChange={(v) => setFilters({ ...filters, quickTrade: v })}
+                className="scale-75"
+              />
+              <span className="text-xs font-medium text-gray-600 whitespace-nowrap">سعر فقط</span>
             </div>
-            <div className="flex gap-2 flex-wrap">
-              <Select value={filters.category} onValueChange={(v) => setFilters({ ...filters, category: v })}>
-                <SelectTrigger className="w-full md:w-40 rounded-xl bg-white/50"><SelectValue placeholder="الفئة" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">جميع الفئات</SelectItem>
-                  {CATEGORIES.map((cat) => {
-                    const IconComponent = cat.icon;
-                    return (
-                      <SelectItem key={cat.name} value={cat.name}>
-                        <div className="flex items-center gap-2">
-                          <IconComponent className="w-4 h-4" strokeWidth={1.5} />
-                          <span>{cat.name}</span>
-                        </div>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-              <Select value={filters.governorate} onValueChange={(v) => setFilters({ ...filters, governorate: v })}>
-                <SelectTrigger className="w-full md:w-40 rounded-xl bg-white/50"><SelectValue placeholder="المحافظة" /></SelectTrigger>
-                <SelectContent><SelectItem value="all">جميع المحافظات</SelectItem>{GOVERNORATES.map((gov) => <SelectItem key={gov} value={gov}>{gov}</SelectItem>)}</SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2 bg-yellow-50 px-4 py-2 rounded-xl">
-              <Switch checked={filters.quickTrade} onCheckedChange={(v) => setFilters({ ...filters, quickTrade: v })} />
-              <Label className="flex items-center gap-1 cursor-pointer text-sm"><Zap className="w-4 h-4 text-yellow-500" />سريعة فقط</Label>
+            
+            <Select value={filters.category} onValueChange={(v) => setFilters({ ...filters, category: v })}>
+              <SelectTrigger className="h-8 rounded-full bg-gray-50 border-gray-200 text-xs px-3 min-w-[80px]">
+                <SelectValue placeholder="الفئة" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">جميع الفئات</SelectItem>
+                {CATEGORIES.map((cat) => (
+                  <SelectItem key={cat.name} value={cat.name}>{cat.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <Select value={filters.governorate} onValueChange={(v) => setFilters({ ...filters, governorate: v })}>
+              <SelectTrigger className="h-8 rounded-full bg-gray-50 border-gray-200 text-xs px-3 min-w-[80px]">
+                <SelectValue placeholder="المنطقة" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">الكل</SelectItem>
+                {GOVERNORATES.map((gov) => <SelectItem key={gov} value={gov}>{gov}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            
+            <div className="relative flex-shrink-0">
+              <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+              <Input 
+                placeholder="بحث..." 
+                value={filters.search} 
+                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                className="h-8 rounded-full bg-gray-50 border-gray-200 text-xs pr-8 w-24"
+              />
             </div>
           </div>
-        </GlassCard>
-        {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">{[...Array(8)].map((_, i) => <Skeleton key={i} className="h-52 md:h-72 rounded-2xl md:rounded-3xl" />)}</div>
-        ) : offers.length === 0 ? (
-          <div className="text-center py-16"><Package className="w-20 h-20 text-muted-foreground mx-auto mb-4 opacity-50" /><h3 className="text-xl font-semibold mb-2">لا توجد عروض</h3><p className="text-muted-foreground">جرب تغيير معايير البحث</p></div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">{offers.map((offer, idx) => <OfferCard key={offer.id} offer={offer} delay={idx * 0.05} />)}</div>
-        )}
+        </div>
+        
+        {/* Offers Grid */}
+        <div className="px-3 pt-3 pb-20">
+          {loading ? (
+            <div className="grid grid-cols-2 gap-2.5">
+              {[...Array(6)].map((_, i) => (
+                <Skeleton key={i} className="aspect-[3/4] rounded-2xl" />
+              ))}
+            </div>
+          ) : offers.length === 0 ? (
+            <div className="text-center py-20">
+              <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Package className="w-10 h-10 text-purple-400" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2 text-gray-900">لا توجد عروض</h3>
+              <p className="text-sm text-gray-500">جرب تغيير معايير البحث</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2.5">
+              {offers.map((offer, idx) => (
+                <OfferCard key={offer.id} offer={offer} delay={idx * 0.03} />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Desktop View */}
+      <div className="hidden md:block px-4 py-8">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-3xl font-bold mb-8">تصفح العروض</h1>
+          <GlassCard className="mb-8 p-4" hover={false}>
+            <div className="flex flex-col md:flex-row flex-wrap gap-3 md:gap-4 items-stretch md:items-center">
+              <div className="flex-1 w-full md:w-auto md:min-w-[200px]">
+                <Input placeholder="بحث..." value={filters.search} onChange={(e) => setFilters({ ...filters, search: e.target.value })} className="rounded-xl bg-white/50 w-full" />
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <Select value={filters.category} onValueChange={(v) => setFilters({ ...filters, category: v })}>
+                  <SelectTrigger className="w-full md:w-40 rounded-xl bg-white/50"><SelectValue placeholder="الفئة" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">جميع الفئات</SelectItem>
+                    {CATEGORIES.map((cat) => {
+                      const IconComponent = cat.icon;
+                      return (
+                        <SelectItem key={cat.name} value={cat.name}>
+                          <div className="flex items-center gap-2">
+                            <IconComponent className="w-4 h-4" strokeWidth={1.5} />
+                            <span>{cat.name}</span>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+                <Select value={filters.governorate} onValueChange={(v) => setFilters({ ...filters, governorate: v })}>
+                  <SelectTrigger className="w-full md:w-40 rounded-xl bg-white/50"><SelectValue placeholder="المحافظة" /></SelectTrigger>
+                  <SelectContent><SelectItem value="all">جميع المحافظات</SelectItem>{GOVERNORATES.map((gov) => <SelectItem key={gov} value={gov}>{gov}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2 bg-yellow-50 px-4 py-2 rounded-xl">
+                <Switch checked={filters.quickTrade} onCheckedChange={(v) => setFilters({ ...filters, quickTrade: v })} />
+                <Label className="flex items-center gap-1 cursor-pointer text-sm"><Zap className="w-4 h-4 text-yellow-500" />سريعة فقط</Label>
+              </div>
+            </div>
+          </GlassCard>
+          {loading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">{[...Array(8)].map((_, i) => <Skeleton key={i} className="h-52 md:h-72 rounded-2xl md:rounded-3xl" />)}</div>
+          ) : offers.length === 0 ? (
+            <div className="text-center py-16"><Package className="w-20 h-20 text-muted-foreground mx-auto mb-4 opacity-50" /><h3 className="text-xl font-semibold mb-2">لا توجد عروض</h3><p className="text-muted-foreground">جرب تغيير معايير البحث</p></div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">{offers.map((offer, idx) => <OfferCard key={offer.id} offer={offer} delay={idx * 0.05} />)}</div>
+          )}
+        </div>
       </div>
     </div>
   );
