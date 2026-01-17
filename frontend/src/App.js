@@ -2488,7 +2488,9 @@ const MessagesPage = () => {
           // فقط نحدث إذا كان هناك رسائل جديدة
           if (newMessages.length > messages.length) {
             setMessages(newMessages);
-            fetchUnreadCounts(); // تحديث عداد الرسائل غير المقروءة
+            fetchUnreadCounts();
+            // التمرير التلقائي لآخر رسالة
+            setTimeout(() => scrollToBottom(), 100);
           }
         } catch (e) { console.error("Polling error:", e); }
       }, 3000);
