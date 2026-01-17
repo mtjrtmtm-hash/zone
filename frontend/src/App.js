@@ -2021,12 +2021,22 @@ const VerifyPhonePage = () => {
   const [cooldown, setCooldown] = useState(0); // عداد تنازلي للانتظار
   const inputs = useRef([]);
 
+  // حماية الصفحة - إذا لم يكن المستخدم مسجل دخول، انتقل لصفحة تسجيل الدخول
   useEffect(() => {
-    if (!phone && !user) {
-      navigate("/register");
+    if (!user) {
+      navigate("/login", { replace: true });
       return;
     }
-  }, [phone, user, navigate]);
+    if (!phone) {
+      navigate("/register", { replace: true });
+      return;
+    }
+  }, [user, phone, navigate]);
+
+  // إذا لم يكن هناك مستخدم، لا تعرض الصفحة
+  if (!user) {
+    return null;
+  }
 
   // عداد تنازلي للـ cooldown
   useEffect(() => {
