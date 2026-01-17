@@ -2891,6 +2891,10 @@ const MessagesPage = () => {
     setSelectedConv(conv);
     setDrawerOpen(false);
     setMessages([]);
+    
+    // لا تجلب الرسائل إذا كانت محادثة جديدة
+    if (conv.is_new) return;
+    
     try { 
       const res = await api.get(`/messages/${conv.offer_id}/${conv.other_user_id}`); 
       setMessages(res.data);
@@ -2906,6 +2910,19 @@ const MessagesPage = () => {
       const res = await api.post("/messages", { receiver_id: selectedConv.other_user_id, offer_id: selectedConv.offer_id, content: newMessage, message_type: "text" });
       setMessages(prev => [...prev, res.data]);
       setNewMessage("");
+      
+      // بعد إرسال أول رسالة، أزل علامة المحادثة الجديدة وأعد جلب المحادثات
+      if (selectedConv.is_new) {
+        setSelectedConv(prev => ({ ...prev, is_new: false }));
+        // إعادة جلب المحادثات للحصول على ID الحقيقي
+        const convRes = await api.get("/conversations");
+        setConversations(convRes.data);
+        // إيجاد المحادثة الجديدة وتحديدها
+        const newConv = convRes.data.find(c => c.offer_id === selectedConv.offer_id && c.other_user_id === selectedConv.other_user_id);
+        if (newConv) {
+          setSelectedConv(newConv);
+        }
+      }
     } catch (e) { toast.error("فشل إرسال الرسالة"); }
     finally { setSending(false); }
   };
