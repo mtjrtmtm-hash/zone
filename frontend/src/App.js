@@ -3581,20 +3581,31 @@ const AdminWhatsApp = () => {
   const [status, setStatus] = useState(null);
   const [qrCode, setQrCode] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [connecting, setConnecting] = useState(false);
 
   useEffect(() => {
     fetchStatus();
-    const interval = setInterval(fetchStatus, 5000); // تحديث كل 5 ثواني
+    const interval = setInterval(fetchStatus, 3000); // تحديث كل 3 ثواني
     return () => clearInterval(interval);
   }, []);
+
+  // مسح QR عند الاتصال
+  useEffect(() => {
+    if (status?.connected) {
+      setQrCode(null);
+    }
+  }, [status?.connected]);
 
   const fetchStatus = async () => {
     try {
       const res = await api.get("/whatsapp/status");
       setStatus(res.data);
+      
+      // إذا تم الاتصال، أزل QR
+      if (res.data.connected) {
+        setQrCode(null);
+      }
     } catch (e) {
-      console.error(e);
+      console.error("Error fetching WhatsApp status:", e);
     }
   };
 
@@ -3602,21 +3613,28 @@ const AdminWhatsApp = () => {
     setLoading(true);
     try {
       const res = await api.post("/whatsapp/generate-qr");
-      setQrCode(res.data.qr_code);
-      toast.success("تم توليد QR Code");
       
-      // محاكاة الاتصال بعد 5 ثواني
-      setTimeout(async () => {
-        try {
-          await api.post(`/whatsapp/connect?session_id=test-session`);
-          toast.success("تم الاتصال بنجاح! 🎉");
-          fetchStatus();
-        } catch (e) {
-          toast.error("فشل الاتصال");
-        }
-      }, 5000);
+      if (res.data.status === "already_connected" || res.data.status === "connected") {
+        toast.success("WhatsApp متصل بالفعل! 🎉");
+        setQrCode(null);
+        fetchStatus();
+      } else if (res.data.qr_code) {
+        setQrCode(res.data.qr_code);
+        toast.success("تم توليد QR Code - امسحه من WhatsApp");
+      } else if (res.data.status === "loading") {
+        toast.info("جاري توليد QR Code... انتظر قليلاً");
+        // إعادة المحاولة بعد 3 ثواني
+        setTimeout(async () => {
+          const retryRes = await api.get("/whatsapp/qr");
+          if (retryRes.data.qr_code) {
+            setQrCode(retryRes.data.qr_code);
+            toast.success("تم توليد QR Code");
+          }
+        }, 3000);
+      }
     } catch (e) {
-      toast.error("فشل توليد QR Code");
+      console.error("Error generating QR:", e);
+      toast.error("فشل توليد QR Code - تحقق من أن خدمة WhatsApp تعمل");
     } finally {
       setLoading(false);
     }
@@ -3647,13 +3665,12 @@ const AdminWhatsApp = () => {
             <MessageCircle className="w-5 h-5" />
             حالة الاتصال
           </h3>
-          {status?.connected && (
+          {status?.connected ? (
             <Badge className="bg-green-500 text-white">
               <CheckCircle className="w-3 h-3 ml-1" />
               متصل
             </Badge>
-          )}
-          {!status?.connected && (
+          ) : (
             <Badge variant="secondary">
               <XCircle className="w-3 h-3 ml-1" />
               غير متصل
@@ -3661,17 +3678,24 @@ const AdminWhatsApp = () => {
           )}
         </div>
 
-        {status?.session && (
+        {status?.connected && status?.connectedNumber && (
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
             <div className="flex items-start gap-3">
               <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <p className="font-medium text-green-900 mb-1">WhatsApp متصل بنجاح!</p>
                 <div className="text-sm text-green-700 space-y-1">
-                  <p>الرقم: {status.session.phone}</p>
-                  <p>وقت الاتصال: {new Date(status.session.connected_at).toLocaleString("ar-SY")}</p>
+                  <p>الرقم المتصل: +{status.connectedNumber}</p>
                 </div>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={disconnect}
+                className="text-red-500 border-red-200 hover:bg-red-50"
+              >
+                قطع الاتصال
+              </Button>
             </div>
           </div>
         )}
@@ -3728,6 +3752,17 @@ const AdminWhatsApp = () => {
                 امسح هذا الكود
               </p>
             </div>
+            <Button
+              variant="outline"
+              onClick={generateQR}
+              className="mt-4"
+              disabled={loading}
+            >
+              <RefreshCw className={`w-4 h-4 ml-2 ${loading ? 'animate-spin' : ''}`} />
+              إعادة توليد QR
+            </Button>
+          </div>
+        )}
             <div className="mt-4 flex items-center justify-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin text-primary" />
               <span className="text-sm text-muted-foreground">في انتظار المسح...</span>
