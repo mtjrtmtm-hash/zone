@@ -2033,11 +2033,6 @@ const VerifyPhonePage = () => {
     }
   }, [user, phone, navigate]);
 
-  // إذا لم يكن هناك مستخدم، لا تعرض الصفحة
-  if (!user) {
-    return null;
-  }
-
   // عداد تنازلي للـ cooldown
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -2054,6 +2049,11 @@ const VerifyPhonePage = () => {
 
     return () => clearInterval(interval);
   }, [cooldown]);
+
+  // إذا لم يكن هناك مستخدم، لا تعرض الصفحة
+  if (!user) {
+    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  }
 
   const handleChange = (index, value) => {
     if (!/^\d*$/.test(value)) return;
