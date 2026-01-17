@@ -1189,165 +1189,129 @@ const HomePage = () => {
       </div>
 
       {/* Desktop Hero Section */}
-      <section className="relative overflow-hidden hidden md:block">
-        {/* Desktop Hero */}
+      <section className="relative overflow-hidden hidden md:block bg-gradient-to-br from-purple-50 via-white to-pink-50">
+        <div className="max-w-7xl mx-auto px-4 py-16">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left Side - Content */}
+            <motion.div 
+              initial={{ opacity: 0, x: -30 }} 
+              animate={{ opacity: 1, x: 0 }} 
+              transition={{ duration: 0.6 }}
+              className="text-right"
+            >
+              <Badge className="mb-4 bg-purple-100 text-purple-700 px-4 py-1.5 rounded-full text-sm">
+                <Sparkles className="w-4 h-4 ml-1.5" />
+                مدعوم بالذكاء الاصطناعي
+              </Badge>
 
-        {/* Desktop Hero */}
-        <div className="hidden md:block bg-gradient-to-br from-purple-50 via-white to-pink-50">
-          <div className="max-w-7xl mx-auto px-4 py-16">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
-              {/* Left Side - Content */}
-              <motion.div 
-                initial={{ opacity: 0, x: -30 }} 
-                animate={{ opacity: 1, x: 0 }} 
-                transition={{ duration: 0.6 }}
-                className="text-right"
-              >
-                <Badge className="mb-4 bg-purple-100 text-purple-700 px-4 py-1.5 rounded-full text-sm">
-                  <Sparkles className="w-4 h-4 ml-1.5" />
-                  مدعوم بالذكاء الاصطناعي
-                </Badge>
+              <h1 className="text-5xl lg:text-6xl font-bold mb-4 leading-tight">
+                <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  قايض بذكاء
+                </span>
+                <br />
+                <span className="text-gray-900">اربح بدون نقود</span>
+              </h1>
 
-                <h1 className="text-5xl lg:text-6xl font-bold mb-4 leading-tight">
-                  <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                    قايض بذكاء
-                  </span>
-                  <br />
-                  <span className="text-gray-900">اربح بدون نقود</span>
-                </h1>
+              <p className="text-lg text-gray-600 mb-6 leading-relaxed max-w-lg">
+                أول منصة سورية ذكية تربطك بآلاف الأشخاص لتبادل السلع والخدمات. 
+                <span className="block mt-1 text-purple-600 font-medium">بدون نقود، بكل سهولة!</span>
+              </p>
 
-                <p className="text-lg text-gray-600 mb-6 leading-relaxed max-w-lg">
-                  أول منصة سورية ذكية تربطك بآلاف الأشخاص لتبادل السلع والخدمات. 
-                  <span className="block mt-1 text-purple-600 font-medium">بدون نقود، بكل سهولة!</span>
-                </p>
+              <div className="flex gap-3">
+                <Button 
+                  size="lg" 
+                  className="h-12 px-6 rounded-xl text-base bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg"
+                  onClick={() => navigate('/browse')}
+                >
+                  <Search className="w-4 h-4 ml-2" />
+                  تصفح العروض
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  className="h-12 px-6 rounded-xl text-base border-2 border-purple-200 hover:bg-purple-50"
+                  onClick={() => navigate('/add-offer')}
+                >
+                  <Plus className="w-4 h-4 ml-2" />
+                  أضف عرض
+                </Button>
+              </div>
+            </motion.div>
 
-                <div className="flex gap-3">
+            {/* Right Side - Search Card */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <div className="bg-white rounded-3xl p-6 shadow-2xl border border-purple-100">
+                <div className="mb-5">
+                  <h3 className="text-xl font-bold mb-1 text-gray-900">ابحث عن ما تريد</h3>
+                  <p className="text-gray-500 text-sm">اكتشف آلاف العروض في جميع أنحاء سوريا</p>
+                </div>
+
+                <form onSubmit={handleSearch} className="space-y-3">
+                  <div className="relative">
+                    <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <Input 
+                      placeholder="ابحث عن أي شيء..." 
+                      className="pr-12 h-12 rounded-xl border-gray-200 bg-gray-50"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>
+
+                  <Select value={selectedGov} onValueChange={setSelectedGov}>
+                    <SelectTrigger className="h-12 rounded-xl border-gray-200 bg-gray-50">
+                      <MapPin className="w-4 h-4 ml-2 text-gray-400" />
+                      <SelectValue placeholder="اختر المحافظة" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">جميع المحافظات</SelectItem>
+                      {GOVERNORATES.map((gov) => (
+                        <SelectItem key={gov} value={gov}>{gov}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
                   <Button 
+                    type="submit" 
                     size="lg" 
-                    className="h-12 px-6 rounded-xl text-base bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg"
-                    onClick={() => navigate('/browse')}
+                    className="w-full h-12 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
                   >
                     <Search className="w-4 h-4 ml-2" />
-                    تصفح العروض
+                    ابحث الآن
                   </Button>
-                  <Button 
-                    size="lg" 
-                    variant="outline"
-                    className="h-12 px-6 rounded-xl text-base border-2 border-purple-200 hover:bg-purple-50"
-                    onClick={() => navigate('/add-offer')}
-                  >
-                    <Plus className="w-4 h-4 ml-2" />
-                    أضف عرض
-                  </Button>
-                </div>
-              </motion.div>
+                </form>
 
-              {/* Right Side - Search Card */}
-              <motion.div
-                initial={{ opacity: 0, x: 30 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-              >
-                <div className="bg-white rounded-3xl p-6 shadow-2xl border border-purple-100">
-                  <div className="mb-5">
-                    <h3 className="text-xl font-bold mb-1 text-gray-900">ابحث عن ما تريد</h3>
-                    <p className="text-gray-500 text-sm">اكتشف آلاف العروض في جميع أنحاء سوريا</p>
-                  </div>
-
-                  <form onSubmit={handleSearch} className="space-y-3">
-                    <div className="relative">
-                      <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                      <Input 
-                        placeholder="ابحث عن أي شيء..." 
-                        className="pr-12 h-12 rounded-xl border-gray-200 bg-gray-50"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                      />
-                    </div>
-
-                    <Select value={selectedGov} onValueChange={setSelectedGov}>
-                      <SelectTrigger className="h-12 rounded-xl border-gray-200 bg-gray-50">
-                        <MapPin className="w-4 h-4 ml-2 text-gray-400" />
-                        <SelectValue placeholder="اختر المحافظة" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">جميع المحافظات</SelectItem>
-                        {GOVERNORATES.map((gov) => (
-                          <SelectItem key={gov} value={gov}>{gov}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-
-                    <Button 
-                      type="submit" 
-                      size="lg" 
-                      className="w-full h-12 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                    >
-                      <Search className="w-4 h-4 ml-2" />
-                      ابحث الآن
-                    </Button>
-                  </form>
-
-                  {/* Quick Categories */}
-                  <div className="mt-5 pt-5 border-t border-gray-100">
-                    <p className="text-xs text-gray-500 mb-3">فئات شائعة:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {CATEGORIES.slice(0, 5).map((cat) => {
-                        const IconComponent = cat.icon;
-                        return (
-                          <Link
-                            key={cat.name}
-                            to={`/browse?category=${cat.name}`}
-                            className="px-3 py-1.5 bg-gray-100 hover:bg-purple-100 rounded-lg text-xs font-medium text-gray-700 hover:text-purple-700 transition-all flex items-center gap-1"
-                          >
-                            <IconComponent className="w-3 h-3" />
-                            {cat.name}
-                          </Link>
-                        );
-                      })}
-                    </div>
+                {/* Quick Categories */}
+                <div className="mt-5 pt-5 border-t border-gray-100">
+                  <p className="text-xs text-gray-500 mb-3">فئات شائعة:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {CATEGORIES.slice(0, 5).map((cat) => {
+                      const IconComponent = cat.icon;
+                      return (
+                        <Link
+                          key={cat.name}
+                          to={`/browse?category=${cat.name}`}
+                          className="px-3 py-1.5 bg-gray-100 hover:bg-purple-100 rounded-lg text-xs font-medium text-gray-700 hover:text-purple-700 transition-all flex items-center gap-1"
+                        >
+                          <IconComponent className="w-3 h-3" />
+                          {cat.name}
+                        </Link>
+                      );
+                    })}
                   </div>
                 </div>
-              </motion.div>
-            </div>
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Categories Section - Modern Design */}
-      <section className="pt-6 pb-4 md:py-16 bg-white">
+      {/* Desktop Categories Section */}
+      <section className="py-16 bg-white hidden md:block">
         <div className="max-w-7xl mx-auto px-4">
-          {/* Mobile View - Modern Cards */}
-          <div className="md:hidden">
-            <div className="grid grid-cols-4 gap-2">
-              {CATEGORIES.slice(0, 8).map((cat, idx) => {
-                const IconComponent = cat.icon;
-                const bgColors = [
-                  "bg-gradient-to-br from-rose-100 to-pink-200",
-                  "bg-gradient-to-br from-blue-100 to-indigo-200",
-                  "bg-gradient-to-br from-emerald-100 to-green-200",
-                  "bg-gradient-to-br from-violet-100 to-purple-200",
-                  "bg-gradient-to-br from-amber-100 to-orange-200",
-                  "bg-gradient-to-br from-cyan-100 to-teal-200",
-                  "bg-gradient-to-br from-pink-100 to-rose-200",
-                  "bg-gradient-to-br from-indigo-100 to-blue-200"
-                ];
-                const iconColors = [
-                  "text-rose-600",
-                  "text-blue-600",
-                  "text-emerald-600",
-                  "text-violet-600",
-                  "text-amber-600",
-                  "text-cyan-600",
-                  "text-pink-600",
-                  "text-indigo-600"
-                ];
-                return (
-                  <Link
-                    key={cat.name}
-                    to={`/browse?category=${cat.name}`}
-                    className={`${bgColors[idx]} rounded-2xl p-3 flex flex-col items-center justify-center aspect-square active:scale-95 transition-transform`}
-                  >
                     <IconComponent className={`w-7 h-7 ${iconColors[idx]} mb-1.5`} strokeWidth={1.5} />
                     <span className="text-[10px] font-semibold text-gray-700 text-center leading-tight">{cat.name}</span>
                   </Link>
