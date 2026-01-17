@@ -1523,6 +1523,7 @@ const OfferDetailPage = () => {
   const [showStatusDialog, setShowStatusDialog] = useState(false);
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [reportReason, setReportReason] = useState("");
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => { fetchOffer(); }, [id]);
 
