@@ -1886,7 +1886,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen flex items-center justify-center px-4 py-4 md:py-8">
       <GlassCard className="w-full max-w-md" hover={false}>
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl shadow-primary/25"><span className="text-white font-bold text-2xl">ب</span></div>
@@ -1957,7 +1957,7 @@ const RegisterPage = () => {
   ];
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8 pb-24 md:pb-8">
+    <div className="min-h-screen flex items-center justify-center px-4 py-4 md:py-8 pb-24 md:pb-8">
       <GlassCard className="w-full max-w-md" hover={false}>
         <div className="text-center mb-8">
           <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl">
@@ -2227,7 +2227,7 @@ const VerifyPhonePage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-8 pb-24 md:pb-8">
+    <div className="min-h-screen flex items-center justify-center px-4 py-4 md:py-8 pb-24 md:pb-8">
       <GlassCard className="w-full max-w-md" hover={false}>
         <div className="text-center mb-8">
           <motion.div
