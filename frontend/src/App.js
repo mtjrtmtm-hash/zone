@@ -1351,11 +1351,11 @@ const HomePage = () => {
       </section>
 
       {/* Latest Offers Section */}
-      <section className="py-8 md:py-20 px-4 bg-white">
-        <div className="max-w-7xl mx-auto">
+      <section className="py-8 md:py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center mb-6 md:mb-12">
             <div>
-              <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-1 md:mb-2">أحدث العروض</h2>
+              <h2 className="text-xl md:text-4xl lg:text-5xl font-bold mb-1 md:mb-2">أحدث العروض</h2>
               <p className="text-sm md:text-xl text-gray-600">تصفح أحدث الفرص</p>
             </div>
             <Link 
@@ -1385,17 +1385,17 @@ const HomePage = () => {
       </section>
 
       {/* CTA Section - Mobile Optimized */}
-      <section className="py-12 md:py-20 px-4 bg-gradient-to-br from-purple-600 via-purple-500 to-pink-500">
-        <div className="max-w-4xl mx-auto text-center text-white">
+      <section className="py-10 md:py-20 bg-gradient-to-br from-purple-600 via-purple-500 to-pink-500">
+        <div className="max-w-4xl mx-auto text-center text-white px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6">
+            <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6">
               جاهز للبدء؟
             </h2>
-            <p className="text-lg md:text-xl lg:text-2xl mb-6 md:mb-8 opacity-90 px-4">
+            <p className="text-base md:text-xl lg:text-2xl mb-6 md:mb-8 opacity-90">
               انضم لآلاف المستخدمين واستمتع بتجربة مقايضة فريدة
             </p>
             <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center px-4">
