@@ -157,7 +157,7 @@ class NotificationResponse(BaseModel):
     notification_type: Optional[str] = None
     link: Optional[str] = None
     is_read: bool = False
-    created_at: str
+    created_at: datetime
 
 class AISuggestionRequest(BaseModel):
     item_description: str
