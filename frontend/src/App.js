@@ -1525,34 +1525,36 @@ const BrowsePage = () => {
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-8">تصفح العروض</h1>
         <GlassCard className="mb-8 p-4" hover={false}>
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="flex-1 min-w-[200px]">
-              <Input placeholder="بحث..." value={filters.search} onChange={(e) => setFilters({ ...filters, search: e.target.value })} className="rounded-xl bg-white/50" />
+          <div className="flex flex-col md:flex-row flex-wrap gap-3 md:gap-4 items-stretch md:items-center">
+            <div className="flex-1 w-full md:w-auto md:min-w-[200px]">
+              <Input placeholder="بحث..." value={filters.search} onChange={(e) => setFilters({ ...filters, search: e.target.value })} className="rounded-xl bg-white/50 w-full" />
             </div>
-            <Select value={filters.category} onValueChange={(v) => setFilters({ ...filters, category: v })}>
-              <SelectTrigger className="w-48 rounded-xl bg-white/50"><SelectValue placeholder="الفئة" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">جميع الفئات</SelectItem>
-                {CATEGORIES.map((cat) => {
-                  const IconComponent = cat.icon;
-                  return (
-                    <SelectItem key={cat.name} value={cat.name}>
-                      <div className="flex items-center gap-2">
-                        <IconComponent className="w-4 h-4" strokeWidth={1.5} />
-                        <span>{cat.name}</span>
-                      </div>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-            <Select value={filters.governorate} onValueChange={(v) => setFilters({ ...filters, governorate: v })}>
-              <SelectTrigger className="w-48 rounded-xl bg-white/50"><SelectValue placeholder="المحافظة" /></SelectTrigger>
-              <SelectContent><SelectItem value="all">جميع المحافظات</SelectItem>{GOVERNORATES.map((gov) => <SelectItem key={gov} value={gov}>{gov}</SelectItem>)}</SelectContent>
-            </Select>
+            <div className="flex gap-2 flex-wrap">
+              <Select value={filters.category} onValueChange={(v) => setFilters({ ...filters, category: v })}>
+                <SelectTrigger className="w-full md:w-40 rounded-xl bg-white/50"><SelectValue placeholder="الفئة" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">جميع الفئات</SelectItem>
+                  {CATEGORIES.map((cat) => {
+                    const IconComponent = cat.icon;
+                    return (
+                      <SelectItem key={cat.name} value={cat.name}>
+                        <div className="flex items-center gap-2">
+                          <IconComponent className="w-4 h-4" strokeWidth={1.5} />
+                          <span>{cat.name}</span>
+                        </div>
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              <Select value={filters.governorate} onValueChange={(v) => setFilters({ ...filters, governorate: v })}>
+                <SelectTrigger className="w-full md:w-40 rounded-xl bg-white/50"><SelectValue placeholder="المحافظة" /></SelectTrigger>
+                <SelectContent><SelectItem value="all">جميع المحافظات</SelectItem>{GOVERNORATES.map((gov) => <SelectItem key={gov} value={gov}>{gov}</SelectItem>)}</SelectContent>
+              </Select>
+            </div>
             <div className="flex items-center gap-2 bg-yellow-50 px-4 py-2 rounded-xl">
               <Switch checked={filters.quickTrade} onCheckedChange={(v) => setFilters({ ...filters, quickTrade: v })} />
-              <Label className="flex items-center gap-1 cursor-pointer"><Zap className="w-4 h-4 text-yellow-500" />سريعة فقط</Label>
+              <Label className="flex items-center gap-1 cursor-pointer text-sm"><Zap className="w-4 h-4 text-yellow-500" />سريعة فقط</Label>
             </div>
           </div>
         </GlassCard>
