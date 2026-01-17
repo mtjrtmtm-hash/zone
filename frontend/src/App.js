@@ -1266,10 +1266,46 @@ const HomePage = () => {
           </div>
         </div>
 
+        {/* Trending Offers - عليها العين 👁️ */}
+        <div className="pt-6 px-4">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+              <Eye className="w-4 h-4 text-purple-500" />
+              عليها العين
+            </h3>
+            <Link to="/browse?sort=views" className="text-xs text-purple-600 font-medium flex items-center gap-1">
+              عرض الكل
+              <ArrowLeft className="w-3 h-3" />
+            </Link>
+          </div>
+          {loading ? (
+            <div className="grid grid-cols-2 gap-3">
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="h-56 rounded-2xl" />
+              ))}
+            </div>
+          ) : trendingOffers.length > 0 ? (
+            <div className="grid grid-cols-2 gap-3">
+              {trendingOffers.map((offer, idx) => (
+                <OfferCard key={offer.id} offer={offer} delay={idx * 0.05} />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              {offers.slice(0, 4).map((offer, idx) => (
+                <OfferCard key={offer.id} offer={offer} delay={idx * 0.05} />
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Latest Offers - أحدث العروض */}
         <div className="pt-6 px-4">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-bold text-gray-900">أحدث العروض</h3>
+            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-pink-500" />
+              أحدث العروض
+            </h3>
             <Link to="/browse" className="text-xs text-purple-600 font-medium flex items-center gap-1">
               عرض الكل
               <ArrowLeft className="w-3 h-3" />
