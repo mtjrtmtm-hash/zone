@@ -2321,7 +2321,7 @@ const RegisterPage = () => {
             <span className="text-white font-bold text-2xl">ب</span>
           </div>
           <h1 className="text-2xl font-bold">إنشاء حساب جديد</h1>
-          <p className="text-muted-foreground">انضم إلى مجتمع بدل</p>
+          <p className="text-muted-foreground">انضم إلى مجتمع زون</p>
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-4">
