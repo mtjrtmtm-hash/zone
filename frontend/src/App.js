@@ -2458,18 +2458,19 @@ const MessagesPage = () => {
   const messagesContainerRef = useRef(null);
   const pollingRef = useRef(null);
 
-  const scrollToBottom = (smooth = true) => {
-    if (messagesContainerRef.current) {
-      const scrollHeight = messagesContainerRef.current.scrollHeight;
-      const height = messagesContainerRef.current.clientHeight;
-      const maxScrollTop = scrollHeight - height;
-      messagesContainerRef.current.scrollTop = maxScrollTop > 0 ? maxScrollTop : 0;
-    }
+  const scrollToBottom = () => {
+    // استخدم requestAnimationFrame للتأكد من التمرير بعد render
+    requestAnimationFrame(() => {
+      if (messagesEndRef.current) {
+        messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      }
+    });
   };
 
+  // التمرير لآخر رسالة عند تحميل الرسائل أو وصول رسالة جديدة
   useEffect(() => {
     if (messages.length > 0) {
-      setTimeout(() => scrollToBottom(true), 100);
+      scrollToBottom();
     }
   }, [messages]);
 
