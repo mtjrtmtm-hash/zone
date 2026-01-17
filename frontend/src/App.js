@@ -1570,33 +1570,43 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* Latest Offers Section */}
-      <section className="py-8 md:py-20 bg-white">
+      {/* Trending Offers Section - عليها العين - Desktop */}
+      <section className="py-12 bg-gray-50 hidden md:block">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="flex justify-between items-center mb-6 md:mb-12">
+          <div className="flex justify-between items-center mb-8">
             <div>
-              <h2 className="text-xl md:text-4xl lg:text-5xl font-bold mb-1 md:mb-2">أحدث العروض</h2>
-              <p className="text-sm md:text-xl text-gray-600">تصفح أحدث الفرص</p>
+              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                  <Eye className="w-5 h-5 text-white" />
+                </div>
+                عليها العين
+              </h2>
+              <p className="text-gray-500 mt-1">العروض الأكثر مشاهدة</p>
             </div>
             <Link 
-              to="/browse" 
-              className="text-primary hover:text-primary/80 flex items-center gap-1 md:gap-2 font-semibold text-sm md:text-lg group"
+              to="/browse?sort=views" 
+              className="text-purple-600 font-medium flex items-center gap-2 hover:gap-3 transition-all"
             >
-              <span className="hidden sm:inline">عرض الكل</span>
-              <span className="sm:hidden">الكل</span>
-              <ArrowLeft className="w-4 h-4 md:w-5 md:h-5 group-hover:-translate-x-1 transition-transform" />
+              عرض الكل
+              <ArrowLeft className="w-4 h-4" />
             </Link>
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {[...Array(4)].map((_, i) => (
-                <Skeleton key={i} className="h-52 md:h-72 rounded-2xl md:rounded-3xl" />
+                <Skeleton key={i} className="h-72 rounded-3xl" />
+              ))}
+            </div>
+          ) : trendingOffers.length > 0 ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {trendingOffers.map((offer, idx) => (
+                <OfferCard key={offer.id} offer={offer} delay={idx * 0.1} />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
-              {offers.map((offer, idx) => (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {offers.slice(0, 4).map((offer, idx) => (
                 <OfferCard key={offer.id} offer={offer} delay={idx * 0.1} />
               ))}
             </div>
@@ -1604,8 +1614,46 @@ const HomePage = () => {
         </div>
       </section>
 
-      {/* CTA Section - Mobile Optimized */}
-      <section className="py-10 md:py-20 bg-gradient-to-br from-purple-600 via-purple-500 to-pink-500">
+      {/* Latest Offers Section - أحدث العروض - Desktop */}
+      <section className="py-12 bg-white hidden md:block">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-rose-500 rounded-xl flex items-center justify-center">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                أحدث العروض
+              </h2>
+              <p className="text-gray-500 mt-1">تصفح أحدث الفرص المتاحة</p>
+            </div>
+            <Link 
+              to="/browse" 
+              className="text-purple-600 font-medium flex items-center gap-2 hover:gap-3 transition-all"
+            >
+              عرض الكل
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
+          </div>
+
+          {loading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="h-72 rounded-3xl" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {offers.slice(0, 4).map((offer, idx) => (
+                <OfferCard key={offer.id} offer={offer} delay={idx * 0.1} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-10 md:py-20 bg-gradient-to-br from-purple-600 via-purple-500 to-pink-500 hidden md:block">
         <div className="max-w-4xl mx-auto text-center text-white px-4">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
