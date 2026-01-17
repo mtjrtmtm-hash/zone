@@ -1326,9 +1326,9 @@ const HomePage = () => {
           )}
         </div>
 
-        {/* Why Badal Section - لماذا بدل؟ */}
+        {/* Why Zone Section - لماذا زون؟ */}
         <div className="pt-8 px-4 pb-6">
-          <h3 className="text-base font-bold text-gray-900 mb-4">لماذا يدل؟</h3>
+          <h3 className="text-base font-bold text-gray-900 mb-4">لماذا زون؟</h3>
           <div className="grid grid-cols-2 gap-3">
             {[
               { icon: Sparkles, title: "ادخل مسابقة المقايضة", color: "from-purple-500 to-pink-500", bg: "bg-purple-50" },
