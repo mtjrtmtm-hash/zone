@@ -2444,7 +2444,7 @@ const OfferForm = ({ form, setForm, handleImageUpload, getAISuggestions, aiLoadi
 );
 // Messages Page - MOBILE OPTIMIZED WITH DRAWER
 const MessagesPage = () => {
-  const { api, user } = useAuth();
+  const { api, user, fetchUnreadCounts } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [conversations, setConversations] = useState([]);
@@ -2456,6 +2456,7 @@ const MessagesPage = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
+  const pollingRef = useRef(null);
 
   const scrollToBottom = (smooth = true) => {
     if (messagesContainerRef.current) {
@@ -2473,6 +2474,44 @@ const MessagesPage = () => {
   }, [messages]);
 
   useEffect(() => { fetchConversations(); }, []);
+
+  // Polling للرسائل الجديدة كل 3 ثواني
+  useEffect(() => {
+    if (selectedConv) {
+      // بدء الـ polling
+      pollingRef.current = setInterval(async () => {
+        try {
+          const res = await api.get(`/messages/${selectedConv.offer_id}/${selectedConv.other_user_id}`);
+          const newMessages = res.data;
+          
+          // فقط نحدث إذا كان هناك رسائل جديدة
+          if (newMessages.length > messages.length) {
+            setMessages(newMessages);
+            fetchUnreadCounts(); // تحديث عداد الرسائل غير المقروءة
+          }
+        } catch (e) { console.error("Polling error:", e); }
+      }, 3000);
+
+      // تنظيف عند تغيير المحادثة أو الخروج
+      return () => {
+        if (pollingRef.current) {
+          clearInterval(pollingRef.current);
+        }
+      };
+    }
+  }, [selectedConv, messages.length]);
+
+  // تحديث المحادثات بشكل دوري أيضاً
+  useEffect(() => {
+    const convPolling = setInterval(async () => {
+      try {
+        const res = await api.get("/conversations");
+        setConversations(res.data);
+      } catch (e) { console.error(e); }
+    }, 10000); // كل 10 ثواني
+
+    return () => clearInterval(convPolling);
+  }, []);
 
   const fetchConversations = async () => {
     try {
@@ -2496,6 +2535,7 @@ const MessagesPage = () => {
     try { 
       const res = await api.get(`/messages/${conv.offer_id}/${conv.other_user_id}`); 
       setMessages(res.data);
+      fetchUnreadCounts(); // تحديث العداد بعد قراءة الرسائل
     }
     catch (e) { console.error(e); }
   };
