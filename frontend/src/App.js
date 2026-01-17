@@ -2476,24 +2476,32 @@ const MessagesPage = () => {
 
   useEffect(() => { fetchConversations(); }, []);
 
-  // Polling للرسائل الجديدة كل 3 ثواني
+  // Polling للرسائل الجديدة كل 3 ثواني - بشكل سلس
   useEffect(() => {
     if (selectedConv) {
-      // بدء الـ polling
-      pollingRef.current = setInterval(async () => {
+      const pollMessages = async () => {
         try {
           const res = await api.get(`/messages/${selectedConv.offer_id}/${selectedConv.other_user_id}`);
           const newMessages = res.data;
           
-          // فقط نحدث إذا كان هناك رسائل جديدة
-          if (newMessages.length > messages.length) {
-            setMessages(newMessages);
-            fetchUnreadCounts();
-            // التمرير التلقائي لآخر رسالة
-            setTimeout(() => scrollToBottom(), 100);
-          }
-        } catch (e) { console.error("Polling error:", e); }
-      }, 3000);
+          // مقارنة آخر رسالة بدلاً من العدد فقط
+          setMessages(prev => {
+            if (newMessages.length === 0) return prev;
+            const lastNewId = newMessages[newMessages.length - 1]?.id;
+            const lastPrevId = prev[prev.length - 1]?.id;
+            
+            // فقط نحدث إذا كانت هناك رسائل جديدة فعلاً
+            if (lastNewId !== lastPrevId || newMessages.length !== prev.length) {
+              fetchUnreadCounts();
+              return newMessages;
+            }
+            return prev;
+          });
+        } catch (e) { /* صامت */ }
+      };
+
+      // بدء الـ polling
+      pollingRef.current = setInterval(pollMessages, 3000);
 
       // تنظيف عند تغيير المحادثة أو الخروج
       return () => {
@@ -2502,17 +2510,23 @@ const MessagesPage = () => {
         }
       };
     }
-  }, [selectedConv, messages.length]);
+  }, [selectedConv?.id]); // نعتمد على ID المحادثة فقط
 
-  // تحديث المحادثات بشكل دوري أيضاً
+  // تحديث المحادثات بشكل دوري - سلس
   useEffect(() => {
-    const convPolling = setInterval(async () => {
+    const pollConversations = async () => {
       try {
         const res = await api.get("/conversations");
-        setConversations(res.data);
-      } catch (e) { console.error(e); }
-    }, 10000); // كل 10 ثواني
+        setConversations(prev => {
+          // مقارنة لتجنب إعادة الرسم غير الضرورية
+          const hasChanges = JSON.stringify(prev.map(c => ({ id: c.id, unread: c.unread_count, last: c.last_message }))) !== 
+                            JSON.stringify(res.data.map(c => ({ id: c.id, unread: c.unread_count, last: c.last_message })));
+          return hasChanges ? res.data : prev;
+        });
+      } catch (e) { /* صامت */ }
+    };
 
+    const convPolling = setInterval(pollConversations, 8000);
     return () => clearInterval(convPolling);
   }, []);
 
