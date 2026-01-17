@@ -3183,9 +3183,24 @@ const MessagesPage = () => {
               <div className="p-3 space-y-2 min-h-full flex flex-col justify-end">
                 {messages.length === 0 ? (
                   <div className="flex items-center justify-center flex-1">
-                    <div className="text-center text-muted-foreground">
-                      <MessageCircle className="w-14 h-14 mx-auto mb-3 opacity-30" />
-                      <p className="text-sm">ابدأ المحادثة الآن</p>
+                    <div className="text-center text-muted-foreground px-4">
+                      {selectedConv?.is_new ? (
+                        <>
+                          <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <MessageCircle className="w-8 h-8 text-purple-500" />
+                          </div>
+                          <h3 className="font-bold text-gray-800 mb-2">ابدأ محادثة جديدة!</h3>
+                          <p className="text-sm text-gray-500 leading-relaxed">
+                            أرسل رسالة لـ <span className="font-semibold text-purple-600">{selectedConv.other_user_name}</span>
+                            <br />بخصوص <span className="text-purple-600">"{selectedConv.offer_title}"</span>
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <MessageCircle className="w-14 h-14 mx-auto mb-3 opacity-30" />
+                          <p className="text-sm">ابدأ المحادثة الآن</p>
+                        </>
+                      )}
                     </div>
                   </div>
                 ) : (
