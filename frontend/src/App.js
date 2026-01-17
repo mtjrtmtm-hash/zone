@@ -2834,12 +2834,57 @@ const MessagesPage = () => {
       const params = new URLSearchParams(location.search);
       const offerId = params.get("offer");
       const userId = params.get("user");
+      
       if (offerId && userId) {
+        // البحث عن محادثة موجودة
         const conv = res.data.find(c => c.offer_id === offerId && c.other_user_id === userId);
-        if (conv) selectConversation(conv);
+        if (conv) {
+          selectConversation(conv);
+        } else {
+          // إنشاء محادثة جديدة إذا لم تكن موجودة
+          await startNewConversation(offerId, userId);
+        }
       }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
+  };
+
+  // بدء محادثة جديدة
+  const startNewConversation = async (offerId, userId) => {
+    try {
+      // جلب بيانات العرض للحصول على اسم المستخدم
+      const offerRes = await api.get(`/offers/${offerId}`);
+      const offer = offerRes.data;
+      
+      // إنشاء محادثة وهمية مؤقتة للعرض
+      const tempConv = {
+        id: `temp-${offerId}-${userId}`,
+        offer_id: offerId,
+        other_user_id: userId,
+        other_user_name: offer.user_name || "مستخدم",
+        offer_title: offer.title,
+        offer_image: offer.images?.[0],
+        last_message: null,
+        last_message_time: new Date().toISOString(),
+        unread_count: 0,
+        is_new: true
+      };
+      
+      setSelectedConv(tempConv);
+      setMessages([]);
+      
+      // إضافة المحادثة للقائمة إذا لم تكن موجودة
+      setConversations(prev => {
+        const exists = prev.find(c => c.offer_id === offerId && c.other_user_id === userId);
+        if (!exists) {
+          return [tempConv, ...prev];
+        }
+        return prev;
+      });
+    } catch (e) {
+      console.error("Error starting conversation:", e);
+      toast.error("فشل بدء المحادثة");
+    }
   };
 
   const selectConversation = async (conv) => {
