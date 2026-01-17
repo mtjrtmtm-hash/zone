@@ -1271,8 +1271,8 @@ const HomePage = () => {
       </section>
 
       {/* Features Section - Mobile Optimized */}
-      <section className="py-8 md:py-20 px-4 bg-gradient-to-b from-white to-purple-50">
-        <div className="max-w-7xl mx-auto">
+      <section className="py-8 md:py-20 bg-gradient-to-b from-white to-purple-50">
+        <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-8 md:mb-16">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -1282,10 +1282,10 @@ const HomePage = () => {
               <Badge className="mb-3 md:mb-4 bg-purple-100 text-purple-700 px-4 py-2 rounded-full text-sm">
                 لماذا بدل؟
               </Badge>
-              <h2 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-3 md:mb-4">
+              <h2 className="text-xl md:text-4xl lg:text-5xl font-bold mb-3 md:mb-4">
                 المقايضة أصبحت <span className="text-primary block md:inline">أسهل من أي وقت</span>
               </h2>
-              <p className="text-base md:text-xl text-gray-600 max-w-2xl mx-auto px-4">
+              <p className="text-sm md:text-xl text-gray-600 max-w-2xl mx-auto">
                 نوفر لك كل ما تحتاجه
               </p>
             </motion.div>
